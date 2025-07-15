@@ -34,14 +34,14 @@ export default function ConfirmCounter({ service, serviceId, onConfirm, onClose 
     if (procedures && procedures.length > 0) {
       // If serviceId is provided, find specific procedure
       if (serviceId) {
-        const targetProcedure = procedures.find((proc: any) => proc.id === serviceId);
+        const targetProcedure = procedures.find((proc: { id: number; counters?: Counter[] }) => proc.id === serviceId);
         if (targetProcedure && targetProcedure.counters) {
           setCounters(targetProcedure.counters);
         }
       } else {
         // If no specific serviceId, aggregate all available counters
         const allCounters: Counter[] = [];
-        procedures.forEach((proc: any) => {
+        procedures.forEach((proc: { counters?: Counter[] }) => {
           if (proc.counters) {
             proc.counters.forEach((counter: Counter) => {
               // Avoid duplicates

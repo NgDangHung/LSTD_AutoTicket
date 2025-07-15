@@ -1,14 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-
-// Extend Window interface for Speech Recognition
-declare global {
-  interface Window {
-    SpeechRecognition: any;
-    webkitSpeechRecognition: any;
-  }
-}
+import type { SpeechRecognition, SpeechRecognitionEvent, SpeechRecognitionErrorEvent } from '@/types/speech';
 
 interface SpeechToTextProps {
   onTranscript: (text: string) => void;
@@ -20,7 +13,7 @@ interface SpeechToTextProps {
 export default function SpeechToText({ onTranscript, onStop, isActive, stopTrigger = 'manual' }: SpeechToTextProps) {
   const [isListening, setIsListening] = useState(false);
   const [error, setError] = useState('');
-  const recognitionRef = useRef<any>(null);
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Cleanup function
@@ -67,7 +60,7 @@ export default function SpeechToText({ onTranscript, onStop, isActive, stopTrigg
       }, 30000);
     };
 
-    recognition.onresult = (event: any) => {
+    recognition.onresult = (event: SpeechRecognitionEvent) => {
       let finalTranscript = '';
       let interim = '';
 
@@ -88,7 +81,7 @@ export default function SpeechToText({ onTranscript, onStop, isActive, stopTrigg
       }
     };
 
-    recognition.onerror = (event: any) => {
+    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
       console.error('Speech recognition error:', event.error);
       
       let errorMessage = 'Có lỗi xảy ra khi nhận diện giọng nói.';
