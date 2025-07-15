@@ -1,0 +1,54 @@
+[build]
+  # Build command
+  command = "npm run build"
+  
+  # Directory to publish (contains the production build)
+  publish = ".next"
+
+[build.environment]
+  # Node.js version to use
+  NODE_VERSION = "18"
+  
+  # Next.js specific environment variables
+  NEXT_TELEMETRY_DISABLED = "1"
+
+# Headers for better caching and security
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+
+# Redirects for client-side routing
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+  
+# Specific redirects for app routes
+[[redirects]]
+  from = "/kiosk"
+  to = "/kiosk/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/tv"
+  to = "/tv/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/officer"
+  to = "/officer/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/admin"
+  to = "/admin/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/test-queue"
+  to = "/test-queue/index.html"
+  status = 200
