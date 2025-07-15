@@ -13,8 +13,8 @@ import type {
 
 // Create axios instance with base configuration
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/app',
-  timeout: 10000,
+  baseURL: process.env.NEXT_PUBLIC_API_URL || 'https://detect-seat.onrender.com/app',
+  timeout: 30000, // Increase timeout for deployed server
   headers: {
     'Content-Type': 'application/json',
   },

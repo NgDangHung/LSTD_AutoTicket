@@ -1,6 +1,6 @@
 # 📘 Tài liệu API Frontend – Kiosk Queue Management System
 
-**Base URL:** `http://localhost:8000/app`
+**Base URL:** `https://detect-seat.onrender.com/app`
 
 ## 🏗️ Architecture Overview
 
@@ -428,8 +428,8 @@ function handleApiError(error: unknown): string {
 ```typescript
 // libs/api.ts
 const api = axios.create({
-  baseURL: 'http://localhost:8000/app',
-  timeout: 10000,
+  baseURL: 'https://detect-seat.onrender.com/app',
+  timeout: 30000,
   headers: {
     'Content-Type': 'application/json'
   }
