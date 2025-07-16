@@ -12,32 +12,59 @@ import type {
 } from './apiTypes';
 
 // Create axios instance with base configuration
-const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'https://detect-seat.onrender.com/app',
-  timeout: 30000, // Increase timeout for deployed server
+const axiosInstance = axios.create({
+  baseURL: 'https://detect-seat.onrender.com',
+  timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
 // Request interceptor to add auth token
-api.interceptors.request.use(
+axiosInstance.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('auth_token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    
+    // Debug logging for requests
+    console.log('🌐 API Request Details:');
+    console.log('📡 Method:', config.method?.toUpperCase());
+    console.log('🔗 Endpoint:', config.url);
+    console.log('🌍 Full URL:', `${config.baseURL}${config.url}`);
+    console.log('📤 Request Payload:', JSON.stringify(config.data, null, 2));
+    console.log('📋 Headers:', config.headers);
+    console.log('────────────────────────────────────────');
+    
     return config;
   },
   (error) => {
+    console.error('❌ Request interceptor error:', error);
     return Promise.reject(error);
   }
 );
 
 // Response interceptor for error handling
-api.interceptors.response.use(
-  (response) => response,
+axiosInstance.interceptors.response.use(
+  (response) => {
+    // Debug logging for successful responses
+    console.log('✅ API Response Success:');
+    console.log('📊 Status:', response.status, response.statusText);
+    console.log('🔗 URL:', response.config.url);
+    console.log('📥 Response Data:', JSON.stringify(response.data, null, 2));
+    console.log('────────────────────────────────────────');
+    return response;
+  },
   (error) => {
+    // Debug logging for error responses
+    console.log('❌ API Response Error:');
+    console.log('📊 Status:', error.response?.status, error.response?.statusText);
+    console.log('🔗 URL:', error.config?.url);
+    console.log('📥 Error Data:', JSON.stringify(error.response?.data, null, 2));
+    console.log('💬 Error Message:', error.message);
+    console.log('────────────────────────────────────────');
+    
     if (error.response?.status === 401) {
       localStorage.removeItem('auth_token');
       window.location.href = '/login';
@@ -145,9 +172,27 @@ export const userAPI = {
   // Delete user
   deleteUser: (userId: string) => api.delete(`/users/${userId}`),
   
-  // Login
-  login: (credentials: { username: string; password: string }) =>
-    api.post('/auth/login', credentials),
+  // Login - Authentication API  
+  login: (credentials: { username: string; password: string }) => {
+    // Try form-urlencoded format
+    const formData = new URLSearchParams();
+    formData.append('username', credentials.username);
+    formData.append('password', credentials.password);
+    
+    return axiosInstance.post('/auths/login', formData, {
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      }
+    });
+  },
+  
+  // Register new user
+  register: (userData: { username: string; password: string }) =>
+    api.post('/auths/users/', userData),
+  
+  // Get current user info
+  getCurrentUser: () =>
+    api.get('/auths/me'),
   
   // Logout
   logout: () => api.post('/auth/logout'),
@@ -209,5 +254,8 @@ export const countersAPI = {
     return api.put(`/counters/${counterId}/resume`);
   },
 };
+
+// Export axiosInstance as api for backward compatibility
+const api = axiosInstance;
 
 export default api;

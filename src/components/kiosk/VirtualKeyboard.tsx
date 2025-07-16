@@ -143,7 +143,15 @@ export default function VirtualKeyboard({
 
         {/* Quick Phrases */}
         <div className="mb-4">
-          <div className="text-sm text-gray-600 mb-2">Cụm từ thường dùng:</div>
+          <div className="flex justify-between items-center mb-2">
+            <div className="text-sm text-gray-600">Cụm từ thường dùng:</div>
+            <button
+              onClick={() => onChange('')}
+              className="px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-red-600 transition-colors text-sm font-medium"
+            >
+              🗑️ Xóa tìm kiếm
+            </button>
+          </div>
           <div className="flex flex-wrap gap-2">
             {[
               'Thuế',

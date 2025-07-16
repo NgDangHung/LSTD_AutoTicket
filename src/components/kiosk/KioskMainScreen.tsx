@@ -1,26 +1,48 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, Mic, Printer, HelpCircle, AudioLines } from 'lucide-react';
 import { toast } from 'react-toastify';
 import Button from '@/components/shared/Button';
 import ConfirmCounter from '@/app/kiosk/confirm-counter';
 import VirtualKeyboard from './VirtualKeyboard';
 import SpeechToText from './SpeechToText';
+import { useCreateTicket } from '@/hooks/useApi';
+import { useOptimizedSearch } from '@/hooks/useOptimizedSearch';
 import { CounterQueueManager } from '@/libs/counterQueue';
 import '@/app/index.css';
 
 const services = [
-  { id: '1', name: 'Chứng thực' },
-  { id: '2', name: 'Hộ tịch' },
-  { id: '3', name: 'Kiểm Lâm' },
-  { id: '4', name: 'Thành lập và hoạt động của hộ kinh doanh' },
-  { id: '5', name: 'Hoạt động xây dựng'},
-  { id: '6', name: 'Đất đai'},
-  { id: '7', name: 'Bảo trợ xã hội'}
+  { id: 1, name: 'Chứng thực' },
+  { id: 2, name: 'Hộ tịch' },
+  { id: 3, name: 'Kiểm Lâm' },
+  { id: 4, name: 'Thành lập và hoạt động của hộ kinh doanh' },
+  { id: 5, name: 'Hoạt động xây dựng'},
+  { id: 6, name: 'Đất đai'},
+  { id: 7, name: 'Bảo trợ xã hội'}
 ];
 
+// Mapping lĩnh vực với quầy phục vụ
+const counters = [
+  { id: 1, name: 'Tư pháp', serviceIds: [1, 2] }, // Chứng thực, Hộ tịch
+  { id: 2, name: 'Kinh tế - Hạ tầng - Đô Thị', serviceIds: [3, 4, 5] }, // Kiểm Lâm, Thành lập hộ KD, Hoạt động xây dựng
+  { id: 3, name: 'Văn phòng đăng ký đất đai', serviceIds: [6] }, // Đất đai
+  { id: 4, name: 'Văn hóa - Xã hội', serviceIds: [7] } // Bảo trợ xã hội
+];
+
+interface ProcedureResult {
+  id: number;
+  name: string;
+  field_id: number;
+  counters: Array<{
+    id: number;
+    name: string;
+    status: string;
+  }>;
+}
+
 export default function KioskMainScreen() {
+  // Original states
   const [selectedService, setSelectedService] = useState<string>('');
   const [selectedServiceName, setSelectedServiceName] = useState<string>('');
   const [showConfirmCounter, setShowConfirmCounter] = useState(false);
@@ -28,119 +50,162 @@ export default function KioskMainScreen() {
   const [searchValue, setSearchValue] = useState('');
   const [isVoiceActive, setIsVoiceActive] = useState(false);
   const [voiceStopTrigger, setVoiceStopTrigger] = useState<'outside-click' | 'enter-key' | 'manual'>('manual');
-  const [usedTicketNumbers, setUsedTicketNumbers] = useState<Set<number>>(new Set());
 
-  // Function to generate unique 4-digit ticket number
-  const generateUniqueTicketNumber = (): number => {
-    let ticketNumber: number;
-    let attempts = 0;
-    const maxAttempts = 1000; // Prevent infinite loop
-    
-    do {
-      // Generate random number between 1000-9999 (4 digits)
-      ticketNumber = Math.floor(Math.random() * 9000);
-      attempts++;
-    } while (usedTicketNumbers.has(ticketNumber) && attempts < maxAttempts);
-    
-    // If we've used too many numbers, reset the set (in real app, this would be handled differently)
-    if (attempts >= maxAttempts) {
-      setUsedTicketNumbers(new Set());
-      ticketNumber = Math.floor(Math.random() * 9000) + 1000;
-    }
-    
-    // Add to used numbers
-    setUsedTicketNumbers(prev => new Set(prev).add(ticketNumber));
-    
-    return ticketNumber;
+  // New states for procedure search workflow
+  const [selectedProcedure, setSelectedProcedure] = useState<ProcedureResult | null>(null);
+
+  // Helper function to find counter by service ID
+  const getCounterByServiceId = (serviceId: number) => {
+    return counters.find(counter => counter.serviceIds.includes(serviceId));
   };
 
-  const handleServiceSelect = (serviceId: string) => {
+  // Optimized search hook
+  const {
+    searchQuery,
+    setSearchQuery,
+    searchResults,
+    loading: searchLoading,
+    error: searchError,
+    clearSearch,
+    isSearchMode
+  } = useOptimizedSearch();
+
+  // API hooks
+  const { createTicket, loading: ticketLoading, error: ticketError } = useCreateTicket();
+
+  // Compute filtered services based on search results
+  const filteredServices = isSearchMode 
+    ? services.filter(service => 
+        searchResults.some(result => result.field_id === service.id)
+      )
+    : services;
+
+  const handleServiceSelect = (serviceId: number) => {
     const service = services.find(s => s.id === serviceId);
-    if (service) {
-      setSelectedService(serviceId);
-      setSelectedServiceName(service.name);
-      setShowConfirmCounter(true);
+    if (!service) return;
+
+    if (isSearchMode) {
+      // LUỒNG 1: Tìm kiếm thủ tục -> chọn lĩnh vực
+      const matchingProcedure = searchResults.find(proc => proc.field_id === service.id);
+      
+      if (matchingProcedure) {
+        setSelectedProcedure(matchingProcedure);
+        setSelectedService(serviceId.toString());
+        setSelectedServiceName(`${service.name} - ${matchingProcedure.name}`);
+        setShowConfirmCounter(true);
+        
+        console.log('✅ Selected procedure from search:', {
+          service: service.name,
+          procedure: matchingProcedure.name,
+          fieldId: service.id
+        });
+      } else {
+        console.warn('⚠️ No matching procedure found for service:', service.name);
+        toast.error('Không tìm thấy thủ tục phù hợp cho lĩnh vực này');
+      }
+    } else {
+      // LUỒNG 2: Chọn trực tiếp lĩnh vực
+      const counter = getCounterByServiceId(serviceId);
+      
+      if (counter) {
+        // Tạo mock procedure để có thể sử dụng chung logic với luồng 1
+        const mockProcedure: ProcedureResult = {
+          id: serviceId,
+          name: service.name,
+          field_id: serviceId,
+          counters: [{
+            id: counter.id,
+            name: counter.name,
+            status: 'active'
+          }]
+        };
+        
+        setSelectedProcedure(mockProcedure);
+        setSelectedService(serviceId.toString());
+        setSelectedServiceName(service.name);
+        setShowConfirmCounter(true);
+        
+        console.log('✅ Selected service directly:', {
+          service: service.name,
+          counter: counter.name,
+          serviceId: serviceId
+        });
+      } else {
+        console.warn('⚠️ No counter found for service:', service.name);
+        toast.error('Không tìm thấy quầy phục vụ cho lĩnh vực này');
+      }
     }
   };
 
   const handleConfirmCounter = async (counterId: string) => {
-    // Xử lý logic khi user xác nhận chọn quầy
-    console.log('Confirmed - Service:', selectedServiceName, 'Counter:', counterId);
-    
-    // Tìm tên quầy từ counterId (đồng bộ với confirm-counter.tsx)
-    const counterNames: { [key: string]: string } = {
-      '1': 'Quầy 1 - Tư pháp',
-      '2': 'Quầy 2 - Kinh tế - Hạ tầng - Đô Thị',
-      '3': 'Quầy 3 - Văn phòng đăng ký đất đai',
-      '4': 'Quầy 4 - Văn hóa - Xã hội'
-    };
-    
-    const counterName = counterNames[counterId] || `Quầy ${counterId}`;
-    
-    // Generate unique ticket number
-    const ticketNumber = generateUniqueTicketNumber();
-    
     try {
-      // Sử dụng CounterQueueManager để thêm vào queue của counter cụ thể
-      const queueData = {
-        serviceId: selectedService,
-        serviceName: selectedServiceName,
-        counterId: counterId,
-        counterName: counterName,
-        number: ticketNumber.toString().padStart(4, '0'),
-        status: 'waiting' as const,
-        priority: 0,
-        createdAt: new Date().toISOString(),
-        estimatedWaitTime: 15 // 15 phút ước tính
-      };
+      // Call API to create ticket instead of generating random number
+      const newTicket = await createTicket(parseInt(counterId));
       
-      // Thêm vào queue của counter cụ thể
-      const newQueueItem = CounterQueueManager.addToCounterQueue(counterId, queueData);
-      
-      console.log('✅ Queue created successfully and will display on TV:', newQueueItem);
-      
-      // Trigger custom event để TV update ngay lập tức
-      window.dispatchEvent(new CustomEvent('counterQueueUpdated', { 
-        detail: { 
-          action: 'added',
+      if (newTicket) {
+        // Find counter name from selectedProcedure or fallback
+        let counterName = `Quầy ${counterId}`;
+        
+        if (selectedProcedure && selectedProcedure.counters) {
+          const counter = selectedProcedure.counters.find(c => c.id === parseInt(counterId));
+          if (counter) {
+            counterName = counter.name;
+          }
+        }
+
+        console.log('✅ Ticket created successfully:', newTicket);
+        
+        // 🔥 ADD TO TV QUEUE
+        const queueItem = CounterQueueManager.addToCounterQueue(newTicket.counter_id.toString(), {
+          number: newTicket.number.toString(),
+          serviceId: selectedService,
+          serviceName: selectedServiceName,
           counterId: counterId,
-          queueItem: newQueueItem 
-        } 
-      }));
-      
-    } catch (error) {
-      console.error('Error creating queue:', error);
-      // Vẫn hiển thị thông báo thành công cho user ngay cả khi có lỗi
-    }
-    
-    // Reset state
-    setShowConfirmCounter(false);
-    setSelectedService('');
-    setSelectedServiceName('');
-    
-    // Hiển thị toast thông báo thành công
-    toast.success(
-      <div style={{ lineHeight: '1.6' }}>
-        <div>🎫 Đã in số thứ tự thành công!</div>
-        <div>📋 Dịch vụ: {selectedServiceName}</div>
-        <div>🏢 {counterName}</div>
-        <div>🎟️ Vé số: {ticketNumber.toString().padStart(4, '0')}</div>
-      </div>,
-      {
-        position: "top-center",
-        autoClose: 6000,
-        hideProgressBar: false,
-        closeOnClick: false,
-        pauseOnHover: false,
-        draggable: false,
+          counterName: counterName,
+          status: 'waiting',
+          priority: 1,
+          createdAt: newTicket.created_at,
+          estimatedWaitTime: 15 // Default 15 minutes
+        });
+        
+        console.log('✅ Added to TV queue:', queueItem);
+        
+        // Reset state
+        setShowConfirmCounter(false);
+        setSelectedService('');
+        setSelectedServiceName('');
+        setSelectedProcedure(null);
+        
+        // Show success toast with data from BE
+        toast.success(
+          <div style={{ lineHeight: '1.6' }}>
+            <div>🎫 Đã in số thứ tự thành công!</div>
+            <div>📋 Dịch vụ: {selectedServiceName}</div>
+            <div>🏢 Quầy: {counterName}</div>
+            <div>🎟️ Vé số: {newTicket.number}</div>
+            <div>⏰ Thời gian: {new Date().toLocaleTimeString('vi-VN')}</div>
+          </div>,
+          {
+            position: "top-center",
+            autoClose: 6000,
+            hideProgressBar: false,
+            closeOnClick: false,
+            pauseOnHover: false,
+            draggable: false,
+          }
+        );
       }
-    );
+    } catch (error) {
+      console.error('Error creating ticket:', error);
+      toast.error('Có lỗi xảy ra khi tạo vé. Vui lòng thử lại!');
+    }
   };
 
   const handleCloseConfirm = () => {
     setShowConfirmCounter(false);
     setSelectedService('');
     setSelectedServiceName('');
+    setSelectedProcedure(null);
   };
 
   const handleVoiceSearch = () => {
@@ -157,11 +222,11 @@ export default function KioskMainScreen() {
   };
 
   const handleSearchChange = (value: string) => {
-    setSearchValue(value);
+    setSearchQuery(value);
   };
 
   const handleSpeechTranscript = (text: string) => {
-    setSearchValue(text);
+    setSearchQuery(text);
   };
 
   const handleSpeechStop = () => {
@@ -169,11 +234,6 @@ export default function KioskMainScreen() {
     // Don't close keyboard when voice stops from keyboard mode
     // Keyboard will only close when user explicitly closes it
   };
-
-  // Filter services dựa trên search value
-  const filteredServices = services.filter(service =>
-    service.name.toLowerCase().includes(searchValue.toLowerCase())
-  );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 p-8">
@@ -205,9 +265,9 @@ export default function KioskMainScreen() {
           <div className="relative" style={{ marginTop: '-28px'}}>
             <input 
               name='voice-search'
-              value={searchValue}
+              value={searchQuery}
               onClick={handleSearchClick}
-              onChange={(e) => setSearchValue(e.target.value)}
+              onChange={(e) => setSearchQuery(e.target.value)}
               className={`flex items-center gap-2 px-6 py-3 text-lg pr-12 Shadow cursor-pointer transition-all duration-300 ${
                 showVirtualKeyboard ? 'ring-2 ring-blue-500 border-blue-500' : ''
               } ${
@@ -216,7 +276,7 @@ export default function KioskMainScreen() {
               type="text"
               placeholder={isVoiceActive ? 
                 (voiceStopTrigger === 'enter-key' ? 'Đang nghe... Bấm Enter trên bàn phím để dừng' : 'Đang nghe... Bấm ra ngoài để dừng') 
-                : 'Tìm kiếm bằng giọng nói - Bàn phím ảo'
+                : 'Tìm kiếm thủ tục cụ thể (ví dụ: "đăng ký khai sinh")'
               }
               style={{ 
                 width: '600px', 
@@ -241,70 +301,101 @@ export default function KioskMainScreen() {
               </div>
             )}
           </div>
+          
+          {/* Clear Search Button - Hiển thị khi có text trong search */}
+          {searchQuery.trim() && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="px-4 py-3 bg-blue-500 text-white rounded-full hover:bg-red-600 transition-colors text-sm font-medium shadow-lg"
+              style={{ marginTop: '-28px' }}
+            >
+              🗑️ Xóa tìm kiếm
+            </button>
+          )}
         </div>
 
-        {/* Search Results Info */}
-        {searchValue && (
+        {/* Search Loading */}
+        {searchLoading && (
           <div className="text-center mb-4">
-            <p className="text-gray-600">
-              Tìm thấy <span className="font-semibold text-blue-600">{filteredServices.length}</span> dịch vụ 
-              cho từ khóa "<span className="font-semibold">{searchValue}</span>"
-            </p>
+            <div className="inline-flex items-center gap-2 text-blue-600">
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+              Đang tìm kiếm...
+            </div>
           </div>
         )}
-        {/* Service Grid */}
-        <div className="flex flex-col items-center">
-          {/* Scroll Indicator */}
-          {(searchValue ? filteredServices : services).length > 6 && (
-            <div className="mb-4 text-center">
-              <p className="text-gray-600 text-sm flex items-center justify-center gap-2">
-                <span>📋 {(searchValue ? filteredServices : services).length} dịch vụ có sẵn</span>
-              </p>
-            </div>
-          )}
-          
-          <div 
-            className="service-grid-container grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12 overflow-y-auto p-4 border rounded-lg bg-white/50 backdrop-blur-sm"
-            style={{ 
-              maxWidth: '1200px',
-              maxHeight: '448px' // Exact height for 2 rows: (192px card height + 24px gap) * 2 + 32px padding
-            }}
-          >
-            {(searchValue ? filteredServices : services).map((service) => (
-              <div
-                key={service.id}
-                onClick={() => handleServiceSelect(service.id)}
-                className="kiosk-card relative Shadow hover:shadow-lg transition-shadow duration-200"
-              >
-                
-                <h3 className="text-xl font-semibold text-center text-gray-800 mb-4">
-                  {service.name}
-                </h3>
-                <div className="text-center ">
-                  <span className="inline-flex items-center gap-2 text-blue-600 font-medium absolute bottom-5 left-1/2 transform -translate-x-1/2">
-                    <Printer size={16} />
-                    In số thứ tự
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
 
-        {/* No Results */}
-        {searchValue && filteredServices.length === 0 && (
-          <div className="text-center py-12">
-            <div className="text-gray-400 mb-4">
-              <Search size={64} className="mx-auto mb-4" />
-              <p className="text-xl">Không tìm thấy dịch vụ nào</p>
-              <p className="text-lg">Thử tìm kiếm với từ khóa khác</p>
-            </div>
-            <button
-              onClick={() => setSearchValue('')}
-              className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+        {/* Search Results Info */}
+        {isSearchMode && !searchLoading && (
+          <div className="text-center mb-4">
+            {filteredServices.length > 0 ? (
+              <div className="flex flex-col items-center gap-2">
+                <p className="text-gray-600">
+                  Tìm thấy <span className="font-semibold text-blue-600">{filteredServices.length}</span> lĩnh vực 
+                  cho từ khóa "<span className="font-semibold">{searchQuery}</span>"
+                </p>
+        
+              </div>
+            ) : (
+              <div className="text-gray-600">
+                <p>Không tìm thấy thủ tục nào cho "<span className="font-semibold">{searchQuery}</span>"</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Service Grid */}
+        {filteredServices.length > 0 && (
+          <div className="flex flex-col items-center">
+            {/* Scroll Indicator */}
+            {filteredServices.length > 6 && (
+              <div className="mb-4 text-center">
+                <p className="text-gray-600 text-sm flex items-center justify-center gap-2">
+                  <span>📋 {filteredServices.length} lĩnh vực có sẵn</span>
+                </p>
+              </div>
+            )}
+            
+            <div 
+              className="service-grid-container grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12 overflow-y-auto p-4 border rounded-lg bg-white/50 backdrop-blur-sm"
+              style={{ 
+                maxWidth: '1200px',
+                maxHeight: '448px' // Exact height for 2 rows: (192px card height + 24px gap) * 2 + 32px padding
+              }}
             >
-              Xóa tìm kiếm
-            </button>
+              {filteredServices.map((service) => (
+                <div
+                  key={service.id}
+                  onClick={() => handleServiceSelect(service.id)}
+                  className="kiosk-card relative Shadow hover:shadow-lg transition-shadow duration-200"
+                >
+                  
+                  <h3 className="text-xl font-semibold text-center text-gray-800 mb-4">
+                    {service.name}
+                  </h3>
+                  
+                  {/* Show matching procedures if in search mode */}
+                  {isSearchMode && (
+                    <div className="text-sm text-gray-600 mb-2 px-2">
+                      {searchResults
+                        .filter(proc => proc.field_id === service.id)
+                        .map(proc => (
+                          <div key={proc.id} className="mb-1 text-center">
+                            📋 {proc.name}
+                          </div>
+                        ))
+                      }
+                    </div>
+                  )}
+                  
+                  <div className="text-center ">
+                    <span className="inline-flex items-center gap-2 text-blue-600 font-medium absolute bottom-5 left-1/2 transform -translate-x-1/2">
+                      <Printer size={16} />
+                      In số thứ tự
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
@@ -322,8 +413,9 @@ export default function KioskMainScreen() {
       {/* Confirm Counter Modal */}
       {showConfirmCounter && (
         <ConfirmCounter
-          service={selectedServiceName}
+          service={selectedProcedure?.name || selectedServiceName}
           serviceId={selectedService ? parseInt(selectedService) : undefined}
+          selectedProcedure={selectedProcedure}
           onConfirm={handleConfirmCounter}
           onClose={handleCloseConfirm}
         />
@@ -332,7 +424,7 @@ export default function KioskMainScreen() {
       {/* Virtual Keyboard */}
       {showVirtualKeyboard && (
         <VirtualKeyboard
-          value={searchValue}
+          value={searchQuery}
           onChange={handleSearchChange}
           onClose={handleKeyboardClose}
           isVisible={showVirtualKeyboard}

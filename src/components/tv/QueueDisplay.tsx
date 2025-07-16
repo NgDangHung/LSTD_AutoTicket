@@ -40,14 +40,14 @@ export default function QueueDisplay() {
       refreshData();
     };
     
-    window.addEventListener('counterQueueUpdated', handleQueueUpdate);
+    window.addEventListener('queueUpdated', handleQueueUpdate);
     window.addEventListener('counterStatusUpdated', handleCounterStatusUpdate);
     
     // Polling every 3 seconds
     const interval = setInterval(refreshData, 3000);
     
     return () => {
-      window.removeEventListener('counterQueueUpdated', handleQueueUpdate);
+      window.removeEventListener('queueUpdated', handleQueueUpdate);
       window.removeEventListener('counterStatusUpdated', handleCounterStatusUpdate);
       clearInterval(interval);
     };

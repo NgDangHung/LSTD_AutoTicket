@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import 'react-toastify/dist/ReactToastify.css';
 import { ToastContainer } from 'react-toastify';
+import { ProceduresProvider } from '@/contexts/ProceduresContext';
 
 // Force import Tailwind CSS
 if (typeof window === 'undefined') {
@@ -32,7 +33,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
-        {children}
+        <ProceduresProvider>
+          {children}
+        </ProceduresProvider>
         <ToastContainer
           position="top-right"
           autoClose={5000}

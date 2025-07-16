@@ -243,6 +243,40 @@ export class CounterQueueManager {
     return true;
   }
 
+  // Skip next in queue for a counter (remove first waiting item when no one shows up)
+  static skipNextInQueue(counterId: string): boolean {
+    const queues = this.getCounterQueues();
+    const counterQueue = queues[counterId] || [];
+    
+    // Find the next waiting item (first in queue)
+    const nextWaiting = counterQueue.find(item => item.status === 'waiting');
+    if (!nextWaiting) {
+      return false; // No waiting items
+    }
+    
+    // Update status to skipped (or remove from queue)
+    const index = counterQueue.findIndex(item => item.id === nextWaiting.id);
+    counterQueue[index].status = 'skipped';
+    counterQueue[index].completedAt = new Date().toISOString();
+    
+    this.saveCounterQueues(queues);
+    
+    // Dispatch event for real-time updates
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('counterQueueUpdated', {
+        detail: {
+          action: 'skipped',
+          counterId,
+          queueItem: counterQueue[index]
+        }
+      }));
+    }
+    
+    console.log('⏭️ Skipped next in queue for counter', counterId, nextWaiting);
+    
+    return true;
+  }
+
   // Get counter info
   static getCounterInfo(): CounterInfo[] {
     return this.getCounterInfoData();

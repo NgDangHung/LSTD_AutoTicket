@@ -5,8 +5,10 @@ import { CounterQueueManager } from '@/libs/counterQueue';
 import StopServiceModal from '@/components/shared/StopServiceModal';
 import { counterStatusManager, type CounterStatus } from '@/libs/counterStatus';
 import { useCounterOperations } from '@/hooks/useApi';
+import AuthGuard from '@/components/shared/AuthGuard';
+import { useRouter } from 'next/navigation';
 
-export default function TestQueuePage() {
+function TestQueuePage() {
   const [queueData, setQueueData] = useState<Array<{
     counter: any;
     serving: any[];
@@ -24,7 +26,14 @@ export default function TestQueuePage() {
   const [counterStatuses, setCounterStatuses] = useState<Record<string, CounterStatus>>({});
 
   // API hooks
-  const { pauseCounter, resumeCounter, loading: apiLoading, error: apiError, clearError } = useCounterOperations();
+  const { pauseCounter, resumeCounter, callNext, loading: apiLoading, error: apiError, clearError } = useCounterOperations();
+  const router = useRouter();
+
+  // Logout function
+  const handleLogout = () => {
+    localStorage.removeItem('auth_token');
+    router.push('/login');
+  };
 
   const refreshData = () => {
     const data = CounterQueueManager.getQueuesGroupedByCounter();
@@ -66,13 +75,32 @@ export default function TestQueuePage() {
   }, []);
 
   // Accept next ticket for specific counter
-  const handleAcceptTicket = (counterId: string) => {
-    const success = CounterQueueManager.acceptNextInQueue(counterId);
-    if (!success) {
-      console.log('⚠️ No waiting tickets for counter', counterId);
-      return;
+  const handleAcceptTicket = async (counterId: string) => {
+    try {
+      // Call BE API first
+      const result = await callNext(parseInt(counterId));
+      
+      if (result) {
+        // If API success, also update local queue for immediate UI feedback
+        const success = CounterQueueManager.acceptNextInQueue(counterId);
+        if (!success) {
+          console.log('⚠️ No waiting tickets in local queue for counter', counterId);
+        }
+        console.log('✅ Called next ticket via API for counter', counterId, result);
+      } else {
+        console.error('Failed to call next ticket via API for counter', counterId);
+      }
+    } catch (error) {
+      console.error('Error calling next ticket:', error);
+      
+      // Fallback to local queue management if API fails
+      const success = CounterQueueManager.acceptNextInQueue(counterId);
+      if (!success) {
+        console.log('⚠️ No waiting tickets for counter', counterId);
+        return;
+      }
+      console.log('✅ Accepted ticket locally for counter', counterId);
     }
-    console.log('✅ Accepted ticket for counter', counterId);
   };
 
   // Mark current serving ticket as done
@@ -85,10 +113,14 @@ export default function TestQueuePage() {
     console.log('✅ Completed ticket for counter', counterId);
   };
 
-  // Clear all queue for specific counter
-  const handleClearCounterQueue = (counterId: string) => {
-    CounterQueueManager.clearCounterQueue(counterId);
-    console.log('🗑️ Cleared all queue for counter', counterId);
+  // Skip next ticket for specific counter (when no one shows up)
+  const handleSkipNextTicket = (counterId: string) => {
+    const success = CounterQueueManager.skipNextInQueue(counterId);
+    if (!success) {
+      console.log('⚠️ No waiting tickets to skip for counter', counterId);
+      return;
+    }
+    console.log('⏭️ Skipped next ticket for counter', counterId);
   };
 
   // Handle stop service - open modal
@@ -175,9 +207,18 @@ export default function TestQueuePage() {
   return (
     <div className="min-h-screen bg-gray-100 p-8">
       <div className="max-w-6xl mx-auto">
-        <h1 className="text-3xl font-bold mb-8 text-center">
-          🧪 Test Counter Queue Management System
-        </h1>
+        {/* Header with logout button */}
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-3xl font-bold text-gray-600">
+            🧪 Test Counter Queue Management System
+          </h1>
+          <button
+            onClick={handleLogout}
+            className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+          >
+            🚪 Đăng xuất
+          </button>
+        </div>
         
         {/* API Error Display */}
         {apiError && (
@@ -199,7 +240,7 @@ export default function TestQueuePage() {
         
         {/* Global Controls */}
         <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
-          <h2 className="text-xl font-semibold mb-4">Global Controls</h2>
+          <h2 className="text-xl font-semibold mb-4 text-gray-600">Global Controls</h2>
           <div className="flex gap-4">
             <button
               onClick={handleClearAllQueues}
@@ -255,10 +296,10 @@ export default function TestQueuePage() {
                 </button>
                 
                 <button
-                  onClick={() => handleClearCounterQueue(counterData.counter.id)}
-                  className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors text-sm"
+                  onClick={() => handleSkipNextTicket(counterData.counter.id)}
+                  className="px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700 transition-colors text-sm"
                 >
-                  🗑️ Xóa hàng chờ
+                  ⏭️ Số tiếp theo
                 </button>
               </div>
               
@@ -279,10 +320,10 @@ export default function TestQueuePage() {
                     {counterData.serving.map((item: any) => (
                       <div key={item.id} className="bg-red-100 p-3 rounded border-l-4 border-red-500">
                         <div className="flex justify-between items-center">
-                          <span className="font-bold text-2xl text-red-700">{item.number}</span>
-                          <div className="text-right text-sm">
-                            <div className="font-medium">{item.serviceName}</div>
-                            <div className="text-gray-600">{new Date(item.createdAt).toLocaleTimeString('vi-VN')}</div>
+                          <span className="font-bold text-2xl text-black">{item.number}</span>
+                          <div className="text-left text-sm">
+                            <div className="font-medium text-black">{item.serviceName}</div>
+                            <div className="text-black">{new Date(item.createdAt).toLocaleTimeString('vi-VN')}</div>
                           </div>
                         </div>
                       </div>
@@ -303,12 +344,12 @@ export default function TestQueuePage() {
                         index === 0 ? 'bg-yellow-100 border-yellow-500' : 'bg-gray-50 border-gray-300'
                       }`}>
                         <div className="flex justify-between items-center">
-                          <span className={`font-bold ${index === 0 ? 'text-yellow-700 text-xl' : 'text-gray-700'}`}>
+                          <span className={`font-bold ${index === 0 ? 'text-black text-xl' : 'text-black'}`}>
                             {item.number}
                           </span>
-                          <div className="text-right text-sm">
-                            <div className="font-medium">{item.serviceName}</div>
-                            <div className="text-gray-600">{new Date(item.createdAt).toLocaleTimeString('vi-VN')}</div>
+                          <div className="text-left text-sm">
+                            <div className="font-medium text-black">{item.serviceName}</div>
+                            <div className="text-black">{new Date(item.createdAt).toLocaleTimeString('vi-VN')}</div>
                           </div>
                         </div>
                       </div>
@@ -346,8 +387,8 @@ export default function TestQueuePage() {
               <p className="text-sm">Hoàn thành phục vụ, xóa vé khỏi đang phục vụ</p>
             </div>
             <div>
-              <h4 className="font-medium mb-1">🗑️ Xóa hàng chờ:</h4>
-              <p className="text-sm">Xóa tất cả vé trong quầy (chờ + phục vụ)</p>
+              <h4 className="font-medium mb-1">⏭️ Số tiếp theo:</h4>
+              <p className="text-sm">Bỏ qua số đầu tiên trong hàng chờ (khách không đến), các số sau tiến lên</p>
             </div>
           </div>
         </div>
@@ -361,5 +402,13 @@ export default function TestQueuePage() {
         counterName={stopServiceModal.counterName}
       />
     </div>
+  );
+}
+
+export default function TestQueuePageWithAuth() {
+  return (
+    <AuthGuard>
+      <TestQueuePage />
+    </AuthGuard>
   );
 }

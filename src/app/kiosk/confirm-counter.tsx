@@ -10,33 +10,62 @@ interface Counter {
   status: string;
 }
 
+interface Procedure {
+  id: number;
+  name: string;
+  field_id: number;
+  counters: Counter[];
+}
+
 interface ConfirmCounterProps {
   service: string;
   serviceId?: number;
+  selectedProcedure?: Procedure | null; // Add selected procedure prop
   onConfirm: (counterId: string) => void;
   onClose: () => void;
 }
 
-export default function ConfirmCounter({ service, serviceId, onConfirm, onClose }: ConfirmCounterProps) {
+export default function ConfirmCounter({ service, serviceId, selectedProcedure, onConfirm, onClose }: ConfirmCounterProps) {
   const [selectedCounter, setSelectedCounter] = useState<string>('');
   const [counters, setCounters] = useState<Counter[]>([]);
   
-  // API hooks
+  // API hooks - only used as fallback
   const { procedures, loading, error, searchProcedures } = useProceduresExtended();
 
-  // Extract counters from procedures API response
+  // Use selectedProcedure if available, otherwise fallback to API
   useEffect(() => {
-    // Trigger search for procedures when component mounts
-    searchProcedures(service);
-  }, [service, searchProcedures]);
+    if (selectedProcedure && selectedProcedure.counters) {
+      // Use procedure data passed from parent
+      setCounters(selectedProcedure.counters);
+      
+      // Auto-select first active counter
+      const firstActiveCounter = selectedProcedure.counters.find(c => c.status === 'active');
+      if (firstActiveCounter) {
+        setSelectedCounter(firstActiveCounter.id.toString());
+      }
+      
+      console.log('✅ Using selected procedure counters:', selectedProcedure.counters);
+    } else {
+      // Fallback: Trigger search for procedures when component mounts
+      console.log('⚠️ No selected procedure, falling back to API search');
+      searchProcedures(service);
+    }
+  }, [service, selectedProcedure, searchProcedures]);
 
+  // Fallback: Extract counters from procedures API response when no selectedProcedure
   useEffect(() => {
-    if (procedures && procedures.length > 0) {
+    if (!selectedProcedure && procedures && procedures.length > 0) {
       // If serviceId is provided, find specific procedure
       if (serviceId) {
         const targetProcedure = procedures.find((proc: { id: number; counters?: Counter[] }) => proc.id === serviceId);
         if (targetProcedure && targetProcedure.counters) {
           setCounters(targetProcedure.counters);
+          
+          // Auto-select first active counter
+          const firstActiveCounter = targetProcedure.counters.find(c => c.status === 'active');
+          if (firstActiveCounter) {
+            setSelectedCounter(firstActiveCounter.id.toString());
+          }
         }
       } else {
         // If no specific serviceId, aggregate all available counters
@@ -52,18 +81,31 @@ export default function ConfirmCounter({ service, serviceId, onConfirm, onClose 
           }
         });
         setCounters(allCounters);
+        
+        // Auto-select first active counter
+        const firstActiveCounter = allCounters.find(c => c.status === 'active');
+        if (firstActiveCounter) {
+          setSelectedCounter(firstActiveCounter.id.toString());
+        }
       }
     }
-  }, [procedures, serviceId]);
+  }, [procedures, serviceId, selectedProcedure]);
 
   const handleConfirm = () => {
+    // Use the auto-selected counter (first active counter)
     if (selectedCounter) {
       onConfirm(selectedCounter);
+    } else {
+      // Fallback: find first active counter
+      const firstActiveCounter = counters.find(c => c.status === 'active');
+      if (firstActiveCounter) {
+        onConfirm(firstActiveCounter.id.toString());
+      }
     }
   };
 
-  // Loading state
-  if (loading) {
+  // Loading state - only show when falling back to API and no selectedProcedure
+  if (!selectedProcedure && loading) {
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
         <div className="bg-white rounded-lg p-8 max-w-lg w-full mx-4">
@@ -76,8 +118,8 @@ export default function ConfirmCounter({ service, serviceId, onConfirm, onClose 
     );
   }
 
-  // Error state
-  if (error) {
+  // Error state - only show when falling back to API and no selectedProcedure
+  if (!selectedProcedure && error) {
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
         <div className="bg-white rounded-lg p-8 max-w-lg w-full mx-4">
@@ -117,59 +159,45 @@ export default function ConfirmCounter({ service, serviceId, onConfirm, onClose 
         </div>
 
         <div className="mb-6">
-          <h3 className="text-lg font-semibold mb-3 text-black">Chọn quầy phục vụ:</h3>
-          
-          {/* Counter Count Indicator */}
-          {counters.length > 6 && (
-            <div className="mb-3 text-center">
-              <p className="text-gray-600 text-sm flex items-center justify-center gap-2">
-                <span>🏢 {counters.length} quầy có sẵn</span>
-              </p>
-            </div>
-          )}
+          <h3 className="text-lg font-semibold mb-3 text-black">Quầy phục vụ:</h3>
           
           <div 
             className="counter-list-container space-y-2 overflow-y-auto pr-2"
             style={{ 
-              maxHeight: '300px' // Height for approximately 6 items (50px each + spacing)
+              maxHeight: '200px' // Reduced height since we only show text
             }}
           >
             {counters.length > 0 ? (
-              counters.map((counter) => {
-                const isActive = counter.status === 'active';
-                const counterId = counter.id.toString();
-                
-                return (
-                  <label
-                    key={counter.id}
-                    className={`flex items-center p-3 border rounded-lg cursor-pointer ${
-                      !isActive 
-                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
-                        : selectedCounter === counterId
-                        ? 'border-blue-500 bg-blue-50'
-                        : 'border-gray-300 hover:border-blue-300'
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="counter"
-                      value={counterId}
-                      checked={selectedCounter === counterId}
-                      onChange={(e) => setSelectedCounter(e.target.value)}
-                      disabled={!isActive}
-                      className="mr-3"
-                    />
-                    <span className="text-black">{counter.name}</span>
-                    {!isActive && (
-                      <span className="ml-auto text-sm text-red-500">(Không hoạt động)</span>
-                    )}
-                  </label>
-                );
-              })
+              <div className="space-y-2">
+                {counters.map((counter, index) => {
+                  const isActive = counter.status === 'active';
+                  
+                  return (
+                    <div
+                      key={counter.id}
+                      className={`p-3 border rounded-lg ${
+                        !isActive 
+                          ? 'bg-gray-100 text-gray-400 border-gray-200' 
+                          : 'bg-blue-50 text-blue-700 border-blue-200'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium">{counter.name}</span>
+                        {!isActive && (
+                          <span className="text-sm text-red-500">(Không hoạt động)</span>
+                        )}
+                        {isActive && (
+                          <span className="text-sm text-green-600">✓ Sẵn sàng</span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             ) : (
               <div className="text-center py-8 text-gray-500">
-                <p>⚠️ Không có quầy nào khả dụng cho dịch vụ này</p>
-                <p className="text-sm mt-2">Vui lòng chọn dịch vụ khác hoặc liên hệ nhân viên hỗ trợ</p>
+                <p>⚠️ Không có quầy nào khả dụng cho thủ tục này</p>
+                <p className="text-sm mt-2">Vui lòng chọn thủ tục khác hoặc liên hệ nhân viên hỗ trợ</p>
               </div>
             )}
           </div>
@@ -184,7 +212,7 @@ export default function ConfirmCounter({ service, serviceId, onConfirm, onClose 
           </button>
           <button
             onClick={handleConfirm}
-            disabled={!selectedCounter}
+            disabled={counters.length === 0 || !counters.some(c => c.status === 'active')}
             className="flex-1 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             <Printer size={16} />
