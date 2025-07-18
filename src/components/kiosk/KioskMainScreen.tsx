@@ -10,6 +10,7 @@ import SpeechToText from './SpeechToText';
 import { useCreateTicket } from '@/hooks/useApi';
 import { useOptimizedSearch } from '@/hooks/useOptimizedSearch';
 import { CounterQueueManager } from '@/libs/counterQueue';
+import { countersAPI, Counter } from '@/libs/rootApi';
 import '@/app/index.css';
 
 const services = [
@@ -22,13 +23,47 @@ const services = [
   { id: 7, name: 'Bảo trợ xã hội'}
 ];
 
-// Mapping lĩnh vực với quầy phục vụ
-const counters = [
-  { id: 1, name: 'Tư pháp', serviceIds: [1, 2] }, // Chứng thực, Hộ tịch
-  { id: 2, name: 'Kinh tế - Hạ tầng - Đô Thị', serviceIds: [3, 4, 5] }, // Kiểm Lâm, Thành lập hộ KD, Hoạt động xây dựng
-  { id: 3, name: 'Văn phòng đăng ký đất đai', serviceIds: [6] }, // Đất đai
-  { id: 4, name: 'Văn hóa - Xã hội', serviceIds: [7] } // Bảo trợ xã hội
+// Mapping lĩnh vực với quầy phục vụ - DEPRECATED: Use API data instead
+const legacyCounters = [
+  { 
+    id: 1, 
+    name: 'Tư pháp', 
+    serviceIds: [1, 2],
+    serviceNames: 'Chứng thực, Hộ tịch',
+    icon: '⚖️'
+  },
+  { 
+    id: 2, 
+    name: 'Kinh tế - Hạ tầng - Đô Thị', 
+    serviceIds: [3, 4, 5],
+    serviceNames: 'Kiểm Lâm, Thành lập và hoạt động của hộ kinh doanh, Hoạt động xây dựng',
+    icon: '🏗️'
+  },
+  { 
+    id: 3, 
+    name: 'Văn phóng đăng ký đất đai', 
+    serviceIds: [6],
+    serviceNames: 'Đất đai',
+    icon: '🏘️'
+  },
+  { 
+    id: 4, 
+    name: 'Văn hóa - Xã hội', 
+    serviceIds: [7],
+    serviceNames: 'Bảo trợ xã hội',
+    icon: '🏛️'
+  }
 ];
+
+// Icons mapping for API counters
+const counterIcons: Record<string, string> = {
+  'Tư pháp': '⚖️',
+  'Kinh tế - Hạ tầng - Đô Thị': '🏗️',
+  'Kinh tế - Hạ tầng - Đô thị': '🏗️', // Alternative naming
+  'Văn phóng đăng ký đất đai': '🏘️',
+  'Văn phòng đăng ký đất đai': '🏘️', // Alternative naming
+  'Văn hóa - Xã hội': '🏛️'
+};
 
 interface ProcedureResult {
   id: number;
@@ -39,9 +74,13 @@ interface ProcedureResult {
     name: string;
     status: string;
   }>;
+  serviceNames?: string; // Add optional serviceNames field
 }
 
 export default function KioskMainScreen() {
+  // Debug: Track component renders
+  console.log('🔄 KioskMainScreen rendered at:', new Date().toLocaleTimeString());
+  
   // Original states
   const [selectedService, setSelectedService] = useState<string>('');
   const [selectedServiceName, setSelectedServiceName] = useState<string>('');
@@ -53,6 +92,107 @@ export default function KioskMainScreen() {
 
   // New states for procedure search workflow
   const [selectedProcedure, setSelectedProcedure] = useState<ProcedureResult | null>(null);
+
+  // API Counter states
+  const [apiCounters, setApiCounters] = useState<Counter[]>([]);
+  const [countersLoading, setCountersLoading] = useState(false); // Changed: Start with false
+  const [countersError, setCountersError] = useState<string | null>(null);
+  const [hasLoadedCounters, setHasLoadedCounters] = useState(false); // Add flag to prevent re-loading
+
+  // Load counters from API on component mount
+  useEffect(() => {
+    const loadCounters = async () => {
+      // Prevent multiple calls
+      if (hasLoadedCounters || countersLoading) {
+        return;
+      }
+
+      try {
+        setCountersLoading(true);
+        setCountersError(null);
+        
+        console.log('🔄 Loading counters from API...');
+        const countersData = await countersAPI.getCounters();
+        setApiCounters(countersData);
+        setHasLoadedCounters(true); // Mark as loaded
+        
+        // 🔍 Debug logging
+        console.log('✅ API Response:', countersData);
+        console.log('📊 Counter status breakdown:', 
+          countersData.map(c => ({
+            name: c.name,
+            id: c.id,
+            is_active: c.is_active,
+            status: c.status
+          }))
+        );
+      } catch (error) {
+        console.error('❌ Failed to load counters:', error);
+        setCountersError('Failed to load counters from API');
+        
+        // Fallback to legacy data
+        const fallbackCounters: Counter[] = legacyCounters.map(counter => ({
+          id: counter.id,
+          name: counter.name,
+          is_active: true,
+          status: 'active' as const
+        }));
+        setApiCounters(fallbackCounters);
+        setHasLoadedCounters(true); // Mark as loaded even on error
+        
+        toast.warn('Using offline counter data');
+      } finally {
+        setCountersLoading(false);
+      }
+    };
+
+    loadCounters();
+  }, []); // Simple empty dependency - run once on mount
+
+  // Convert API counters to display format with icons and service mapping
+  const counters = apiCounters.map(apiCounter => ({
+    id: apiCounter.id,
+    name: apiCounter.name,
+    status: apiCounter.status,
+    // Fix: Use status field as source of truth, fallback to true if active
+    is_active: apiCounter.is_active !== undefined ? apiCounter.is_active : (apiCounter.status === 'active'),
+    icon: counterIcons[apiCounter.name] || '🏢', // Default icon if not found
+    // For legacy compatibility, try to map to service IDs
+    serviceIds: getLegacyServiceIds(apiCounter.name),
+    serviceNames: getLegacyServiceNames(apiCounter.name)
+  }));
+
+  // Debug: Log processed counters
+  console.log('🎯 Processed counters for display:', counters.map(c => ({
+    id: c.id,
+    name: c.name,
+    status: c.status,
+    is_active: c.is_active,
+    willShow: c.status === 'active' ? 'ACTIVE' : c.status === 'paused' ? 'PAUSED' : 'OFFLINE'
+  })));
+
+  // Debug: Log loading states
+  console.log('📊 Loading states:', {
+    countersLoading,
+    hasLoadedCounters,
+    apiCountersLength: apiCounters.length,
+    countersError
+  });
+
+  // Helper functions for legacy compatibility
+  function getLegacyServiceIds(counterName: string): number[] {
+    const legacyMapping = legacyCounters.find(legacy => 
+      legacy.name.toLowerCase() === counterName.toLowerCase()
+    );
+    return legacyMapping?.serviceIds || [];
+  }
+
+  function getLegacyServiceNames(counterName: string): string {
+    const legacyMapping = legacyCounters.find(legacy => 
+      legacy.name.toLowerCase() === counterName.toLowerCase()
+    );
+    return legacyMapping?.serviceNames || counterName;
+  }
 
   // Helper function to find counter by service ID
   const getCounterByServiceId = (serviceId: number) => {
@@ -73,12 +213,12 @@ export default function KioskMainScreen() {
   // API hooks
   const { createTicket, loading: ticketLoading, error: ticketError } = useCreateTicket();
 
-  // Compute filtered services based on search results
-  const filteredServices = isSearchMode 
-    ? services.filter(service => 
-        searchResults.some(result => result.field_id === service.id)
+  // Compute filtered counters based on search results
+  const filteredCounters = isSearchMode 
+    ? counters.filter(counter => 
+        searchResults.some(result => counter.serviceIds.includes(result.field_id))
       )
-    : services;
+    : counters;
 
   const handleServiceSelect = (serviceId: number) => {
     const service = services.find(s => s.id === serviceId);
@@ -135,6 +275,49 @@ export default function KioskMainScreen() {
         toast.error('Không tìm thấy quầy phục vụ cho lĩnh vực này');
       }
     }
+  };
+
+  // Handle counter selection (new approach)
+  const handleCounterSelect = (counter: typeof counters[0]) => {
+    // Check if counter is active - Fix: Only check status field
+    if (counter.status === 'paused' || counter.status === 'offline') {
+      toast.warn(
+        <div>
+          <div>⚠️ Quầy hiện không khả dụng</div>
+          <div>🏢 {counter.name}</div>
+          <div>📊 Trạng thái: {
+            counter.status === 'paused' ? 'Tạm dừng' : 'Ngừng hoạt động'
+          }</div>
+        </div>,
+        { position: "top-center", autoClose: 3000 }
+      );
+      return;
+    }
+    
+    // Create a mock procedure for compatibility with existing logic
+    const mockProcedure: ProcedureResult = {
+      id: counter.id,
+      name: counter.name,
+      field_id: counter.id,
+      counters: [{
+        id: counter.id,
+        name: counter.name,
+        status: counter.status || 'active'
+      }],
+      serviceNames: counter.serviceNames // Add serviceNames to procedure
+    };
+    
+    setSelectedProcedure(mockProcedure);
+    setSelectedService(counter.id.toString());
+    setSelectedServiceName(counter.name);
+    setShowConfirmCounter(true);
+    
+    console.log('✅ Selected active counter:', {
+      counter: counter.name,
+      services: counter.serviceNames,
+      counterId: counter.id,
+      status: counter.status
+    });
   };
 
   const handleConfirmCounter = async (counterId: string) => {
@@ -324,77 +507,135 @@ export default function KioskMainScreen() {
           </div>
         )}
 
+        {/* Counters Loading State */}
+        {countersLoading && (
+          <div className="text-center mb-4">
+            <div className="inline-flex items-center gap-2 text-blue-600">
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+              Đang tải thông tin quầy...
+            </div>
+          </div>
+        )}
+
+        {/* Counters Error State */}
+        {countersError && (
+          <div className="text-center mb-4">
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 inline-block">
+              <p className="text-yellow-800 text-sm">
+                ⚠️ {countersError}
+              </p>
+              <p className="text-yellow-600 text-xs mt-1">
+                Đang sử dụng dữ liệu offline
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Search Results Info */}
         {isSearchMode && !searchLoading && (
           <div className="text-center mb-4">
-            {filteredServices.length > 0 ? (
+            {filteredCounters.length > 0 ? (
               <div className="flex flex-col items-center gap-2">
                 <p className="text-gray-600">
-                  Tìm thấy <span className="font-semibold text-blue-600">{filteredServices.length}</span> lĩnh vực 
+                  Tìm thấy <span className="font-semibold text-blue-600">{filteredCounters.length}</span> quầy 
                   cho từ khóa "<span className="font-semibold">{searchQuery}</span>"
                 </p>
         
               </div>
             ) : (
               <div className="text-gray-600">
-                <p>Không tìm thấy thủ tục nào cho "<span className="font-semibold">{searchQuery}</span>"</p>
+                <p>Không tìm thấy quầy nào cho "<span className="font-semibold">{searchQuery}</span>"</p>
               </div>
             )}
           </div>
         )}
 
-        {/* Service Grid */}
-        {filteredServices.length > 0 && (
+        {/* Counter Grid */}
+        {!countersLoading && filteredCounters.length > 0 && (
           <div className="flex flex-col items-center">
             {/* Scroll Indicator */}
-            {filteredServices.length > 6 && (
+            {filteredCounters.length > 4 && (
               <div className="mb-4 text-center">
                 <p className="text-gray-600 text-sm flex items-center justify-center gap-2">
-                  <span>📋 {filteredServices.length} lĩnh vực có sẵn</span>
+                  <span>📋 {filteredCounters.length} quầy có sẵn</span>
                 </p>
               </div>
             )}
             
             <div 
-              className="service-grid-container grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12 overflow-y-auto p-4 border rounded-lg bg-white/50 backdrop-blur-sm"
+              className="service-grid-container grid grid-cols-1 md:grid-cols-2 gap-6 mb-12 overflow-y-auto p-4 border rounded-lg bg-white/50 backdrop-blur-sm"
               style={{ 
-                maxWidth: '1200px',
-                maxHeight: '448px' // Exact height for 2 rows: (192px card height + 24px gap) * 2 + 32px padding
+                maxWidth: '800px', // Reduced width for 2 columns
+                maxHeight: '500px' // Increased height for portrait layout
               }}
             >
-              {filteredServices.map((service) => (
+              {filteredCounters.map((counter) => (
                 <div
-                  key={service.id}
-                  onClick={() => handleServiceSelect(service.id)}
-                  className="kiosk-card relative Shadow hover:shadow-lg transition-shadow duration-200"
+                  key={counter.id}
+                  onClick={() => counter.status === 'active' ? handleCounterSelect(counter) : null}
+                  className={`kiosk-card relative shadow transition-all duration-200 min-h-[180px] ${
+                    counter.status === 'paused' || counter.status === 'offline'
+                      ? 'opacity-50 cursor-not-allowed bg-gray-100' 
+                      : 'cursor-pointer hover:shadow-lg hover:scale-105'
+                  }`}
                 >
-                  
-                  <h3 className="text-xl font-semibold text-center text-gray-800 mb-4">
-                    {service.name}
-                  </h3>
-                  
-                  {/* Show matching procedures if in search mode */}
-                  {isSearchMode && (
-                    <div className="text-sm text-gray-600 mb-2 px-2">
-                      {searchResults
-                        .filter(proc => proc.field_id === service.id)
-                        .map(proc => (
-                          <div key={proc.id} className="mb-1 text-center">
-                            📋 {proc.name}
-                          </div>
-                        ))
-                      }
+                  {/* Status Badge */}
+                  {(counter.status === 'paused' || counter.status === 'offline') && (
+                    <div className="absolute top-2 right-2 z-10">
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        counter.status === 'paused' 
+                          ? 'bg-orange-100 text-orange-800 border border-orange-200' 
+                          : 'bg-red-100 text-red-800 border border-red-200'
+                      }`}>
+                        {counter.status === 'paused' ? '⏸️ Tạm dừng' : '❌ Không hoạt động'}
+                      </span>
                     </div>
                   )}
                   
-                  <div className="text-center ">
-                    <span className="inline-flex items-center gap-2 text-blue-600 font-medium absolute bottom-5 left-1/2 transform -translate-x-1/2">
-                      <Printer size={16} />
-                      In số thứ tự
-                    </span>
+                  {/* Active Status Badge */}
+                  {counter.status === 'active' && (
+                    <div className="absolute top-2 right-2 z-10">
+                      <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 border border-green-200">
+                        ✅ Hoạt động
+                      </span>
+                    </div>
+                  )}
+                  
+                  {/* Counter Icon */}
+                  <div className="text-center mb-3">
+                    <div className={`text-4xl ${counter.status !== 'active' ? 'grayscale' : ''}`}>
+                      {counter.icon}
+                    </div>
                   </div>
+                  
+                  {/* Counter Name */}
+                  <h3 className={`text-xl font-semibold text-center mb-4 ${
+                    counter.status !== 'active' ? 'text-gray-500' : 'text-gray-800'
+                  }`}>
+                    {counter.name}
+                  </h3>
+                  
+                  {/* Counter Number */}
+                  <div className="text-center absolute bottom-5 left-1/2 transform -translate-x-1/2">
+                    <div className={`inline-flex items-center gap-2 font-bold text-lg ${
+                      counter.status !== 'active' ? 'text-gray-400' : 'text-blue-600'
+                    }`}>
+                      <Printer size={18} />
+                      Quầy {counter.id}
+                    </div>
+                  </div>
+                  
                 </div>
               ))}
+            </div>
+          </div>
+        )}
+
+        {/* No Counters Available */}
+        {!countersLoading && filteredCounters.length === 0 && !isSearchMode && (
+          <div className="text-center py-12">
+            <div className="text-gray-400 text-xl">
+              {countersError ? 'Không thể tải dữ liệu quầy' : 'Không có quầy nào khả dụng'}
             </div>
           </div>
         )}

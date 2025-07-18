@@ -32,8 +32,14 @@ export interface Ticket {
 
 // 🧾 Counters Types
 export interface CallNextResponse {
+  id: number;
   number: number;
+  counter_id: number;
   counter_name: string;
+  created_at: string;
+  status: string;
+  called_at: string; // New field for timestamp
+  finished_at: string;
 }
 
 export interface PauseCounterRequest {
@@ -51,6 +57,19 @@ export interface ResumeCounterResponse {
   id: number;
   name: string;
   status: 'active';
+}
+
+// TTS related types
+export interface SeatInfo {
+  id: number;
+  status: boolean; // true = occupied, false = empty
+  type: string; // "client" | "staff"
+  counter_id: number;
+}
+
+export interface TTSRequest {
+  counter_id: number;
+  ticket_number: number;
 }
 
 // 🛑 Error Types

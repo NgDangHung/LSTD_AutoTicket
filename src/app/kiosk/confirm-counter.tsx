@@ -15,6 +15,7 @@ interface Procedure {
   name: string;
   field_id: number;
   counters: Counter[];
+  serviceNames?: string; // Add optional serviceNames field
 }
 
 interface ConfirmCounterProps {
@@ -152,11 +153,14 @@ export default function ConfirmCounter({ service, serviceId, selectedProcedure, 
             <X size={24} />
           </button>
         </div>
-        
-        <div className="mb-6">
-          <h3 className="text-lg font-semibold mb-2 text-black">Dịch vụ đã chọn:</h3>
-          <p className="text-blue-600 font-medium">{service}</p>
-        </div>
+
+        {/* Service Area Information */}
+        {selectedProcedure?.serviceNames && (
+          <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+            <h3 className="text-lg font-semibold mb-2 text-blue-800">Phục vụ lĩnh vực:</h3>
+            <p className="text-blue-700">{selectedProcedure.serviceNames}</p>
+          </div>
+        )}
 
         <div className="mb-6">
           <h3 className="text-lg font-semibold mb-3 text-black">Quầy phục vụ:</h3>

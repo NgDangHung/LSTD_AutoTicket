@@ -13,7 +13,7 @@ import type {
 
 // Create axios instance with base configuration
 const axiosInstance = axios.create({
-  baseURL: 'https://detect-seat.onrender.com',
+  baseURL: 'https://detect-seat.onrender.com/app',
   timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
@@ -253,6 +253,72 @@ export const countersAPI = {
   resumeCounter: (counterId: number): Promise<{ data: ResumeCounterResponse }> => {
     return api.put(`/counters/${counterId}/resume`);
   },
+};
+
+// TTS API endpoints
+export const ttsAPI = {
+  // Generate TTS audio file - POST /app/tts
+  // Returns MP3 audio blob with Content-Type: audio/mpeg
+  generateAudio: async (counterId: number, ticketNumber: number): Promise<Blob> => {
+    const response = await fetch(`${axiosInstance.defaults.baseURL}/tts`, {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Accept': 'audio/mpeg, audio/*' 
+      },
+      body: JSON.stringify({
+        counter_id: counterId,
+        ticket_number: ticketNumber
+      })
+    });
+
+    if (!response.ok) {
+      if (response.status === 404) {
+        throw new Error('Counter not found');
+      }
+      if (response.status === 422) {
+        const errorData = await response.json();
+        throw new Error(`Validation error: ${errorData.detail || 'Invalid data'}`);
+      }
+      throw new Error(`TTS API failed: ${response.statusText}`);
+    }
+
+    // Verify response is audio content
+    const contentType = response.headers.get('Content-Type');
+    if (!contentType || !contentType.includes('audio')) {
+      console.warn('⚠️ TTS Response Content-Type:', contentType);
+    }
+
+    // Return MP3 blob that can be used with HTML5 audio or downloaded
+    const audioBlob = await response.blob();
+    
+    // Ensure blob has correct MIME type for MP3
+    return new Blob([audioBlob], { type: 'audio/mpeg' });
+  },
+
+  // Get seat info by ID - GET /seats/{seat_id}
+  getSeatInfo: async (seatId: number) => {
+    const response = await fetch(`${axiosInstance.defaults.baseURL}/seats/${seatId}`);
+    if (!response.ok) {
+      if (response.status === 422) {
+        throw new Error('Invalid seat_id format');
+      }
+      throw new Error(`Failed to get seat info: ${response.statusText}`);
+    }
+    return await response.json();
+  },
+
+  // Get all client seats for counter - GET /seats/counter/{counter_id}
+  getCounterSeats: async (counterId: number) => {
+    const response = await fetch(`${axiosInstance.defaults.baseURL}/seats/counter/${counterId}`);
+    if (!response.ok) {
+      if (response.status === 422) {
+        throw new Error('Invalid counter_id format');
+      }
+      throw new Error(`Failed to get counter seats: ${response.statusText}`);
+    }
+    return await response.json();
+  }
 };
 
 // Export axiosInstance as api for backward compatibility

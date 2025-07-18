@@ -74,6 +74,20 @@ a {
     @apply bg-white rounded-2xl shadow-lg p-8 cursor-pointer transform transition-all duration-200 hover:scale-105 hover:shadow-xl;
   }
 
+  /* Counter disabled state */
+  .kiosk-card.counter-disabled {
+    @apply opacity-50 cursor-not-allowed bg-gray-100 border-gray-200;
+  }
+
+  .kiosk-card.counter-disabled:hover {
+    @apply transform-none shadow-lg scale-100;
+  }
+
+  /* Grayscale effect for disabled counter icons */
+  .counter-icon-disabled {
+    filter: grayscale(100%);
+  }
+
   .service-icon {
     @apply w-16 h-16 rounded-full flex items-center justify-center text-2xl mb-4 mx-auto;
   }

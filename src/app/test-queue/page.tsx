@@ -1,19 +1,169 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { CounterQueueManager } from '@/libs/counterQueue';
+import React, { useState, useEffect, useCallback } from 'react';
 import StopServiceModal from '@/components/shared/StopServiceModal';
-import { counterStatusManager, type CounterStatus } from '@/libs/counterStatus';
 import { useCounterOperations } from '@/hooks/useApi';
 import AuthGuard from '@/components/shared/AuthGuard';
 import { useRouter } from 'next/navigation';
+import { useWebSocketQueue } from '@/hooks/useWebSocketQueue';
+import { TTSService } from '@/libs/ttsService';
+import { toast } from 'react-toastify';
+import { useQueueData } from '@/hooks/useQueueData';
+import { callNextTicket, type CounterDetail, type CurrentServing, type WaitingTicket } from '@/libs/queueApi';
+import { countersAPI, type Counter } from '@/libs/rootApi';
+
+// 🔥 MOCK COUNTER DATA - Being replaced by real API
+// TODO: Remove this when getCounters API is fully integrated
+const mockCounters: CounterDetail[] = [
+  {
+    counter_id: 1,
+    counter_name: 'Tư pháp',
+    is_active: true,
+    status: 'active' as const,
+    procedures: ['Chứng thực', 'Hộ tịch'],
+    current_serving: {
+      ticket_id: 1001,
+      number: 1001,
+      called_at: new Date(Date.now() - 5 * 60 * 1000).toISOString(), // 5 minutes ago
+      procedure_name: 'Chứng thực'
+    },
+    waiting_queue: [
+      {
+        ticket_id: 1002,
+        number: 1002,
+        procedure_name: 'Hộ tịch',
+        wait_time: 15,
+        priority: 'normal' as const
+      },
+      {
+        ticket_id: 1003, 
+        number: 1003,
+        procedure_name: 'Chứng thực',
+        wait_time: 25,
+        priority: 'priority' as const
+      }
+    ],
+    waiting_count: 2
+  },
+  {
+    counter_id: 2,
+    counter_name: 'Kinh tế - Hạ tầng - Đô Thị',
+    is_active: true,
+    status: 'active' as const,
+    procedures: ['Kiểm Lâm', 'Thành lập và hoạt động của hộ kinh doanh', 'Hoạt động xây dựng'],
+    current_serving: undefined,
+    waiting_queue: [
+      {
+        ticket_id: 2001,
+        number: 2001,
+        procedure_name: 'Đăng ký kinh doanh',
+        wait_time: 10,
+        priority: 'normal' as const
+      }
+    ],
+    waiting_count: 1
+  },
+  {
+    counter_id: 3,
+    counter_name: 'Văn phóng đăng ký đất đai',
+    is_active: true,
+    status: 'active' as const,
+    procedures: ['Đất đai'],
+    current_serving: undefined,
+    waiting_queue: [],
+    waiting_count: 0
+  },
+  {
+    counter_id: 4,
+    counter_name: 'Văn hóa - Xã hội',
+    is_active: false,
+    status: 'paused' as const,
+    pause_reason: 'Tạm nghỉ trưa',
+    procedures: ['Bảo trợ xã hội'],
+    current_serving: undefined,
+    waiting_queue: [],
+    waiting_count: 0
+  }
+];
 
 function TestQueuePage() {
-  const [queueData, setQueueData] = useState<Array<{
-    counter: any;
-    serving: any[];
-    waiting: any[];
-  }>>([]);
+  // TTS Service instance
+  const ttsService = TTSService.getInstance();
+  const [ttsQueueStatus, setTtsQueueStatus] = useState<any>({ queueLength: 0, isPlaying: false, upcomingRequests: [] });
+
+  // API States for counters
+  const [apiCounters, setApiCounters] = useState<Counter[]>([]);
+  const [countersLoading, setCountersLoading] = useState(true);
+  const [countersError, setCountersError] = useState<string | null>(null);
+
+  // Load counters from API
+  const loadCounters = useCallback(async () => {
+    try {
+      setCountersLoading(true);
+      setCountersError(null);
+      
+      const countersData = await countersAPI.getCounters();
+      setApiCounters(countersData);
+      
+      console.log('✅ Loaded counters from API:', countersData);
+    } catch (error) {
+      console.error('❌ Failed to load counters:', error);
+      setCountersError('Failed to load counters from API');
+      
+      // Fallback to mock data for now
+      console.warn('⚠️ Using mock counter data as fallback');
+    } finally {
+      setCountersLoading(false);
+    }
+  }, []);
+
+  // Load counters on mount
+  useEffect(() => {
+    loadCounters();
+  }, [loadCounters]);
+
+  // Convert API counters to CounterDetail format for compatibility
+  const convertToCounterDetail = (apiCounter: Counter): CounterDetail => ({
+    counter_id: apiCounter.id,
+    counter_name: apiCounter.name,
+    is_active: apiCounter.is_active,
+    status: apiCounter.status,
+    procedures: [], // TODO: Get from API when available
+    current_serving: undefined, // TODO: Get from API when available
+    waiting_queue: [], // TODO: Get from API when available
+    waiting_count: 0 // TODO: Get from API when available
+  });
+
+  // 🔥 HYBRID APPROACH: Use API counters if available, fallback to mock
+  // TODO: Remove mock fallback when full queue API is available
+  const allCounters = apiCounters.length > 0 
+    ? apiCounters.map(convertToCounterDetail)
+    : mockCounters;
+  
+  const totalWaiting = allCounters.reduce((sum, counter) => sum + counter.waiting_count, 0);
+  const lastUpdated = new Date().toISOString();
+  const isLoading = countersLoading;
+  const isRefreshing = false;
+  const queueError = countersError;
+  
+  const refreshQueue = async () => {
+    console.log('🔄 Refreshing counters and queue data...');
+    await loadCounters();
+    // TODO: Add queue data refresh when API is available
+    toast.info('Đã làm mới dữ liệu quầy');
+  };
+
+  // Keep original API hook commented for reference
+  // const { 
+  //   allCounters, 
+  //   totalWaiting, 
+  //   lastUpdated, 
+  //   isLoading, 
+  //   isRefreshing, 
+  //   error: queueError, 
+  //   refresh: refreshQueue 
+  // } = useQueueData({ autoRefresh: true, refreshInterval: 2000 });
+
   const [stopServiceModal, setStopServiceModal] = useState<{
     isOpen: boolean;
     counterId: string;
@@ -23,10 +173,28 @@ function TestQueuePage() {
     counterId: '',
     counterName: ''
   });
-  const [counterStatuses, setCounterStatuses] = useState<Record<string, CounterStatus>>({});
 
   // API hooks
-  const { pauseCounter, resumeCounter, callNext, loading: apiLoading, error: apiError, clearError } = useCounterOperations();
+  const { pauseCounter, resumeCounter, loading: apiLoading, error: apiError, clearError } = useCounterOperations();
+  
+  // WebSocket hook for real-time updates
+  const { isConnected, connectionError, lastEvent, reconnect } = useWebSocketQueue();
+
+  // Update TTS queue status periodically
+  useEffect(() => {
+    const updateTTSStatus = () => {
+      const status = ttsService.getQueueStatus();
+      setTtsQueueStatus(status);
+    };
+    
+    // TTS status update interval
+    const ttsInterval = setInterval(updateTTSStatus, 1000);
+    
+    return () => {
+      clearInterval(ttsInterval);
+    };
+  }, [ttsService]);
+
   const router = useRouter();
 
   // Logout function
@@ -35,103 +203,68 @@ function TestQueuePage() {
     router.push('/login');
   };
 
-  const refreshData = () => {
-    const data = CounterQueueManager.getQueuesGroupedByCounter();
-    setQueueData(data);
-    
-    // Update counter statuses
-    const statuses: Record<string, CounterStatus> = {};
-    data.forEach(counterData => {
-      const status = counterStatusManager.getCounterStatus(counterData.counter.id);
-      statuses[counterData.counter.id] = status.status;
-    });
-    setCounterStatuses(statuses);
-  };
+  // State for processing actions
+  const [isProcessing, setIsProcessing] = useState<Record<string, boolean>>({});
 
-  useEffect(() => {
-    refreshData();
-    
-    // Listen for queue updates
-    const handleQueueUpdate = () => {
-      refreshData();
-    };
-    
-    // Listen for counter status updates
-    const handleCounterStatusUpdate = () => {
-      refreshData();
-    };
-    
-    window.addEventListener('counterQueueUpdated', handleQueueUpdate);
-    window.addEventListener('counterStatusUpdated', handleCounterStatusUpdate);
-    
-    // Polling every 2 seconds
-    const interval = setInterval(refreshData, 2000);
-    
-    return () => {
-      window.removeEventListener('counterQueueUpdated', handleQueueUpdate);
-      window.removeEventListener('counterStatusUpdated', handleCounterStatusUpdate);
-      clearInterval(interval);
-    };
-  }, []);
-
-  // Accept next ticket for specific counter
-  const handleAcceptTicket = async (counterId: string) => {
+  // Enhanced next ticket handler - API is source of truth
+  const handleNextTicket = async (counterId: string) => {
     try {
-      // Call BE API first
-      const result = await callNext(parseInt(counterId));
+      setIsProcessing(prev => ({ ...prev, [counterId]: true }));
       
-      if (result) {
-        // If API success, also update local queue for immediate UI feedback
-        const success = CounterQueueManager.acceptNextInQueue(counterId);
-        if (!success) {
-          console.log('⚠️ No waiting tickets in local queue for counter', counterId);
-        }
-        console.log('✅ Called next ticket via API for counter', counterId, result);
-      } else {
-        console.error('Failed to call next ticket via API for counter', counterId);
+      // Call BE API directly (no local queue manipulation needed)
+      let result;
+      try {
+        result = await callNextTicket(parseInt(counterId));
+      } catch (apiError) {
+        console.error('❌ Failed to call next ticket via API:', apiError);
+        throw new Error('Failed to call next ticket');
       }
+      
+      // TTS announcement với API data
+      if (result && result.called_at) {
+        await ttsService.queueAnnouncement(
+          parseInt(counterId), 
+          result.number, 
+          1, // First attempt
+          'manual', // Source tracking
+          result.called_at // Use API timestamp for queue ordering
+        );
+        
+        // Success notification with API data
+        toast.success(
+          <div>
+            <div>📞 Đã gọi số {result.number}</div>
+            <div>🔊 Thêm vào hàng đợi phát thanh</div>
+            <div className="text-xs text-gray-500">
+              Thời gian: {new Date(result.called_at).toLocaleTimeString('vi-VN')}
+            </div>
+          </div>
+        );
+      }
+      
+      // Trigger API refresh
+      await refreshQueue();
+      
     } catch (error) {
-      console.error('Error calling next ticket:', error);
+      console.error('❌ Failed to process next ticket:', error);
       
-      // Fallback to local queue management if API fails
-      const success = CounterQueueManager.acceptNextInQueue(counterId);
-      if (!success) {
-        console.log('⚠️ No waiting tickets for counter', counterId);
-        return;
-      }
-      console.log('✅ Accepted ticket locally for counter', counterId);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      toast.error(`Lỗi: ${errorMessage}`);
+      
+    } finally {
+      setIsProcessing(prev => ({ ...prev, [counterId]: false }));
     }
-  };
-
-  // Mark current serving ticket as done
-  const handleDoneTicket = (counterId: string) => {
-    const success = CounterQueueManager.markCurrentAsCompleted(counterId);
-    if (!success) {
-      console.log('⚠️ No serving ticket for counter', counterId);
-      return;
-    }
-    console.log('✅ Completed ticket for counter', counterId);
-  };
-
-  // Skip next ticket for specific counter (when no one shows up)
-  const handleSkipNextTicket = (counterId: string) => {
-    const success = CounterQueueManager.skipNextInQueue(counterId);
-    if (!success) {
-      console.log('⚠️ No waiting tickets to skip for counter', counterId);
-      return;
-    }
-    console.log('⏭️ Skipped next ticket for counter', counterId);
   };
 
   // Handle stop service - open modal
   const handleStopService = (counterId: string) => {
-    const counterData = queueData.find(data => data.counter.id === counterId);
+    const counterData = allCounters.find(counter => counter.counter_id.toString() === counterId);
     if (!counterData) return;
     
     setStopServiceModal({
       isOpen: true,
       counterId: counterId,
-      counterName: `${counterData.counter.shortName} - ${counterData.counter.name}`
+      counterName: `${counterData.counter_name}`
     });
   };
 
@@ -140,27 +273,16 @@ function TestQueuePage() {
     const { counterId } = stopServiceModal;
     
     try {
-      // Call API to pause counter
-      const result = await pauseCounter(reason, parseInt(counterId));
+      // Call rootApi to pause counter
+      await countersAPI.pauseCounter(parseInt(counterId), { reason });
       
-      if (result) {
-        // Update local status
-        counterStatusManager.pauseCounter(counterId, reason);
-        
-        // Get current serving items and mark them as skipped/paused
-        const counterData = queueData.find(data => data.counter.id === counterId);
-        if (counterData && counterData.serving.length > 0) {
-          counterData.serving.forEach((item: any) => {
-            CounterQueueManager.updateQueueStatus(item.id, 'skipped');
-          });
-        }
-        
-        console.log(`⏸️ Stopped service for counter ${counterId}. Reason: ${reason}`);
-      } else {
-        console.error('Failed to pause counter via API');
-      }
+      toast.success('✅ Counter paused successfully');
+      
+      // Refresh API data to get updated status
+      await refreshQueue();
     } catch (error) {
       console.error('Error pausing counter:', error);
+      toast.error('❌ Failed to pause counter');
     }
     
     // Close modal
@@ -174,18 +296,16 @@ function TestQueuePage() {
   // Handle resume service
   const handleResumeService = async (counterId: string) => {
     try {
-      // Call API to resume counter
-      const result = await resumeCounter(parseInt(counterId));
+      // Call rootApi to resume counter
+      await countersAPI.resumeCounter(parseInt(counterId));
       
-      if (result) {
-        // Update local status
-        counterStatusManager.resumeCounter(counterId);
-        console.log(`▶️ Resumed service for counter ${counterId}`);
-      } else {
-        console.error('Failed to resume counter via API');
-      }
+      toast.success('✅ Counter resumed successfully');
+      
+      // Refresh API data to get updated status
+      await refreshQueue();
     } catch (error) {
       console.error('Error resuming counter:', error);
+      toast.error('❌ Failed to resume counter');
     }
   };
 
@@ -198,25 +318,140 @@ function TestQueuePage() {
     });
   };
 
-  // Global clear all queues
+  // Global clear all queues - Note: Only for demo/testing purposes
   const handleClearAllQueues = () => {
-    CounterQueueManager.clearAllQueues();
-    console.log('🗑️ Cleared all queues');
+    // API-based approach doesn't need global clear
+    // This would need to be implemented on backend
+    toast.info('Clear all queues needs backend implementation');
   };
 
   return (
     <div className="min-h-screen bg-gray-100 p-8">
       <div className="max-w-6xl mx-auto">
-        {/* Header with logout button */}
+        {/* Header with WebSocket status and logout button */}
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-600">
-            🧪 Test Counter Queue Management System
-          </h1>
+          <div>
+            <h1 className="text-3xl font-bold text-gray-600">
+              🧪 Test Counter Queue Management System
+            </h1>
+            
+            {/* WebSocket Connection Status */}
+            <div className="flex items-center gap-3 mt-2">
+              <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm ${
+                isConnected 
+                  ? 'bg-green-100 text-green-800' 
+                  : 'bg-red-100 text-red-800'
+              }`}>
+                <div className={`w-2 h-2 rounded-full ${
+                  isConnected ? 'bg-green-500' : 'bg-red-500'
+                }`}></div>
+                {isConnected ? '🔌 WebSocket Connected' : '❌ WebSocket Disconnected'}
+              </div>
+              
+              {connectionError && (
+                <button
+                  onClick={reconnect}
+                  className="px-2 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700"
+                >
+                  🔄 Reconnect
+                </button>
+              )}
+              
+              {lastEvent && (
+                <div className="text-xs text-gray-600">
+                  Last Event: {lastEvent.event} at {new Date().toLocaleTimeString()}
+                </div>
+              )}
+            </div>
+            
+            {/* TTS Controls */}
+            <div className="flex items-center gap-3 mt-2">
+              <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm ${
+                ttsQueueStatus.isPlaying 
+                  ? 'bg-yellow-100 text-yellow-800' 
+                  : ttsQueueStatus.queueLength > 0
+                  ? 'bg-blue-100 text-blue-800'
+                  : 'bg-gray-100 text-gray-600'
+              }`}>
+                <div className={`w-2 h-2 rounded-full ${
+                  ttsQueueStatus.isPlaying 
+                    ? 'bg-yellow-500 animate-pulse' 
+                    : ttsQueueStatus.queueLength > 0
+                    ? 'bg-blue-500'
+                    : 'bg-gray-400'
+                }`}></div>
+                {ttsQueueStatus.isPlaying 
+                  ? '🔊 TTS Playing' 
+                  : ttsQueueStatus.queueLength > 0
+                  ? `🎵 TTS Queue: ${ttsQueueStatus.queueLength}`
+                  : '🔇 TTS Idle'
+                }
+              </div>
+              
+              {/* TTS Controls when active */}
+              {(ttsQueueStatus.isPlaying || ttsQueueStatus.queueLength > 0) && (
+                <div className="flex gap-2">
+                  {ttsQueueStatus.isPlaying && (
+                    <button
+                      onClick={() => ttsService.stopCurrentAudio()}
+                      className="px-2 py-1 bg-red-500 text-white text-xs rounded hover:bg-red-600"
+                    >
+                      ⏹️ Stop
+                    </button>
+                  )}
+                  <button
+                    onClick={() => ttsService.clearQueue()}
+                    className="px-2 py-1 bg-gray-500 text-white text-xs rounded hover:bg-gray-600"
+                  >
+                    🗑️ Clear
+                  </button>
+                </div>
+              )}
+            </div>
+            
+            {/* API Status */}
+            <div className="flex items-center gap-3 mt-2">
+              <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm ${
+                !queueError 
+                  ? 'bg-green-100 text-green-800' 
+                  : 'bg-red-100 text-red-800'
+              }`}>
+                <div className={`w-2 h-2 rounded-full ${
+                  !queueError ? 'bg-green-500' : 'bg-red-500'
+                }`}></div>
+                {!queueError ? '🌐 Counters API Connected' : '❌ Counters API Error'}
+              </div>
+              
+              {apiCounters.length > 0 && (
+                <div className="text-xs text-green-600">
+                  📊 Loaded {apiCounters.length} counters from API
+                </div>
+              )}
+              
+              {lastUpdated && (
+                <div className="text-xs text-gray-500">
+                  📅 Last Update: {new Date(lastUpdated).toLocaleTimeString('vi-VN')}
+                </div>
+              )}
+              
+              <div className="text-sm text-blue-600">
+                📊 Total Waiting: {totalWaiting}
+              </div>
+              
+              {isRefreshing && (
+                <div className="text-xs text-blue-500 animate-pulse">
+                  🔄 Refreshing...
+                </div>
+              )}
+            </div>
+          </div>
+          
+          {/* Logout button */}
           <button
             onClick={handleLogout}
             className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
           >
-            🚪 Đăng xuất
+            🚪 Logout
           </button>
         </div>
         
@@ -230,17 +465,35 @@ function TestQueuePage() {
               </div>
               <button
                 onClick={clearError}
-                className="text-red-600 hover:text-red-800 font-bold text-xl"
+                className="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700"
               >
-                ✕
+                ✕ Đóng
               </button>
             </div>
           </div>
         )}
-        
+
+        {/* Queue Error Display */}
+        {queueError && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-8">
+            <div className="flex justify-between items-center">
+              <div className="text-red-800">
+                <h3 className="font-semibold">⚠️ Lỗi kết nối API Queue:</h3>
+                <p className="text-sm mt-1">{queueError}</p>
+              </div>
+              <button
+                onClick={refreshQueue}
+                className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700"
+              >
+                🔄 Thử lại
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Global Controls */}
-        <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
-          <h2 className="text-xl font-semibold mb-4 text-gray-600">Global Controls</h2>
+        <div className="bg-white rounded-lg shadow-md p-6 mb-8">
+          <h2 className="text-xl font-semibold mb-4 text-gray-800">🎛️ Global Controls</h2>
           <div className="flex gap-4">
             <button
               onClick={handleClearAllQueues}
@@ -251,145 +504,152 @@ function TestQueuePage() {
           </div>
         </div>
         
-        {/* Counter Controls Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {queueData.map((counterData) => (
-            <div key={counterData.counter.id} className="bg-white rounded-lg shadow-lg p-6">
-              <h2 className="text-xl font-semibold mb-4 text-blue-600">
-                {counterData.counter.shortName} | {counterData.counter.name}
-              </h2>
-              
-              {/* Counter Action Buttons */}
-              <div className="mb-6 grid grid-cols-2 gap-3">
-                {counterStatuses[counterData.counter.id] === 'paused' ? (
+        {/* Counter Controls Grid - Only show when data is loaded */}
+        {!isLoading && allCounters.length > 0 && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {allCounters.map((counter) => {
+              const counterId = counter.counter_id.toString();
+              // Use counter status from API, fallback to is_active field
+              const counterStatus = counter.status || (counter.is_active ? 'active' : 'paused');
+            
+            return (
+              <div key={counter.counter_id} className="bg-white rounded-lg shadow-lg p-6">
+                <h2 className="text-xl font-semibold mb-4 text-blue-600">
+                  {counter.counter_name}
+                </h2>
+                
+                {/* Counter Action Buttons */}
+                <div className="mb-6 grid grid-cols-2 gap-3">
+                  {counterStatus === 'paused' ? (
+                    <button
+                      onClick={() => handleResumeService(counterId)}
+                      className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors text-sm"
+                      disabled={apiLoading}
+                    >
+                      {apiLoading ? '⏳ Processing...' : '▶️ Resume'}
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => handleStopService(counterId)}
+                      className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors text-sm"
+                      disabled={!counter.current_serving || apiLoading}
+                    >
+                      {apiLoading ? '⏳ Processing...' : '⏸️ Pause'}
+                    </button>
+                  )}
+                  
                   <button
-                    onClick={() => handleResumeService(counterData.counter.id)}
+                    onClick={() => handleNextTicket(counterId)}
                     className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors text-sm"
-                    disabled={apiLoading}
+                    disabled={counter.waiting_count === 0 || isProcessing[counterId]}
                   >
-                    {apiLoading ? '⏳ Đang xử lý...' : '▶️ Tiếp tục'}
+                    {isProcessing[counterId] ? '⏳ Processing...' : '✅ Next Number'}
                   </button>
-                ) : (
-                  <button
-                    onClick={() => handleStopService(counterData.counter.id)}
-                    className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors text-sm"
-                    disabled={counterData.serving.length === 0 || apiLoading}
-                  >
-                    {apiLoading ? '⏳ Đang xử lý...' : '⏸️ Tạm dừng'}
-                  </button>
-                )}
+                </div>
                 
-                <button
-                  onClick={() => handleAcceptTicket(counterData.counter.id)}
-                  className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors text-sm"
-                  disabled={counterData.waiting.length === 0}
-                >
-                  ✅ Chấp nhận
-                </button>
-                
-                <button
-                  onClick={() => handleDoneTicket(counterData.counter.id)}
-                  className="px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700 transition-colors text-sm"
-                  disabled={counterData.serving.length === 0}
-                >
-                  ✅ Hoàn thành
-                </button>
-                
-                <button
-                  onClick={() => handleSkipNextTicket(counterData.counter.id)}
-                  className="px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700 transition-colors text-sm"
-                >
-                  ⏭️ Số tiếp theo
-                </button>
-              </div>
-              
-              {/* Serving Section */}
-              <div className="mb-6">
-                <h3 className="text-lg font-medium mb-2 text-red-600">🔊 Đang phục vụ</h3>
-                {counterStatuses[counterData.counter.id] === 'paused' ? (
-                  <div className="text-orange-600 font-semibold bg-orange-100 p-3 rounded border-l-4 border-orange-500">
-                    ⏸️ Quầy tạm dừng phục vụ
-                    {counterStatusManager.getCounterStatus(counterData.counter.id).pauseReason && (
-                      <div className="text-sm text-orange-700 mt-1">
-                        Lý do: {counterStatusManager.getCounterStatus(counterData.counter.id).pauseReason}
-                      </div>
-                    )}
-                  </div>
-                ) : counterData.serving.length > 0 ? (
-                  <div className="space-y-2">
-                    {counterData.serving.map((item: any) => (
-                      <div key={item.id} className="bg-red-100 p-3 rounded border-l-4 border-red-500">
+                {/* Serving Section */}
+                <div className="mb-6">
+                  <h3 className="text-lg font-medium mb-2 text-red-600">🔊 Currently Serving</h3>
+                  {counterStatus === 'paused' ? (
+                    <div className="text-orange-600 font-semibold bg-orange-100 p-3 rounded border-l-4 border-orange-500">
+                      ⏸️ Counter is paused
+                      {counter.pause_reason && (
+                        <div className="text-sm text-orange-700 mt-1">
+                          Reason: {counter.pause_reason}
+                        </div>
+                      )}
+                    </div>
+                  ) : counter.current_serving ? (
+                    <div className="space-y-2">
+                      <div className="bg-red-100 p-3 rounded border-l-4 border-red-500">
                         <div className="flex justify-between items-center">
-                          <span className="font-bold text-2xl text-black">{item.number}</span>
+                          <span className="font-bold text-2xl text-black">{counter.current_serving.number}</span>
                           <div className="text-left text-sm">
-                            <div className="font-medium text-black">{item.serviceName}</div>
-                            <div className="text-black">{new Date(item.createdAt).toLocaleTimeString('vi-VN')}</div>
+                            <div className="font-medium text-black">{counter.current_serving.procedure_name}</div>
+                            <div className="text-black">{new Date(counter.current_serving.called_at).toLocaleTimeString('vi-VN')}</div>
                           </div>
                         </div>
                       </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-gray-500 italic bg-gray-100 p-3 rounded">Chưa có số được phục vụ</div>
-                )}
-              </div>
+                    </div>
+                  ) : (
+                    <div className="text-gray-500 italic bg-gray-100 p-3 rounded">No number currently being served</div>
+                  )}
+                </div>
 
-              {/* Waiting Section */}
-              <div>
-                <h3 className="text-lg font-medium mb-2 text-yellow-600">⏳ Đang chờ ({counterData.waiting.length})</h3>
-                {counterData.waiting.length > 0 ? (
-                  <div className="space-y-2 max-h-60 overflow-y-auto">
-                    {counterData.waiting.map((item: any, index: number) => (
-                      <div key={item.id} className={`p-3 rounded border-l-4 ${
-                        index === 0 ? 'bg-yellow-100 border-yellow-500' : 'bg-gray-50 border-gray-300'
-                      }`}>
-                        <div className="flex justify-between items-center">
-                          <span className={`font-bold ${index === 0 ? 'text-black text-xl' : 'text-black'}`}>
-                            {item.number}
-                          </span>
-                          <div className="text-left text-sm">
-                            <div className="font-medium text-black">{item.serviceName}</div>
-                            <div className="text-black">{new Date(item.createdAt).toLocaleTimeString('vi-VN')}</div>
+                {/* Waiting Section */}
+                <div>
+                  <h3 className="text-lg font-medium mb-2 text-yellow-600">⏳ Waiting ({counter.waiting_count})</h3>
+                  {counter.waiting_queue.length > 0 ? (
+                    <div className="space-y-2 max-h-60 overflow-y-auto">
+                      {counter.waiting_queue.map((ticket, index) => (
+                        <div key={ticket.ticket_id} className={`p-3 rounded border-l-4 ${
+                          index === 0 ? 'bg-yellow-100 border-yellow-500' : 'bg-gray-50 border-gray-300'
+                        }`}>
+                          <div className="flex justify-between items-center">
+                            <span className={`font-bold ${index === 0 ? 'text-black text-xl' : 'text-black'}`}>
+                              {ticket.number}
+                            </span>
+                            <div className="text-left text-sm">
+                              <div className="font-medium text-black">{ticket.procedure_name || 'N/A'}</div>
+                              <div className="text-black">Wait {ticket.wait_time} min</div>
+                              {ticket.priority !== 'normal' && (
+                                <div className="text-xs text-purple-600 font-medium">
+                                  {ticket.priority === 'priority' ? '⚡ Priority' : '👴 Elderly'}
+                                </div>
+                              )}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-gray-500 italic bg-gray-100 p-3 rounded">Không có số đang chờ</div>
-                )}
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-gray-500 italic bg-gray-100 p-3 rounded">No numbers waiting</div>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            );
+          })}
+          </div>
+        )}
 
-        {queueData.length === 0 && (
+        {allCounters.length === 0 && !isLoading && (
           <div className="text-center py-12">
             <div className="text-gray-400 text-xl">
-              Đang khởi tạo hệ thống quầy...
+              {queueError ? 'API Connection Error' : 'No counter data available'}
+            </div>
+          </div>
+        )}
+
+        {isLoading && (
+          <div className="text-center py-12">
+            <div className="text-gray-400 text-xl">
+              🔄 Loading data...
             </div>
           </div>
         )}
         
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-8">
-          <h3 className="font-semibold text-blue-800 mb-2">📋 Hướng dẫn sử dụng:</h3>
+          <h3 className="font-semibold text-blue-800 mb-2">📋 API Integration Status:</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-blue-700">
             <div>
-              <h4 className="font-medium mb-1">⏸️ Tạm dừng:</h4>
-              <p className="text-sm">Tạm dừng phục vụ với lý do cụ thể</p>
+              <h4 className="font-medium mb-1">✅ Counters API:</h4>
+              <p className="text-sm">Using GET /counters/ for counter information</p>
             </div>
             <div>
-              <h4 className="font-medium mb-1">✅ Chấp nhận:</h4>
-              <p className="text-sm">Chuyển vé từ hàng chờ sang đang phục vụ</p>
+              <h4 className="font-medium mb-1">🔄 Queue API:</h4>
+              <p className="text-sm">Call next ticket uses POST /counters/&#123;id&#125;/call-next</p>
             </div>
             <div>
-              <h4 className="font-medium mb-1">✅ Hoàn thành:</h4>
-              <p className="text-sm">Hoàn thành phục vụ, xóa vé khỏi đang phục vụ</p>
+              <h4 className="font-medium mb-1">⏸️ Control API:</h4>
+              <p className="text-sm">Pause/Resume uses API endpoints</p>
             </div>
             <div>
-              <h4 className="font-medium mb-1">⏭️ Số tiếp theo:</h4>
-              <p className="text-sm">Bỏ qua số đầu tiên trong hàng chờ (khách không đến), các số sau tiến lên</p>
+              <h4 className="font-medium mb-1">📊 Queue Data:</h4>
+              <p className="text-sm">Queue details still using mock data (TODO)</p>
             </div>
+          </div>
+          <div className="mt-4 text-sm text-blue-600">
+            <strong>🌐 Hybrid Mode:</strong> Counter metadata from API, queue operations via API, queue display using mock data until full queue API is available.
           </div>
         </div>
       </div>

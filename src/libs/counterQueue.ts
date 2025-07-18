@@ -125,6 +125,30 @@ export class CounterQueueManager {
     return waitingQueue[0] || null;
   }
 
+  // Get current serving ticket for counter (for officer interface)
+  static getCurrentServingTicket(counterId: string): QueueItem | null {
+    const servingQueue = this.getQueueByStatusForCounter(counterId, 'serving');
+    return servingQueue[0] || null; // Only one ticket should be serving at a time
+  }
+
+  // Remove ticket from serving queue (when completed by BE)
+  static removeFromServingQueue(counterId: string): boolean {
+    const queues = this.getCounterQueues();
+    const counterQueue = queues[counterId] || [];
+    
+    // Find the serving item
+    const servingIndex = counterQueue.findIndex(item => item.status === 'serving');
+    if (servingIndex === -1) {
+      return false; // No serving items
+    }
+    
+    // Remove the serving item
+    counterQueue.splice(servingIndex, 1);
+    this.saveCounterQueues(queues);
+    
+    return true;
+  }
+
   // Get all serving queues across all counters
   static getAllServingQueues(): QueueItem[] {
     const queues = this.getCounterQueues();
