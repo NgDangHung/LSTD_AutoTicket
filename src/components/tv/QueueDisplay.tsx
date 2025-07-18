@@ -486,7 +486,7 @@ export default function QueueDisplay() {
             
             <div className="space-y-4">
               {processedCounters.map((counter) => (
-                <div key={`serving-counter-${counter.counter_id}`} className="bg-gray-600 bg-opacity-50 rounded-xl p-4">
+                <div key={counter.counter_id} className="bg-gray-600 bg-opacity-50 rounded-xl p-4">
                   <div className="text-lg font-semibold text-white mb-2">
                     QUẦY {counter.counter_id} | {counter.counter_name}:
                   </div>
@@ -510,7 +510,7 @@ export default function QueueDisplay() {
             
             <div className="max-h-96 overflow-y-auto space-y-4">
               {processedCounters.map((counter) => (
-                <div key={`waiting-counter-${counter.counter_id}`} className="border-b border-white border-opacity-20 pb-3 last:border-b-0">
+                <div key={counter.counter_id} className="border-b border-white border-opacity-20 pb-3 last:border-b-0">
                   <div className="text-lg font-semibold mb-2 text-blue-200">
                     QUẦY {counter.counter_id} | {counter.counter_name}:
                   </div>
