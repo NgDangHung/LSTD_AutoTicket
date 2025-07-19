@@ -359,7 +359,7 @@ export default function KioskMainScreen() {
         console.log('✅ Added to TV queue:', queueItem);
 
         // 🖨️ Gửi dữ liệu cho PrintNow component
-        setPrintData({ number: newTicket.number, counterId, counterName });
+        // setPrintData({ number: newTicket.number, counterId, counterName });
 
         
         // Reset states
