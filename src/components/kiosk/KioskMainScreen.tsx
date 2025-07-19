@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import { Search, Mic, Printer, HelpCircle, AudioLines } from 'lucide-react';
 import { toast } from 'react-toastify';
@@ -218,12 +218,55 @@ export default function KioskMainScreen() {
   // API hooks
   const { createTicket, loading: ticketLoading, error: ticketError } = useCreateTicket();
 
-  // Compute filtered counters based on search results
-  const filteredCounters = isSearchMode 
-    ? counters.filter(counter => 
-        searchResults.some(result => counter.serviceIds.includes(result.field_id))
-      )
-    : counters;
+  // ✅ Enhanced filter logic using API response data directly
+  const filteredCounters = useMemo(() => {
+    if (!isSearchMode || searchResults.length === 0) {
+      return counters.filter(counter => counter.status === 'active');
+    }
+
+    // ✅ Extract counter IDs from API search-extended response
+    const apiCounterIds = new Set<number>();
+    const apiCounterStatuses = new Map<number, string>();
+    
+    searchResults.forEach(procedure => {
+      if (procedure.counters && Array.isArray(procedure.counters)) {
+        procedure.counters.forEach(apiCounter => {
+          if (typeof apiCounter.id === 'number') {
+            apiCounterIds.add(apiCounter.id);
+            // ✅ Store status from API response for real-time validation
+            apiCounterStatuses.set(apiCounter.id, apiCounter.status);
+          }
+        });
+      }
+    });
+
+    console.log('🔍 Search filter data:', {
+      searchValue,
+      apiCounterIds: Array.from(apiCounterIds),
+      apiCounterStatuses: Object.fromEntries(apiCounterStatuses),
+      totalCounters: counters.length
+    });
+
+    // ✅ Filter using API counter IDs and validate status
+    const filtered = counters.filter(counter => {
+      const isInSearchResults = apiCounterIds.has(counter.id);
+      const isActive = counter.status === 'active';
+      
+      if (isInSearchResults) {
+        console.log(`✅ Counter ${counter.id} (${counter.name}): API status=${apiCounterStatuses.get(counter.id)}, Local status=${counter.status}`);
+      }
+      
+      return isInSearchResults && isActive;
+    });
+
+    console.log('🎯 Filtered results:', filtered.map(c => ({
+      id: c.id,
+      name: c.name,
+      status: c.status
+    })));
+
+    return filtered;
+  }, [isSearchMode, searchResults, counters, searchValue]);
 
   const handleServiceSelect = (serviceId: number) => {
     const service = services.find(s => s.id === serviceId);
@@ -282,7 +325,7 @@ export default function KioskMainScreen() {
     }
   };
 
-  // Handle counter selection (new approach)
+  // ✅ Enhanced handleCounterSelect using API search data
   const handleCounterSelect = (counter: typeof counters[0]) => {
     // Check if counter is active - Fix: Only check status field
     if (counter.status === 'paused' || counter.status === 'offline') {
@@ -299,7 +342,32 @@ export default function KioskMainScreen() {
       return;
     }
     
-    // Create a mock procedure for compatibility with existing logic
+    // ✅ If in search mode, find matching procedure from API results
+    if (isSearchMode && searchResults.length > 0) {
+      const matchingProcedure = searchResults.find(procedure => 
+        procedure.counters?.some(apiCounter => apiCounter.id === counter.id)
+      );
+      
+      if (matchingProcedure) {
+        setSelectedProcedure({
+          ...matchingProcedure,
+          serviceNames: counter.serviceNames // Add serviceNames for compatibility
+        });
+        setSelectedService(counter.id.toString());
+        setSelectedServiceName(`${matchingProcedure.name} - ${counter.name}`);
+        setShowConfirmCounter(true);
+        
+        console.log('✅ Selected procedure from API search:', {
+          procedure: matchingProcedure.name,
+          counter: counter.name,
+          counterId: counter.id,
+          fieldId: matchingProcedure.field_id
+        });
+        return;
+      }
+    }
+    
+    // ✅ Fallback: Create mock procedure for direct counter selection
     const mockProcedure: ProcedureResult = {
       id: counter.id,
       name: counter.name,
