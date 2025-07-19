@@ -12,6 +12,8 @@ import { useOptimizedSearch } from '@/hooks/useOptimizedSearch';
 import { CounterQueueManager } from '@/libs/counterQueue';
 import { countersAPI, Counter } from '@/libs/rootApi';
 import '@/app/index.css';
+import PrintNow from '@/components/kiosk/PrintTicket'; 
+
 
 const services = [
   { id: 1, name: 'Chứng thực' },
@@ -82,6 +84,7 @@ export default function KioskMainScreen() {
   console.log('🔄 KioskMainScreen rendered at:', new Date().toLocaleTimeString());
   
   // Original states
+  const [printData, setPrintData] = useState<{ number: number; counterId: string; counterName: string } | null>(null);
   const [selectedService, setSelectedService] = useState<string>('');
   const [selectedServiceName, setSelectedServiceName] = useState<string>('');
   const [showConfirmCounter, setShowConfirmCounter] = useState(false);
@@ -352,8 +355,12 @@ export default function KioskMainScreen() {
         });
         
         console.log('✅ Added to TV queue:', queueItem);
+
+        // 🖨️ Gửi dữ liệu cho PrintNow component
+        setPrintData({ number: newTicket.number, counterId, counterName });
+
         
-        // Reset state
+        // Reset states
         setShowConfirmCounter(false);
         setSelectedService('');
         setSelectedServiceName('');
@@ -686,6 +693,14 @@ export default function KioskMainScreen() {
         isActive={isVoiceActive}
         stopTrigger={voiceStopTrigger}
       />
+      {printData && (
+        <PrintNow
+          number={printData.number}
+          counterId={printData.counterId}
+          counterName={printData.counterName}
+          autoPrint={true}
+        />
+      )}
     </div>
   );
 }
