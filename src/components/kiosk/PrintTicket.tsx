@@ -42,7 +42,7 @@ export default function PrintNow({ number,counterId, counterName, autoPrint }: P
     window.onafterprint = () => {
       window.location.reload();
     };
-  }, [number, counterName, autoPrint]);
+  }, [number, counterId, counterName, autoPrint]); // Added missing counterId dependency
 
   return <div id="print-area" style={{ display: 'none' }} />;
 }

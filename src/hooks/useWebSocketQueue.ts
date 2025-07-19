@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 
 // WebSocket event types based on BE documentation
 interface NewTicketEvent {
@@ -25,9 +25,9 @@ interface UseWebSocketQueueReturn {
 
 // Singleton WebSocket instance to prevent multiple connections
 let globalWebSocket: WebSocket | null = null;
-let connectionListeners: Set<(connected: boolean) => void> = new Set();
-let eventListeners: Set<(event: WebSocketEvent) => void> = new Set();
-let errorListeners: Set<(error: string) => void> = new Set();
+const connectionListeners: Set<(connected: boolean) => void> = new Set();
+const eventListeners: Set<(event: WebSocketEvent) => void> = new Set();
+const errorListeners: Set<(error: string) => void> = new Set();
 
 const createGlobalWebSocket = () => {
   if (globalWebSocket && globalWebSocket.readyState === WebSocket.OPEN) {
@@ -101,6 +101,19 @@ export const useWebSocketQueue = (): UseWebSocketQueueReturn => {
   const [connectionError, setConnectionError] = useState<string | null>(null);
   const [lastEvent, setLastEvent] = useState<WebSocketEvent | null>(null);
 
+  const handleWebSocketEvent = useCallback((event: WebSocketEvent) => {
+    switch (event.event) {
+      case 'new_ticket':
+        handleNewTicketEvent(event);
+        break;
+      case 'ticket_called':
+        handleTicketCalledEvent(event);
+        break;
+      default:
+        console.warn('🤷‍♂️ Unknown WebSocket event type:', event);
+    }
+  }, []);
+
   useEffect(() => {
     // Register listeners for this hook instance
     const connectionListener = (connected: boolean) => {
@@ -148,7 +161,7 @@ export const useWebSocketQueue = (): UseWebSocketQueueReturn => {
         error: errorListeners.size
       });
     };
-  }, []);
+  }, [handleWebSocketEvent]); // Added missing dependency
 
   const reconnect = () => {
     console.log('🔄 Manual reconnect requested');
@@ -157,19 +170,6 @@ export const useWebSocketQueue = (): UseWebSocketQueueReturn => {
       globalWebSocket = null;
     }
     createGlobalWebSocket();
-  };
-
-  const handleWebSocketEvent = (event: WebSocketEvent) => {
-    switch (event.event) {
-      case 'new_ticket':
-        handleNewTicketEvent(event);
-        break;
-      case 'ticket_called':
-        handleTicketCalledEvent(event);
-        break;
-      default:
-        console.warn('🤷‍♂️ Unknown WebSocket event type:', event);
-    }
   };
 
   const handleNewTicketEvent = (event: NewTicketEvent) => {

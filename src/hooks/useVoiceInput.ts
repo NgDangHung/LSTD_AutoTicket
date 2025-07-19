@@ -135,7 +135,8 @@ export const useVoiceInput = (options: UseVoiceInputOptions = {}) => {
     } catch (err: any) {
       setError(err.message);
     }
-  }, [isSupported]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isSupported]); // stopListening declared later
 
   const stopListening = useCallback(() => {
     if (recognitionRef.current && isListening) {

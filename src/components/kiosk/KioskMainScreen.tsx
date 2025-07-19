@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { Search, Mic, Printer, HelpCircle, AudioLines } from 'lucide-react';
 import { toast } from 'react-toastify';
 import Button from '@/components/shared/Button';
@@ -150,7 +151,8 @@ export default function KioskMainScreen() {
     };
 
     loadCounters();
-  }, []); // Simple empty dependency - run once on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run once on mount
 
   // Convert API counters to display format with icons and service mapping
   const counters = apiCounters.map(apiCounter => ({
@@ -434,10 +436,13 @@ export default function KioskMainScreen() {
           style={{ backgroundColor: '#c31313' }}
         >
           <div className="flex items-center gap-2">
-            <img 
+            <Image 
               src="/images/Logo_vang.png" 
               alt="Logo Ban Gốc" 
+              width={240}
+              height={240}
               className="w-60 h-60 object-contain"
+              priority
             />
             <div style={{ marginLeft: '30px' }}>
               <h1 className="text-4xl font-bold text-white-800 mb-4" style={{ lineHeight: '1.5' }}>

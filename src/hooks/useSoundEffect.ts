@@ -151,6 +151,9 @@ export const useSoundEffect = () => {
 
   // Cleanup on unmount
   useEffect(() => {
+    // Copy ref value to variable for cleanup
+    const currentAudioCache = audioCache.current;
+    
     return () => {
       // Stop current audio
       if (currentAudio.current) {
@@ -158,8 +161,8 @@ export const useSoundEffect = () => {
         currentAudio.current = null;
       }
       
-      // Clear cache
-      audioCache.current.clear();
+      // Clear cache using copied variable
+      currentAudioCache.clear();
     };
   }, []);
 

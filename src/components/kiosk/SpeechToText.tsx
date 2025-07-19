@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import type { SpeechRecognition, SpeechRecognitionEvent, SpeechRecognitionErrorEvent } from '@/types/speech';
 
 interface SpeechToTextProps {
@@ -34,7 +34,7 @@ export default function SpeechToText({ onTranscript, onStop, isActive, stopTrigg
     return 'webkitSpeechRecognition' in window || 'SpeechRecognition' in window;
   };
 
-  const startListening = () => {
+  const startListening = useCallback(() => {
     if (!isSpeechSupported()) {
       setError('Trình duyệt không hỗ trợ nhận diện giọng nói. Vui lòng sử dụng Chrome hoặc Edge.');
       return;
@@ -122,12 +122,13 @@ export default function SpeechToText({ onTranscript, onStop, isActive, stopTrigg
 
     recognitionRef.current = recognition;
     recognition.start();
-  };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onTranscript, onStop]); // stopListening not needed here
 
-  const stopListening = () => {
+  const stopListening = useCallback(() => {
     cleanup();
     onStop();
-  };
+  }, [onStop]); // Add dependencies
 
   // Start listening when component becomes active
   useEffect(() => {
@@ -136,7 +137,7 @@ export default function SpeechToText({ onTranscript, onStop, isActive, stopTrigg
     } else if (!isActive && isListening) {
       stopListening();
     }
-  }, [isActive]);
+  }, [isActive, isListening, startListening, stopListening]); // Added missing dependencies
 
   // Handle different stop triggers
   useEffect(() => {
@@ -172,7 +173,7 @@ export default function SpeechToText({ onTranscript, onStop, isActive, stopTrigg
       document.removeEventListener('keydown', handleKeyDown);
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [isListening, stopTrigger]);
+  }, [isActive, isListening, stopTrigger, stopListening]); // Added missing dependencies
 
   // Cleanup on component unmount
   useEffect(() => {

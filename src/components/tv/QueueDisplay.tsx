@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import NumberAnimation from './NumberAnimation';
 import { useWebSocketQueue } from '@/hooks/useWebSocketQueue';
 import { TTSService, type TTSService as TTSServiceType } from '@/libs/ttsService';
@@ -225,7 +225,7 @@ export default function QueueDisplay() {
   };
 
   // ✅ Main data fetching và processing function
-  const fetchAndProcessQueueData = async (showLoading = false) => {
+  const fetchAndProcessQueueData = useCallback(async (showLoading = false) => {
     try {
       // Only show loading on initial load, not on polling updates
       if (showLoading) {
@@ -248,7 +248,8 @@ export default function QueueDisplay() {
         setIsLoading(false);
       }
     }
-  };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // No dependencies needed
 
   // ✅ Simplified: No need to re-process since we render directly from wsServingTickets
   // useEffect removed - direct rendering is more reliable
@@ -534,7 +535,8 @@ export default function QueueDisplay() {
       window.removeEventListener('ttsAnnouncement', handleTTSAnnouncement);
       window.removeEventListener('ticketCalled', handleTicketCalledFromTestQueue as EventListener);
     };
-  }, []); // No dependencies, setup once
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fetchAndProcessQueueData]); // Intentionally limited dependencies
 
   // Separate useEffect for TTS status updates
   useEffect(() => {

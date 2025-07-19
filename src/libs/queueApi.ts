@@ -213,7 +213,7 @@ export const checkApiHealth = async (): Promise<boolean> => {
   }
 };
 
-export default {
+const queueAPI = {
   getWaitingTickets,
   getCounterQueue,
   createTicket,
@@ -223,3 +223,5 @@ export default {
   getNextTicketForCounter,
   checkApiHealth,
 };
+
+export default queueAPI;
