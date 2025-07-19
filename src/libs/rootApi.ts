@@ -28,9 +28,25 @@ const rootApi = axios.create({
 // Request interceptor to add auth token
 rootApi.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('auth_token');
+    // ✅ Sử dụng sessionStorage thay vì localStorage
+    const token = sessionStorage.getItem('auth_token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+      
+      // ✅ Debug log for call-next requests
+      if (config.url?.includes('/call-next')) {
+        console.log('🔍 Call-next request interceptor debug:', {
+          url: config.url,
+          method: config.method,
+          baseURL: config.baseURL,
+          hasToken: !!token,
+          tokenPreview: token.substring(0, 20) + '...',
+          authHeader: config.headers.Authorization,
+          allHeaders: config.headers
+        });
+      }
+    } else {
+      console.warn('⚠️ No auth token found in sessionStorage for request:', config.url);
     }
     return config;
   },
@@ -45,7 +61,9 @@ rootApi.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem('auth_token');
+      // ✅ Clear sessionStorage thay vì localStorage
+      sessionStorage.removeItem('auth_token');
+      sessionStorage.removeItem('user_data');
       window.location.href = '/login';
     }
     return Promise.reject(error);

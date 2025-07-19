@@ -218,10 +218,11 @@ export default function KioskMainScreen() {
   // API hooks
   const { createTicket, loading: ticketLoading, error: ticketError } = useCreateTicket();
 
-  // ✅ Enhanced filter logic using API response data directly
+  // ✅ Enhanced filter logic using API response data directly - shows all counters including paused
   const filteredCounters = useMemo(() => {
     if (!isSearchMode || searchResults.length === 0) {
-      return counters.filter(counter => counter.status === 'active');
+      // Show all counters (active, paused, offline) - visual effects handle the display
+      return counters;
     }
 
     // ✅ Extract counter IDs from API search-extended response
@@ -247,16 +248,15 @@ export default function KioskMainScreen() {
       totalCounters: counters.length
     });
 
-    // ✅ Filter using API counter IDs and validate status
+    // ✅ Filter using API counter IDs - include all statuses (active, paused, offline)
     const filtered = counters.filter(counter => {
       const isInSearchResults = apiCounterIds.has(counter.id);
-      const isActive = counter.status === 'active';
       
       if (isInSearchResults) {
         console.log(`✅ Counter ${counter.id} (${counter.name}): API status=${apiCounterStatuses.get(counter.id)}, Local status=${counter.status}`);
       }
       
-      return isInSearchResults && isActive;
+      return isInSearchResults; // No status filtering - show all matching counters
     });
 
     console.log('🎯 Filtered results:', filtered.map(c => ({
@@ -427,7 +427,7 @@ export default function KioskMainScreen() {
         console.log('✅ Added to TV queue:', queueItem);
 
         // 🖨️ Gửi dữ liệu cho PrintNow component
-        setPrintData({ number: newTicket.number, counterId, counterName });
+        // setPrintData({ number: newTicket.number, counterId, counterName });
 
         
         // Reset states

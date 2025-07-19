@@ -57,15 +57,67 @@ export default function LoginPage() {
 
       console.log('✅ Login Response:', response);
 
-      // Lưu token vào localStorage
+      // ✅ Lưu token vào sessionStorage thay vì localStorage
       const responseData = response.data || response;
       if (responseData.token || responseData.access_token) {
         const token = responseData.token || responseData.access_token;
-        localStorage.setItem('auth_token', token);
-        toast.success('Đăng nhập thành công!');
+        sessionStorage.setItem('auth_token', token);
         
-        // Chuyển hướng đến test-queue
-        router.push('/test-queue');
+        // ✅ Get user info to determine redirect path
+        try {
+          console.log('🔍 Getting user info for redirect...');
+          const userResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000'}/app/auths/me`, {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
+          
+          if (userResponse.ok) {
+            const userData = await userResponse.json();
+            console.log('👤 User info:', userData);
+            
+            // ✅ Lưu user data vào sessionStorage
+            sessionStorage.setItem('user_data', JSON.stringify(userData));
+            
+            toast.success(`🎉 Chào mừng ${userData.full_name}!`);
+            
+            // ✅ Role-based redirect
+            if (userData.role === 'admin') {
+              console.log('🔀 Redirecting admin to test-queue');
+              router.push('/test-queue');
+            } else if (userData.role === 'officer') {
+              console.log('🔀 Redirecting officer to officer page');
+              
+              // Check if officer has counter assigned
+              if (userData.counter_id) {
+                router.push('/officer');
+              } else {
+                toast.error('❌ Tài khoản officer chưa được gán quầy!');
+                sessionStorage.removeItem('auth_token');
+                sessionStorage.removeItem('user_data');
+                return;
+              }
+            } else if (userData.role === 'leader') {
+              console.log('🔀 Redirecting leader to admin');
+              router.push('/admin');
+            } else {
+              console.log('🔀 Unknown role, redirecting to default');
+              router.push('/test-queue');
+            }
+          } else {
+            // Fallback to test-queue if can't get user info
+            console.warn('⚠️ Could not get user info, redirecting to test-queue');
+            toast.success('Đăng nhập thành công!');
+            router.push('/test-queue');
+          }
+        } catch (userError) {
+          console.error('❌ Error getting user info:', userError);
+          // Fallback to test-queue
+          toast.success('Đăng nhập thành công!');
+          router.push('/test-queue');
+        }
+        
       } else {
         console.log('Response data:', responseData);
         toast.error('Không nhận được token từ server');

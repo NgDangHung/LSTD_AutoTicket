@@ -196,6 +196,11 @@
 - **Headers:**
   - `Authorization: Bearer <access_token>`
 
+- **Authorization Rules:**
+  - `admin`: ✅ Có thể gọi bất kỳ counter nào
+  - `officer`: ✅ Chỉ có thể gọi counter được gán (`user.counter_id == counter_id`)
+  - `other roles`: ❌ Không có quyền
+
 - **Response:**
 ```json
 {
@@ -204,14 +209,38 @@
 }
 ```
 
+- **Error Responses:**
+```json
+// 403 Forbidden - Officer không có quyền với counter này
+{
+  "detail": "Officer chỉ có quyền với counter 1"
+}
+
+// 404 Not Found - Counter không tồn tại
+{
+  "detail": "Counter not found"
+}
+
+// 400 Bad Request - Không có vé đang chờ
+{
+  "detail": "No waiting tickets for this counter"
+}
+```
+
 ---
 
 ### ⏸️ [POST] `/counters/{counter_id}/pause` – Tạm dừng quầy
-- **Headers:**
-  - `Authorization: Bearer <access_token>`
 
 - **Path Param:**
   - `counter_id` (integer)
+
+- **Headers:**
+  - `Authorization: Bearer <access_token>`
+
+- **Authorization Rules:**
+  - `admin`: ✅ Có thể tạm dừng bất kỳ counter nào
+  - `officer`: ✅ Chỉ có thể tạm dừng counter được gán (`user.counter_id == counter_id`)
+  - `other roles`: ❌ Không có quyền
 
 - **Body (application/json):**
 ```json
@@ -233,11 +262,17 @@
 ---
 
 ### ▶️ [PUT] `/counters/{counter_id}/resume` – Tiếp tục quầy
-- **Headers:**
-  - `Authorization: Bearer <access_token>`
 
 - **Path Param:**
   - `counter_id` (integer)
+
+- **Headers:**
+  - `Authorization: Bearer <access_token>`
+
+- **Authorization Rules:**
+  - `admin`: ✅ Có thể mở lại bất kỳ counter nào
+  - `officer`: ✅ Chỉ có thể mở lại counter được gán (`user.counter_id == counter_id`)
+  - `other roles`: ❌ Không có quyền
 
 - **Response:**
 ```json
@@ -262,4 +297,71 @@
     }
   ]
 }
+```
+
+---
+
+## 🔐 Backend Authorization Implementation Guide
+
+### Counter-specific Endpoints Authorization Logic:
+
+```python
+# FastAPI implementation example
+from fastapi import HTTPException, Depends
+
+async def validate_counter_access(
+    counter_id: int,
+    current_user = Depends(get_current_user)
+):
+    """Validate user has access to specific counter"""
+    
+    # Admin has access to all counters
+    if current_user.role == "admin":
+        return True
+    
+    # Officer can only access assigned counter
+    elif current_user.role == "officer":
+        if current_user.counter_id != counter_id:
+            raise HTTPException(
+                status_code=403,
+                detail=f"Officer chỉ có quyền với counter {current_user.counter_id}"
+            )
+        return True
+    
+    # Other roles denied
+    else:
+        raise HTTPException(
+            status_code=403,
+            detail="Không có quyền truy cập"
+        )
+
+@app.post("/counters/{counter_id}/call-next")
+async def call_next_ticket(
+    counter_id: int,
+    current_user = Depends(get_current_user),
+    _: bool = Depends(validate_counter_access)
+):
+    # Implementation here...
+    pass
+```
+
+### Database Schema Requirements:
+
+```sql
+-- Ensure users table has counter_id for officers
+CREATE TABLE users (
+    id INTEGER PRIMARY KEY,
+    username VARCHAR(50) UNIQUE NOT NULL,
+    full_name VARCHAR(100),
+    role VARCHAR(20) CHECK (role IN ('admin', 'leader', 'officer')),
+    counter_id INTEGER REFERENCES counters(id), -- Required for officer role
+    is_active BOOLEAN DEFAULT true
+);
+
+-- Sample officer data
+INSERT INTO users (username, full_name, role, counter_id) VALUES
+('officer1', 'Nhân viên Quầy 1', 'officer', 1),
+('officer2', 'Nhân viên Quầy 2', 'officer', 2),
+('officer3', 'Nhân viên Quầy 3', 'officer', 3),
+('officer4', 'Nhân viên Quầy 4', 'officer', 4);
 ```

@@ -433,7 +433,9 @@ function TestQueuePage() {
 
   // Logout function
   const handleLogout = () => {
-    localStorage.removeItem('auth_token');
+    // ✅ Clear sessionStorage thay vì localStorage
+    sessionStorage.removeItem('auth_token');
+    sessionStorage.removeItem('user_data');
     router.push('/login');
   };
 
@@ -465,7 +467,7 @@ function TestQueuePage() {
       }
       
       // ✅ Detailed API call with error handling
-      const authToken = localStorage.getItem('auth_token');
+      const authToken = sessionStorage.getItem('auth_token');
       console.log('� Auth token exists:', !!authToken);
       console.log('�📡 Making API call to:', `/counters/${counterIdNum}/call-next`);
       
