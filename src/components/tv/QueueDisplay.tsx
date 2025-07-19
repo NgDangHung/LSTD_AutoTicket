@@ -38,6 +38,18 @@ export default function QueueDisplay() {
   const [apiError, setApiError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<string>('');
   
+  // ✅ WebSocket connection state
+  const [wsConnected, setWsConnected] = useState(false);
+  const [connectionType, setConnectionType] = useState<'websocket' | 'polling' | 'offline'>('offline');
+  
+  // ✅ NEW: WebSocket serving tickets state (independent from test-queue)
+  const [wsServingTickets, setWsServingTickets] = useState<Record<number, {
+    number: number;
+    counter_name: string;
+    called_at: string;
+    source: string;
+  }>>({});
+  
   // Announcement states
   const [announcement, setAnnouncement] = useState<{
     ticketNumber: number;
@@ -67,7 +79,7 @@ export default function QueueDisplay() {
     }
   }, []);
 
-  // ✅ Counter name mapping
+  // ✅ Counter name mapping (both directions)
   const getCounterName = (counterId: number): string => {
     const counterNames: Record<number, string> = {
       1: 'Tư pháp',
@@ -76,6 +88,42 @@ export default function QueueDisplay() {
       4: 'Văn hóa - Xã hội'
     };
     return counterNames[counterId] || `Quầy ${counterId}`;
+  };
+
+  // ✅ Enhanced counter ID parsing from counter name
+  const getCounterIdFromName = (counterName: string): number | null => {
+    // Direct mapping từ actual counter names
+    const nameToIdMap: Record<string, number> = {
+      'Tư pháp': 1,
+      'Kinh tế - Hạ tầng - Đô Thị': 2,
+      'Văn phóng đăng ký đất đai': 3,
+      'Văn phòng đăng ký đất đai': 3, // Alternative spelling
+      'Văn hóa - Xã hội': 4
+    };
+    
+    // ✅ Exact match first
+    if (nameToIdMap[counterName]) {
+      console.log(`✅ Exact match found: "${counterName}" -> ${nameToIdMap[counterName]}`);
+      return nameToIdMap[counterName];
+    }
+    
+    // ✅ Fallback: Extract number từ "Quầy X" format
+    const counterIdMatch = counterName.match(/(?:Quầy\s*)?(\d+)/i);
+    if (counterIdMatch) {
+      const id = parseInt(counterIdMatch[1]);
+      console.log(`✅ Regex match found: "${counterName}" -> ${id}`);
+      return id;
+    }
+    
+    // ✅ Additional fuzzy matching for common variations
+    const lowerName = counterName.toLowerCase().trim();
+    if (lowerName.includes('tư pháp') || lowerName.includes('tu phap')) return 1;
+    if (lowerName.includes('kinh tế') || lowerName.includes('kinh te') || lowerName.includes('hạ tầng')) return 2;
+    if (lowerName.includes('đất đai') || lowerName.includes('dat dai') || lowerName.includes('đăng ký đất')) return 3;
+    if (lowerName.includes('văn hóa') || lowerName.includes('van hoa') || lowerName.includes('xã hội')) return 4;
+    
+    console.warn('⚠️ Could not parse counter ID from:', counterName);
+    return null;
   };
 
   // ✅ Fetch all tickets from real API
@@ -117,9 +165,9 @@ export default function QueueDisplay() {
     }
   };
 
-  // ✅ Process tickets into counter groups theo status logic mới
+  // ✅ Process tickets into counter groups với WebSocket serving state
   const processTicketsToCounters = (tickets: RealTicket[]): ProcessedCounterData[] => {
-    console.log('🔧 Processing tickets into counter groups...');
+    console.log('🔧 Processing tickets into counter groups with WebSocket serving state...');
     
     const countersMap = new Map<number, ProcessedCounterData>();
     
@@ -136,40 +184,40 @@ export default function QueueDisplay() {
       });
     }
     
-    // ✅ Filter out 'done' tickets và group by counter and status
-    const activeTickets = tickets.filter(ticket => ticket.status !== 'done');
-    console.log('📋 Active tickets (exclude done):', activeTickets);
+    // ✅ Filter out 'done' tickets và only process waiting tickets from API
+    const waitingTickets = tickets.filter(ticket => ticket.status === 'waiting');
+    console.log('📋 Waiting tickets from API:', waitingTickets);
+    console.log('🎯 WebSocket serving tickets:', wsServingTickets);
     
-    activeTickets.forEach(ticket => {
+    // Process waiting tickets
+    waitingTickets.forEach(ticket => {
       const counter = countersMap.get(ticket.counter_id);
       if (!counter) return;
       
-      if (ticket.status === 'waiting') {
-        counter.waiting_tickets.push(ticket);
-      } else if (ticket.status === 'called') {
-        counter.serving_tickets.push(ticket);
-      }
+      counter.waiting_tickets.push(ticket);
     });
     
-    // ✅ Process each counter data
+    // ✅ Process each counter data with WebSocket serving state
     countersMap.forEach(counter => {
       // Sort waiting tickets by ID (FIFO order)
       counter.waiting_tickets.sort((a, b) => a.id - b.id);
       counter.waiting_numbers = counter.waiting_tickets.map(t => t.number);
       counter.waiting_count = counter.waiting_tickets.length;
       
-      // Get current serving number (latest called ticket)
-      if (counter.serving_tickets.length > 0) {
-        const latestServing = counter.serving_tickets
-          .sort((a, b) => new Date(b.called_at || b.created_at).getTime() - new Date(a.called_at || a.created_at).getTime())[0];
-        counter.serving_number = latestServing.number;
+      // ✅ Get serving number from WebSocket state instead of API tickets
+      const wsServing = wsServingTickets[counter.counter_id];
+      if (wsServing) {
+        counter.serving_number = wsServing.number;
+        console.log(`🎯 Counter ${counter.counter_id} serving from WebSocket state: #${wsServing.number} (${wsServing.source})`);
+      } else {
+        console.log(`📭 Counter ${counter.counter_id} has no serving ticket in WebSocket state`);
       }
       
       console.log(`📊 Counter ${counter.counter_id} processed:`, {
         serving: counter.serving_number,
         waiting: counter.waiting_numbers,
-        servingCount: counter.serving_tickets.length,
-        waitingCount: counter.waiting_count
+        waitingCount: counter.waiting_count,
+        wsServing: wsServing ? `#${wsServing.number}` : 'none'
       });
     });
     
@@ -202,67 +250,240 @@ export default function QueueDisplay() {
     }
   };
 
-  // ✅ Initial data fetch and optimized real-time polling
+  // ✅ Simplified: No need to re-process since we render directly from wsServingTickets
+  // useEffect removed - direct rendering is more reliable
+
+  // ✅ WebSocket real-time connection - No polling fallback
   useEffect(() => {
-    let pollInterval: NodeJS.Timeout | null = null;
-    let retryCount = 0;
-    const maxRetries = 3;
-    const basePollInterval = 5000; // 5 seconds base
+    let ws: WebSocket | null = null;
+    let reconnectCount = 0;
+    const maxReconnectAttempts = 5;
     
     // Initial fetch with loading
     fetchAndProcessQueueData(true);
     
-    // 🚀 Optimized polling with exponential backoff on errors
-    const startPolling = () => {
-      if (pollInterval) clearInterval(pollInterval);
-      
-      const pollData = async () => {
-        try {
-          // Polling updates without loading state
-          await fetchAndProcessQueueData(false);
-          retryCount = 0; // Reset on success
+    // ✅ Connect to REAL WebSocket endpoint from BE documentation
+    const connectWebSocket = () => {
+      try {
+        console.log('🔌 Connecting to production WebSocket endpoint...');
+        console.log('🌐 WebSocket URL: wss://detect-seat.onrender.com/ws/updates');
+        
+        // ✅ REAL endpoint từ BE: wss://detect-seat.onrender.com/ws/updates
+        ws = new WebSocket('wss://detect-seat.onrender.com/ws/updates');
+        
+        ws.onopen = () => {
+          console.log('✅ WebSocket connected to production endpoint');
+          console.log('🔗 WebSocket readyState:', ws?.readyState);
+          reconnectCount = 0;
+          setWsConnected(true);
+          setConnectionType('websocket');
+        };
+        
+        ws.onmessage = (event) => {
+          try {
+            const eventData = JSON.parse(event.data);
+            console.log('📡 WebSocket event received:', eventData);
+            
+            // ✅ Handle real events từ BE documentation
+            switch (eventData.event) {
+              case 'new_ticket':
+                handleNewTicketEvent(eventData);
+                break;
+                
+              case 'ticket_called':
+                handleTicketCalledEvent(eventData);
+                break;
+                
+              default:
+                console.log('ℹ️ Unknown WebSocket event:', eventData.event);
+            }
+            
+          } catch (error) {
+            console.error('❌ WebSocket message parse error:', error);
+          }
+        };
+        
+        ws.onclose = (event) => {
+          console.warn('⚠️ WebSocket disconnected:', event.code, event.reason);
+          setWsConnected(false);
+          setConnectionType('offline');
           
-          // Standard polling interval on success
-          pollInterval = setTimeout(pollData, basePollInterval);
-          
-        } catch (error) {
-          retryCount++;
-          console.warn(`🔄 Polling retry ${retryCount}/${maxRetries}:`, error);
-          
-          if (retryCount < maxRetries) {
-            // Exponential backoff: 10s, 20s, 40s
-            const backoffDelay = basePollInterval * Math.pow(2, retryCount);
-            console.log(`⏳ Retrying in ${backoffDelay/1000}s...`);
-            pollInterval = setTimeout(pollData, backoffDelay);
+          // Auto-reconnect with exponential backoff (no polling fallback)
+          if (reconnectCount < maxReconnectAttempts) {
+            const delay = Math.min(1000 * Math.pow(2, reconnectCount), 30000);
+            reconnectCount++;
+            
+            console.log(`🔄 WebSocket reconnecting attempt ${reconnectCount}/${maxReconnectAttempts} in ${delay/1000}s...`);
+            setTimeout(connectWebSocket, delay);
           } else {
-            console.error('❌ Max polling retries reached, stopping auto-refresh');
+            console.error('❌ WebSocket max reconnection attempts reached');
+            setConnectionType('offline');
+          }
+        };
+        
+        ws.onerror = (error) => {
+          console.error('❌ WebSocket error:', error);
+          setWsConnected(false);
+          setConnectionType('offline');
+        };
+        
+      } catch (error) {
+        console.error('❌ WebSocket connection failed:', error);
+        setConnectionType('offline');
+      }
+    };
+    
+    // ✅ Handle new_ticket event từ BE documentation
+    const handleNewTicketEvent = async (eventData: { event: string, ticket_number: number, counter_id: number }) => {
+      console.log('🎫 New ticket created via WebSocket:', eventData);
+      
+      // Refresh queue data sau khi có vé mới
+      await fetchAndProcessQueueData(false);
+      
+      // Optional: Show brief notification
+      console.log(`📢 New ticket #${eventData.ticket_number} created for counter ${eventData.counter_id}`);
+    };
+    
+    // ✅ Handle ticket_called event từ BE documentation - UPDATED for WebSocket state
+    const handleTicketCalledEvent = async (eventData: { event: string, ticket_number: number, counter_name: string }) => {
+      console.log('📞 Ticket called via WebSocket:', eventData);
+      console.log('🔍 Parsing counter name:', eventData.counter_name);
+      
+      // ✅ Parse counter ID using mapping function
+      const counterId = getCounterIdFromName(eventData.counter_name);
+      console.log('🎯 Parsed counter ID:', counterId);
+      
+      if (counterId && eventData.ticket_number) {
+        // ✅ Store serving ticket in WebSocket state
+        const servingTicket = {
+          number: eventData.ticket_number,
+          counter_name: eventData.counter_name,
+          called_at: new Date().toISOString(),
+          source: 'websocket-production'
+        };
+        
+        console.log(`🎯 TV storing serving ticket via WebSocket for counter ${counterId}:`, servingTicket);
+        
+        // ✅ Update WebSocket serving tickets state
+        setWsServingTickets(prev => {
+          const newState = {
+            ...prev,
+            [counterId]: servingTicket
+          };
+          console.log('📺 TV WebSocket serving state updated:', {
+            counterId,
+            ticket: servingTicket,
+            newState
+          });
+          return newState;
+        });
+        
+        // ✅ Show announcement cho TV display
+        setAnnouncement({
+          ticketNumber: eventData.ticket_number,
+          counterName: eventData.counter_name,
+          timestamp: new Date().toISOString()
+        });
+        
+        // ✅ TTS announcement if available
+        if (ttsService) {
+          try {
+            await ttsService.queueAnnouncement(
+              counterId,
+              eventData.ticket_number,
+              1, // First attempt
+              'manual', // Source type: manual (từ WebSocket)
+              new Date().toISOString()
+            );
+          } catch (error) {
+            console.warn('⚠️ TTS announcement failed:', error);
           }
         }
-      };
+        
+        // Auto-hide announcement after 10 seconds
+        setTimeout(() => setAnnouncement(null), 10000);
+        
+      } else {
+        console.warn('⚠️ Invalid ticket_called data:', { counterId, ticketNumber: eventData.ticket_number, counterName: eventData.counter_name });
+      }
       
-      // Start polling
-      pollInterval = setTimeout(pollData, basePollInterval);
+      // Refresh queue data sau khi gọi vé (waiting tickets will be updated)
+      await fetchAndProcessQueueData(false);
     };
     
-    startPolling();
+    // Start WebSocket connection
+    connectWebSocket();
     
-    // Listen for queue updates
+    // Listen for queue updates (WebSocket-first approach)
     const handleQueueUpdate = () => {
       console.log('🔔 Queue update event received, refreshing...');
-      fetchAndProcessQueueData(false); // No loading for event-triggered updates
+      if (!wsConnected) {
+        fetchAndProcessQueueData(false); // Only refresh if not using WebSocket
+      }
     };
     
-    // Listen for counter status updates
+    // Listen for counter status updates (WebSocket-first approach)
     const handleCounterStatusUpdate = () => {
       console.log('🔔 Counter status update event received, refreshing...');
-      fetchAndProcessQueueData(false); // No loading for event-triggered updates
+      if (!wsConnected) {
+        fetchAndProcessQueueData(false); // Only refresh if not using WebSocket
+      }
     };
     
-    // Listen for call-next events from officer interface
+    // Listen for call-next events from officer interface (always refresh)
     const handleCallNextEvent = (event: CustomEvent) => {
       console.log('🔔 Call-next event received:', event.detail);
-      // Immediate refresh when officer calls next
-      fetchAndProcessQueueData(false); // No loading for officer actions
+      // Always refresh for officer actions (immediate feedback)
+      fetchAndProcessQueueData(false);
+    };
+    
+    // ✅ BACKUP: Listen for ticket called events from test-queue (fallback)
+    const handleTicketCalledFromTestQueue = (event: CustomEvent) => {
+      console.log('🔔 Backup: Ticket called event from test-queue:', event.detail);
+      
+      const { ticket_number, counter_name, counter_id } = event.detail;
+      
+      // Parse counter ID
+      const counterId = counter_id || getCounterIdFromName(counter_name);
+      
+      if (counterId && ticket_number) {
+        // ✅ Store serving ticket in WebSocket state (backup source)
+        const servingTicket = {
+          number: ticket_number,
+          counter_name: counter_name,
+          called_at: new Date().toISOString(),
+          source: 'custom-event-backup'
+        };
+        
+        console.log(`🎯 TV storing serving ticket from test-queue backup for counter ${counterId}:`, servingTicket);
+        
+        // ✅ Update WebSocket serving tickets state (backup)
+        setWsServingTickets(prev => {
+          const newState = {
+            ...prev,
+            [counterId]: servingTicket
+          };
+          console.log('📺 TV WebSocket serving state updated from backup:', {
+            counterId,
+            ticket: servingTicket,
+            newState
+          });
+          return newState;
+        });
+        
+        // Show announcement
+        setAnnouncement({
+          ticketNumber: ticket_number,
+          counterName: counter_name,
+          timestamp: new Date().toISOString()
+        });
+        
+        // Auto-hide announcement after 10 seconds
+        setTimeout(() => setAnnouncement(null), 10000);
+      }
+      
+      // Refresh queue data
+      fetchAndProcessQueueData(false);
     };
     
     // Listen for ticket announcements from WebSocket
@@ -294,10 +515,15 @@ export default function QueueDisplay() {
     window.addEventListener('callNextTriggered', handleCallNextEvent as EventListener);
     window.addEventListener('ticketAnnouncement', handleTicketAnnouncement as EventListener);
     window.addEventListener('ttsAnnouncement', handleTTSAnnouncement);
+    window.addEventListener('ticketCalled', handleTicketCalledFromTestQueue as EventListener);
     
     return () => {
-      // Cleanup polling interval
-      if (pollInterval) clearTimeout(pollInterval);
+      // Cleanup WebSocket connection
+      if (ws) {
+        console.log('🔌 Closing WebSocket connection...');
+        ws.close();
+        ws = null;
+      }
       
       // Cleanup event listeners
       window.removeEventListener('queueUpdated', handleQueueUpdate);
@@ -306,6 +532,7 @@ export default function QueueDisplay() {
       window.removeEventListener('callNextTriggered', handleCallNextEvent as EventListener);
       window.removeEventListener('ticketAnnouncement', handleTicketAnnouncement as EventListener);
       window.removeEventListener('ttsAnnouncement', handleTTSAnnouncement);
+      window.removeEventListener('ticketCalled', handleTicketCalledFromTestQueue as EventListener);
     };
   }, []); // No dependencies, setup once
 
@@ -451,16 +678,22 @@ export default function QueueDisplay() {
             Thông tin số thứ tự - {new Date().toLocaleDateString('vi-VN')}
           </p>
           
-          {/* WebSocket Status Indicator */}
+          {/* Connection Status Indicator */}
           <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm ${
-            isConnected 
+            connectionType === 'websocket' 
               ? 'bg-green-500 bg-opacity-20 text-green-300' 
+              : connectionType === 'polling'
+              ? 'bg-yellow-500 bg-opacity-20 text-yellow-300'
               : 'bg-red-500 bg-opacity-20 text-red-300'
           }`}>
             <div className={`w-2 h-2 rounded-full ${
-              isConnected ? 'bg-green-400' : 'bg-red-400'
+              connectionType === 'websocket' ? 'bg-green-400 animate-pulse' 
+              : connectionType === 'polling' ? 'bg-yellow-400'
+              : 'bg-red-400'
             }`}></div>
-            {isConnected ? 'Live' : 'Offline'}
+            {connectionType === 'websocket' && '🚀 WebSocket'}
+            {connectionType === 'polling' && '🔄 Polling'}
+            {connectionType === 'offline' && '📡 Offline'}
           </div>
         </div>
       </header>
@@ -485,20 +718,25 @@ export default function QueueDisplay() {
             </h2>
             
             <div className="space-y-4">
-              {processedCounters.map((counter) => (
-                <div key={counter.counter_id} className="bg-gray-600 bg-opacity-50 rounded-xl p-4">
-                  <div className="text-lg font-semibold text-white mb-2">
-                    QUẦY {counter.counter_id} | {counter.counter_name}:
+              {processedCounters.map((counter) => {
+                return (
+                  <div key={counter.counter_id} className="bg-gray-600 bg-opacity-50 rounded-xl p-4">
+                    <div className="text-lg font-semibold text-white mb-2">
+                      QUẦY {counter.counter_id} | {counter.counter_name}:
+                    </div>
+                    <div className="text-3xl font-bold text-white">
+                      {/* ✅ UNIFIED: Check both counter.serving_number and wsServingTickets */}
+                      {counter.serving_number || wsServingTickets[counter.counter_id] ? (
+                        <NumberAnimation 
+                          number={(counter.serving_number || wsServingTickets[counter.counter_id]?.number)?.toString() || '0'} 
+                        />
+                      ) : (
+                        <span className="text-xl text-gray-300">Chưa có số được phục vụ</span>
+                      )}
+                    </div>
                   </div>
-                  <div className="text-3xl font-bold text-white">
-                    {counter.serving_number ? (
-                      <NumberAnimation number={counter.serving_number.toString()} />
-                    ) : (
-                      <span className="text-xl text-gray-300">Chưa có số được phục vụ</span>
-                    )}
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 

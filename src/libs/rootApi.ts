@@ -334,9 +334,8 @@ export const seatsAPI = {
 // ===================================
 
 export interface CallNextResponse {
-  success: boolean;
-  ticket?: Ticket;
-  message: string;
+  number: number;
+  counter_name: string;
 }
 
 export interface PauseCounterRequest {
