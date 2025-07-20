@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
 interface PrintTicketProps {
   number: number;
@@ -10,20 +10,59 @@ interface PrintTicketProps {
   onPrintComplete?: () => void;
 }
 
-// � Enhanced kiosk-printing mode detection
-const checkKioskPrintingMode = async (): Promise<boolean> => {
+interface DebugInfo {
+  windowHeight: number;
+  screenHeight: number;
+  windowWidth: number;
+  screenWidth: number;
+  locationbarVisible: boolean | undefined;
+  menubarVisible: boolean | undefined;
+  toolbarVisible: boolean | undefined;
+  statusbarVisible: boolean | undefined;
+  isHTTPS: boolean;
+  userAgent: string;
+  isKioskInterface: boolean;
+  kioskModeDetected: boolean;
+  timestamp: string;
+  error?: string;
+}
+
+// 🔍 Enhanced kiosk-printing mode detection with debug info
+const checkKioskPrintingMode = async (updateDebug?: (info: DebugInfo) => void): Promise<boolean> => {
   try {
+    // Collect comprehensive debug information
+    const debugData: DebugInfo = {
+      windowHeight: window.outerHeight,
+      screenHeight: window.screen.height,
+      windowWidth: window.outerWidth,
+      screenWidth: window.screen.width,
+      locationbarVisible: window.locationbar?.visible,
+      menubarVisible: window.menubar?.visible,
+      toolbarVisible: window.toolbar?.visible,
+      statusbarVisible: window.statusbar?.visible,
+      isHTTPS: window.location.protocol === 'https:',
+      userAgent: navigator.userAgent,
+      isKioskInterface: false,
+      kioskModeDetected: false,
+      timestamp: new Date().toLocaleTimeString('vi-VN')
+    };
+
     // Method 1: Check window properties for kiosk mode
     const isKioskUI = () => {
       try {
-        return (
+        const isFullscreen = (
           window.outerHeight === window.screen.height &&
-          window.outerWidth === window.screen.width &&
+          window.outerWidth === window.screen.width
+        );
+        
+        const noBrowserUI = (
           (!window.locationbar || !window.locationbar.visible) &&
           (!window.menubar || !window.menubar.visible) &&
           (!window.toolbar || !window.toolbar.visible) &&
           (!window.statusbar || !window.statusbar.visible)
         );
+
+        return isFullscreen && noBrowserUI;
       } catch {
         // Fallback for browsers that don't support these properties
         return window.outerHeight === window.screen.height &&
@@ -31,103 +70,56 @@ const checkKioskPrintingMode = async (): Promise<boolean> => {
       }
     };
 
-    // Method 2: Test print behavior for silent printing capability
-    const testSilentPrint = (): Promise<boolean> => {
-      return new Promise((resolve) => {
-        let hasDialog = false;
-        let printExecuted = false;
-        
-        // Create hidden test iframe
-        const testFrame = document.createElement('iframe');
-        testFrame.style.position = 'absolute';
-        testFrame.style.left = '-9999px';
-        testFrame.style.width = '1px';
-        testFrame.style.height = '1px';
-        testFrame.style.opacity = '0';
-        
-        document.body.appendChild(testFrame);
-        
-        const frameDoc = testFrame.contentDocument || testFrame.contentWindow?.document;
-        if (!frameDoc) {
-          document.body.removeChild(testFrame);
-          resolve(false);
-          return;
-        }
+    const kioskDetected = isKioskUI();
+    debugData.isKioskInterface = kioskDetected;
+    debugData.kioskModeDetected = kioskDetected;
 
-        frameDoc.write(`
-          <html>
-            <head><title>Test</title></head>
-            <body style="display:none;">Test Print Detection</body>
-          </html>
-        `);
-        frameDoc.close();
-        
-        const startTime = Date.now();
-        
-        // Override print to detect execution behavior
-        const originalPrint = testFrame.contentWindow?.print;
-        if (testFrame.contentWindow && originalPrint) {
-          testFrame.contentWindow.print = function() {
-            printExecuted = true;
-            const executionTime = Date.now() - startTime;
-            
-            // In kiosk-printing mode, print executes immediately (< 50ms)
-            // In browser mode, print dialog causes delay (> 100ms)
-            hasDialog = executionTime > 100;
-            
-            // Cleanup and resolve
-            setTimeout(() => {
-              document.body.removeChild(testFrame);
-              resolve(!hasDialog && printExecuted);
-            }, 10);
-            
-            return originalPrint.call(this);
-          };
+    // Update debug UI if callback provided
+    if (updateDebug) {
+      updateDebug(debugData);
+    }
 
-          // Execute test print
-          setTimeout(() => {
-            try {
-              testFrame.contentWindow?.print();
-              
-              // Fallback timeout in case print doesn't execute
-              setTimeout(() => {
-                if (!printExecuted) {
-                  document.body.removeChild(testFrame);
-                  resolve(false);
-                }
-              }, 300);
-            } catch (error) {
-              document.body.removeChild(testFrame);
-              resolve(false);
-            }
-          }, 50);
-        } else {
-          document.body.removeChild(testFrame);
-          resolve(false);
-        }
-      });
-    };
+    console.log('🔍 Kiosk printing detection results:', debugData);
 
-    const isKioskInterface = isKioskUI();
-    const hasSilentPrint = await testSilentPrint();
-
-    // Additional checks
+    // Additional checks for reliable detection
     const isHTTPS = window.location.protocol === 'https:';
     const isChrome = navigator.userAgent.includes('Chrome');
     const isKioskURL = window.location.pathname.includes('/kiosk');
 
-    console.log('🔍 Kiosk printing detection results:', {
-      isKioskInterface,
-      hasSilentPrint,
+    const finalResult = kioskDetected && isHTTPS && isChrome && isKioskURL;
+
+    console.log('🎯 Final kiosk mode result:', {
+      kioskDetected,
       isHTTPS,
       isChrome,
       isKioskURL,
-      finalResult: isKioskInterface && hasSilentPrint && isHTTPS && isChrome
+      finalResult
     });
 
-    return isKioskInterface && hasSilentPrint && isHTTPS && isChrome;
+    return finalResult;
 
   } catch (error) {
+    const errorInfo: DebugInfo = {
+      windowHeight: 0,
+      screenHeight: 0,
+      windowWidth: 0,
+      screenWidth: 0,
+      locationbarVisible: undefined,
+      menubarVisible: undefined,
+      toolbarVisible: undefined,
+      statusbarVisible: undefined,
+      isHTTPS: false,
+      userAgent: '',
+      isKioskInterface: false,
+      kioskModeDetected: false,
+      timestamp: new Date().toLocaleTimeString('vi-VN'),
+      error: error instanceof Error ? error.message : 'Unknown error'
+    };
+
+    if (updateDebug) {
+      updateDebug(errorInfo);
+    }
+
     console.error('❌ Kiosk print mode detection failed:', error);
     return false;
   }
@@ -259,7 +251,7 @@ const generateThermalTicketHTML = (number: number, counterId: string, counterNam
   `;
 };
 
-// �️ Silent printing for kiosk mode using iframe method
+// 🖨️ Silent printing for kiosk mode using iframe method
 const performSilentPrint = async (number: number, counterId: string, counterName: string, timeString: string, dateString: string): Promise<void> => {
   try {
     console.log('🖨️ Performing silent thermal print...');
@@ -320,7 +312,7 @@ const performSilentPrint = async (number: number, counterId: string, counterName
   }
 };
 
-// �️ Fallback browser print with enhanced thermal layout
+// 🖨️ Fallback browser print with enhanced thermal layout
 const performBrowserPrint = async (number: number, counterId: string, counterName: string, timeString: string, dateString: string): Promise<void> => {
   try {
     console.log('🖨️ Performing browser print with dialog...');
@@ -363,7 +355,7 @@ const performBrowserPrint = async (number: number, counterId: string, counterNam
 };
 
 // 🎯 Main print handler
-const handlePrint = async (number: number, counterId: string, counterName: string, onComplete?: () => void) => {
+const handlePrint = async (number: number, counterId: string, counterName: string, onComplete?: () => void, updateDebug?: (info: DebugInfo) => void) => {
   try {
     const now = new Date();
     const timeString = now.toLocaleTimeString('vi-VN', {
@@ -381,7 +373,7 @@ const handlePrint = async (number: number, counterId: string, counterName: strin
     console.log('📄 Ticket details:', { number, counterName, counterId, timeString, dateString });
 
     // Check if in kiosk-printing mode
-    const isKioskPrintMode = await checkKioskPrintingMode();
+    const isKioskPrintMode = await checkKioskPrintingMode(updateDebug);
     
     if (isKioskPrintMode) {
       console.log('🏛️ Kiosk printing mode detected - performing silent print');
@@ -406,7 +398,7 @@ const handlePrint = async (number: number, counterId: string, counterName: strin
   }
 };
 
-// 🎯 PrintTicket React Component
+// 🎯 PrintTicket React Component with Debug UI
 const PrintTicket: React.FC<PrintTicketProps> = ({ 
   number, 
   counterId, 
@@ -415,38 +407,122 @@ const PrintTicket: React.FC<PrintTicketProps> = ({
   onPrintComplete 
 }) => {
   
+  const [debugInfo, setDebugInfo] = useState<DebugInfo | null>(null);
+  const [isKioskMode, setIsKioskMode] = useState<boolean | null>(null);
+  const [showDebug, setShowDebug] = useState<boolean>(false);
+
+  // Debug info updater
+  const updateDebugInfo = (info: DebugInfo) => {
+    setDebugInfo(info);
+    setIsKioskMode(info.kioskModeDetected);
+    console.log('🔍 Debug Info Updated:', info);
+  };
+
   // 🖨️ Handle print button click
   const handlePrintClick = async () => {
     try {
-      await handlePrint(number, counterId, counterName, onPrintComplete);
+      await handlePrint(number, counterId, counterName, onPrintComplete, updateDebugInfo);
     } catch (error) {
       console.error('Print failed:', error);
     }
   };
 
-  // � Auto-print on component mount if autoPrint is true
-  React.useEffect(() => {
+  // 🔄 Auto-print on component mount if autoPrint is true
+  useEffect(() => {
     if (autoPrint) {
       handlePrintClick();
     }
   }, [autoPrint, number, counterId, counterName]);
 
-  // 🎨 Render print button UI
+  // 🔍 Test kiosk detection on component mount
+  useEffect(() => {
+    checkKioskPrintingMode(updateDebugInfo);
+  }, []);
+
+  // 🎨 Render print button UI with debug panel
   return (
-    <button
-      onClick={handlePrintClick}
-      className="kiosk-card bg-red-600 hover:bg-red-700 text-white transition-colors duration-200 cursor-pointer"
-      disabled={!number || !counterId || !counterName}
-    >
-      <div className="flex flex-col items-center justify-center h-full p-6">
-        <div className="text-6xl mb-4">🖨️</div>
-        <div className="text-2xl font-bold text-center mb-2">In số thứ tự</div>
-        <div className="text-lg opacity-90">Vé #{number}</div>
-        <div className="text-sm opacity-75 mt-2">
-          {counterName} - Quầy {counterId}
+    <div className="flex flex-col">
+      {/* Main Print Button */}
+      <button
+        onClick={handlePrintClick}
+        className="kiosk-card bg-red-600 hover:bg-red-700 text-white transition-colors duration-200 cursor-pointer mb-4"
+        disabled={!number || !counterId || !counterName}
+      >
+        <div className="flex flex-col items-center justify-center h-full p-6">
+          <div className="text-6xl mb-4">🖨️</div>
+          <div className="text-2xl font-bold text-center mb-2">In số thứ tự</div>
+          <div className="text-lg opacity-90">Vé #{number}</div>
+          <div className="text-sm opacity-75 mt-2">
+            {counterName} - Quầy {counterId}
+          </div>
         </div>
-      </div>
-    </button>
+      </button>
+
+      {/* Debug Toggle Button */}
+      <button
+        onClick={() => setShowDebug(!showDebug)}
+        className="mb-4 px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg text-sm transition-colors"
+      >
+        {showDebug ? '🔽 Ẩn Debug' : '🔍 Hiện Debug Info'}
+      </button>
+
+      {/* Debug Info Panel */}
+      {showDebug && debugInfo && (
+        <div className="bg-gray-100 border-2 border-gray-300 rounded-lg p-4 text-xs font-mono">
+          {/* Status Indicator */}
+          <div className="flex items-center mb-4">
+            <span className={`inline-block w-4 h-4 rounded-full mr-3 ${
+              isKioskMode === true ? 'bg-green-500' : 
+              isKioskMode === false ? 'bg-red-500' : 'bg-yellow-500'
+            }`}></span>
+            <span className="font-bold text-lg">
+              {isKioskMode === true ? '✅ Kiosk Mode Active' : 
+               isKioskMode === false ? '❌ Browser Mode' : '🔄 Detecting...'}
+            </span>
+          </div>
+
+          {/* Debug Details */}
+          <div className="space-y-2">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <strong>🖥️ Window Size:</strong><br/>
+                {debugInfo.windowWidth} x {debugInfo.windowHeight}
+              </div>
+              <div>
+                <strong>📺 Screen Size:</strong><br/>
+                {debugInfo.screenWidth} x {debugInfo.screenHeight}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <strong>🔒 HTTPS:</strong> {debugInfo.isHTTPS ? '✅' : '❌'}
+              </div>
+              <div>
+                <strong>🌐 Chrome:</strong> {debugInfo.userAgent.includes('Chrome') ? '✅' : '❌'}
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <div><strong>📍 Location Bar:</strong> {debugInfo.locationbarVisible ? '👁️ Visible' : '🚫 Hidden'}</div>
+              <div><strong>📋 Menu Bar:</strong> {debugInfo.menubarVisible ? '👁️ Visible' : '🚫 Hidden'}</div>
+              <div><strong>🔧 Tool Bar:</strong> {debugInfo.toolbarVisible ? '👁️ Visible' : '🚫 Hidden'}</div>
+              <div><strong>📊 Status Bar:</strong> {debugInfo.statusbarVisible ? '👁️ Visible' : '🚫 Hidden'}</div>
+            </div>
+
+            <div className="border-t pt-2 mt-3">
+              <strong>🕐 Last Check:</strong> {debugInfo.timestamp}
+            </div>
+
+            {debugInfo.error && (
+              <div className="border-t pt-2 mt-3 text-red-600">
+                <strong>❌ Error:</strong> {debugInfo.error}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
   );
 };
 
