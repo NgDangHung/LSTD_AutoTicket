@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
+import { rootApi } from '@/libs/rootApi';
 import { BarChart2, UserCheck, Clock, Hourglass, Slash } from "lucide-react";
 
 // Helper function to format date as yyyy-MM-dd
@@ -21,12 +21,14 @@ export default function Dashboard() {
   useEffect(() => {
     async function fetchData() {
       try {
+        const authToken = sessionStorage.getItem('auth_token');
+        const headers = authToken ? { Authorization: `Bearer ${authToken}` } : {};
         const [tickets, attended, avgTime, waitTime, absentTime] = await Promise.all([
-          axios.get(`https://detect-seat.onrender.com/stats/tickets-per-counter`, { params: { start_date: startDate, end_date: endDate } }),
-          axios.get(`https://detect-seat.onrender.com/stats/attended-tickets`, { params: { start_date: startDate, end_date: endDate } }),
-          axios.get(`https://detect-seat.onrender.com/stats/average-handling-time`, { params: { start_date: startDate, end_date: endDate } }),
-          axios.get(`https://detect-seat.onrender.com/stats/average-waiting-time`, { params: { start_date: startDate, end_date: endDate } }),
-          axios.get(`https://detect-seat.onrender.com/stats/afk-duration`, { params: { start_date: startDate, end_date: endDate } }),
+          rootApi.get('/stats/tickets-per-counter', { params: { start_date: startDate, end_date: endDate }, headers }),
+          rootApi.get('/stats/attended-tickets', { params: { start_date: startDate, end_date: endDate }, headers }),
+          rootApi.get('/stats/average-handling-time', { params: { start_date: startDate, end_date: endDate }, headers }),
+          rootApi.get('/stats/average-waiting-time', { params: { start_date: startDate, end_date: endDate }, headers }),
+          rootApi.get('/stats/afk-duration', { params: { start_date: startDate, end_date: endDate }, headers }),
         ]);
 
         setData({

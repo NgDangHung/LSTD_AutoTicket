@@ -408,6 +408,65 @@ export const countersAPI = {
 };
 
 // ===================================
+// 📊 Stats Dashboard APIs (/stats/)
+// ===================================
+
+export interface CounterStats {
+  counter_id: number;
+  total_tickets?: number;
+  attended_tickets?: number;
+  avg_handling_time_seconds?: number;
+  avg_waiting_time_seconds?: number;
+  total_afk_seconds?: number;
+  started_at?: string;
+  ended_at?: string;
+}
+
+export const statsDashboardAPI = {
+  /**
+   * 🟢 [GET] /stats/tickets-per-counter
+   * Tổng số vé đã phát theo từng quầy
+   */
+  getTicketsPerCounter: (params?: { start_date?: string; end_date?: string }) =>
+    rootApi.get('/stats/tickets-per-counter', { params }).then(res => res.data),
+
+  /**
+   * 🟢 [GET] /stats/attended-tickets
+   * Số vé đã tiếp nhận theo từng quầy
+   */
+  getAttendedTickets: (params?: { start_date?: string; end_date?: string }) =>
+    rootApi.get('/stats/attended-tickets', { params }).then(res => res.data),
+
+  /**
+   * 🟢 [GET] /stats/average-handling-time
+   * Thời gian xử lý trung bình từng quầy
+   */
+  getAverageHandlingTime: (params?: { start_date?: string; end_date?: string }) =>
+    rootApi.get('/stats/average-handling-time', { params }).then(res => res.data),
+
+  /**
+   * 🟢 [GET] /stats/average-waiting-time
+   * Thời gian chờ trung bình từng quầy
+   */
+  getAverageWaitingTime: (params?: { start_date?: string; end_date?: string }) =>
+    rootApi.get('/stats/average-waiting-time', { params }).then(res => res.data),
+
+  /**
+   * 🟢 [GET] /stats/afk-duration
+   * Tổng thời gian vắng mặt từng quầy
+   */
+  getAfkDuration: (params?: { start_date?: string; end_date?: string }) =>
+    rootApi.get('/stats/afk-duration', { params }).then(res => res.data),
+
+  /**
+   * 🟢 [GET] /stats/working-time-check
+   * Giờ làm việc từng quầy trong ngày
+   */
+  getWorkingTimeCheck: (params?: { date_check?: string }) =>
+    rootApi.get('/stats/working-time-check', { params }).then(res => res.data),
+};
+
+// ===================================
 // 🔧 Utility Functions
 // ===================================
 
@@ -444,6 +503,7 @@ export const officialAPI = {
   tickets: ticketsAPI,
   seats: seatsAPI,
   counters: countersAPI,
+  stats: statsDashboardAPI,
 };
 
 // Default export for convenience

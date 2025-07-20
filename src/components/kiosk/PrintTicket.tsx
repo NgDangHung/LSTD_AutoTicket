@@ -1,3 +1,8 @@
+declare global {
+  interface Window {
+    qz?: any;
+  }
+}
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -19,35 +24,7 @@ const PrintTicket: React.FC<PrintTicketProps> = ({
 }) => {
   const [printStatus, setPrintStatus] = useState<string>('');
 
-  // 🔍 Enhanced kiosk detection với force mode
-  const checkKioskPrintingMode = async (): Promise<boolean> => {
-    try {
-      // Force kiosk mode nếu fullscreen và URL có /kiosk
-      const isFullscreen = window.outerHeight === window.screen.height &&
-                          window.outerWidth === window.screen.width;
-      const isKioskRoute = window.location.pathname.includes('/kiosk');
-      const hasKioskFlags = !window.locationbar?.visible && 
-                           !window.menubar?.visible && 
-                           !window.toolbar?.visible;
-
-      const forceKioskMode = isFullscreen && isKioskRoute && hasKioskFlags;
-
-      console.log('🔍 Print Mode Detection:', {
-        isFullscreen,
-        isKioskRoute,
-        hasKioskFlags,
-        forceKioskMode,
-        windowSize: `${window.outerWidth}x${window.outerHeight}`,
-        screenSize: `${window.screen.width}x${window.screen.height}`
-      });
-
-      return forceKioskMode;
-
-    } catch (error) {
-      console.error('❌ Kiosk detection failed:', error);
-      return false;
-    }
-  };
+  // ...removed kiosk detection logic...
 
   // 🖨️ Generate thermal HTML với enhanced debugging
   const generateThermalTicketHTML = (timeString: string, dateString: string): string => {
@@ -177,47 +154,50 @@ const PrintTicket: React.FC<PrintTicketProps> = ({
     return ticketHTML;
   };
 
-  // 🖨️ Force silent print cho kiosk
-  const performSilentPrint = async (timeString: string, dateString: string): Promise<void> => {
+  // 🖨️ In vé bằng QZ Tray (chỉ chạy ở client)
+  const loadQZTrayScripts = () => {
+    // Chỉ load nếu chưa có window.qz
+    if (typeof window !== 'undefined' && !window.qz) {
+      const scriptQZ = document.createElement('script');
+      scriptQZ.src = '/src/components/kiosk/qz-tray.js';
+      scriptQZ.async = false;
+      document.body.appendChild(scriptQZ);
+
+      const scriptSign = document.createElement('script');
+      scriptSign.src = '/src/components/kiosk/sign-message.js';
+      scriptSign.async = false;
+      document.body.appendChild(scriptSign);
+    }
+  };
+
+  const performQZTrayPrint = async (timeString: string, dateString: string): Promise<void> => {
     try {
-      setPrintStatus('🖨️ Chuẩn bị in im lặng...');
-      console.log('🖨️ Starting silent thermal print process...');
+      if (typeof window === 'undefined' || !window.qz) {
+        setPrintStatus('❌ QZ Tray chưa sẵn sàng hoặc không hỗ trợ trên server');
+        return;
+      }
+      setPrintStatus('🖨️ Đang kết nối QZ Tray...');
+      if (!window.qz.websocket.isActive()) {
+        await window.qz.websocket.connect();
+      }
 
-      const thermalHTML = generateThermalTicketHTML(timeString, dateString);
-      
-      // Method 1: Direct window.print() với current page replacement
-      const originalContent = document.body.innerHTML;
-      const originalTitle = document.title;
-      
-      console.log('📄 Replacing page content for thermal printing...');
-      document.title = `Vé ${number} - ${counterName}`;
-      document.body.innerHTML = thermalHTML;
-
-      setPrintStatus('🖨️ Đang gửi lệnh in...');
-      
-      // Execute print
-      window.print();
-      
-      console.log('✅ Print command executed successfully');
-      setPrintStatus('✅ Đã gửi lệnh in thành công');
-
-      // Restore content after print
-      setTimeout(() => {
-        console.log('🔄 Restoring original content...');
-        document.body.innerHTML = originalContent;
-        document.title = originalTitle;
-        setPrintStatus('✅ Hoàn tất in vé');
-        
-        onPrintComplete?.();
-        
-        // Clear status after 3 seconds
-        setTimeout(() => setPrintStatus(''), 3000);
-      }, 1000);
-
-    } catch (error) {
-      console.error('❌ Silent print failed:', error);
-      setPrintStatus(`❌ Lỗi in: ${error instanceof Error ? error.message : 'Unknown error'}`);
-      throw error;
+      setPrintStatus('🖨️ Đang gửi lệnh in qua QZ Tray...');
+      const ticketHTML = generateThermalTicketHTML(timeString, dateString);
+      const config = window.qz.configs.create('W80', {
+        encoding: 'RAW',
+        copies: 1,
+        rasterize: true
+      });
+      const data = [
+        { type: 'html', format: 'plain', data: ticketHTML }
+      ];
+      await window.qz.print(config, data);
+      setPrintStatus('✅ Đã gửi lệnh in thành công qua QZ Tray');
+      onPrintComplete?.();
+      setTimeout(() => setPrintStatus(''), 3000);
+    } catch (err) {
+      setPrintStatus('❌ Lỗi in QZ Tray: ' + (err instanceof Error ? err.message : String(err)));
+      console.error(err);
     }
   };
 
@@ -252,7 +232,7 @@ const PrintTicket: React.FC<PrintTicketProps> = ({
     }
   };
 
-  // 🎯 Main print handler với enhanced logging
+  // 🎯 Main print handler: in qua QZ Tray
   const handlePrint = async () => {
     try {
       const now = new Date();
@@ -267,54 +247,22 @@ const PrintTicket: React.FC<PrintTicketProps> = ({
         year: 'numeric'
       });
 
-      console.log('🎯 ===========================================');
-      console.log('🎯 STARTING PRINT PROCESS');
-      console.log('🎯 ===========================================');
-      console.log('📋 Ticket Details:', {
-        number,
-        counterName,
-        counterId,
-        timeString,
-        dateString,
-        timestamp: now.toISOString()
-      });
-
-      setPrintStatus('🔍 Kiểm tra chế độ kiosk...');
-
-      // Enhanced kiosk detection
-      const isKioskMode = await checkKioskPrintingMode();
-      
-      console.log('🔍 Print mode decision:', {
-        isKioskMode,
-        willUseSilentPrint: isKioskMode,
-        reason: isKioskMode ? 'Kiosk mode detected - using silent print' : 'Browser mode - using print dialog'
-      });
-
-      if (isKioskMode) {
-        console.log('🏛️ KIOSK MODE: Performing silent thermal print');
-        setPrintStatus('🏛️ Chế độ kiosk - In im lặng');
-        await performSilentPrint(timeString, dateString);
-      } else {
-        console.log('🖥️ BROWSER MODE: Opening print dialog');
-        setPrintStatus('🖥️ Chế độ browser - Mở hộp thoại in');
-        await performBrowserPrint(timeString, dateString);
-      }
-
-      console.log('🎯 ===========================================');
-      console.log('🎯 PRINT PROCESS COMPLETED');
-      console.log('🎯 ===========================================');
-
+      await performQZTrayPrint(timeString, dateString);
     } catch (error) {
-      console.error('💥 PRINT PROCESS FAILED:', error);
       setPrintStatus(`💥 Lỗi nghiêm trọng: ${error instanceof Error ? error.message : 'Unknown error'}`);
-      
       if (typeof window !== 'undefined' && window.alert) {
         window.alert(`Lỗi in vé: ${error instanceof Error ? error.message : 'Unknown error'}\nVui lòng thử lại hoặc liên hệ nhân viên hỗ trợ.`);
       }
     }
   };
 
-  // 🔄 Auto-print on component mount if autoPrint is true
+  // 🔄 Auto-load QZ Tray scripts và auto-print khi mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      loadQZTrayScripts();
+    }
+  }, []);
+
   useEffect(() => {
     if (autoPrint) {
       handlePrint();
