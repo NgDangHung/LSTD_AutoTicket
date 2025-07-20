@@ -120,7 +120,7 @@ export default function VirtualKeyboard({
   if (!isVisible) return null;
 
   return (
-    <div className="fixed inset-0 keyboard-overlay flex items-end justify-center z-50">
+    <div className="fixed inset-0 keyboard-overlay flex items-center justify-center z-50">
       <div 
         ref={keyboardContainerRef}
         className={`bg-white rounded-t-2xl p-6 w-full max-w-5xl keyboard-slide-up shadow-2xl ${

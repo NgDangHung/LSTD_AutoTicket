@@ -502,10 +502,10 @@ export default function KioskMainScreen() {
               unoptimized
             />
             <div style={{ marginLeft: '30px' }}>
-              <h1 className="text-4xl font-bold text-white-800 mb-4" style={{ lineHeight: '1.5' }}>
+              <h1 className="text-4xl font-bold text-white mb-4" style={{ lineHeight: '1.5' }}>
                 TRUNG TÂM PHỤC VỤ HÀNH CHÍNH CÔNG PHƯỜNG HÀ GIANG 1
               </h1>
-              <h2 className="text-3xl text-white-600">
+              <h2 className="text-3xl text-white">
                 Hành chính phục vụ
               </h2>
             </div>
@@ -632,35 +632,35 @@ export default function KioskMainScreen() {
             )}
             
             <div 
-              className="service-grid-container grid grid-cols-1 md:grid-cols-2 gap-6 mb-12 overflow-y-auto p-4 border rounded-lg bg-white/50 backdrop-blur-sm"
-              style={{ 
-                maxWidth: '800px', // Reduced width for 2 columns
-                maxHeight: '500px' // Increased height for portrait layout
-              }}
+              className="service-grid-container grid grid-cols-2 gap-6 overflow-y-auto p-4 border rounded-lg bg-white/50 backdrop-blur-sm w-[1000px] h-[1100px]"
+              // style={{ 
+              //   maxWidth: '800px', // Reduced width for 2 columns
+              //   maxHeight: '500px' // Increased height for portrait layout
+              // }}
             >
               {filteredCounters.map((counter) => (
                 <div
                   key={counter.id}
                   onClick={() => handleCounterSelect(counter)}
-                  className="kiosk-card relative shadow transition-all duration-200 min-h-[180px] cursor-pointer hover:shadow-lg hover:scale-105"
+                  className="flex flex-direction: column items-center justify-center text-center kiosk-card relative shadow transition-all duration-200 min-h-[220px] min-w-[220px] cursor-pointer hover:shadow-lg hover:scale-105"
                 >
                   {/* Counter Icon */}
-                  <div className="text-center mb-3">
+                  {/* <div className="text-center mb-3">
                     <div className="text-4xl">
                       {counter.icon}
                     </div>
-                  </div>
+                  </div> */}
                   
                   {/* Counter Name */}
-                  <h3 className="text-xl font-semibold text-center mb-4 text-gray-800">
+                  <h3 className="text-4xl font-semibold text-center mb-4 text-gray-800">
                     {counter.name}
                   </h3>
                   
                   {/* Counter Number */}
                   <div className="text-center absolute bottom-5 left-1/2 transform -translate-x-1/2">
                     <div className="inline-flex items-center gap-2 font-bold text-lg text-blue-600">
-                      <Printer size={18} />
-                      Quầy {counter.id}
+                      <Printer size={36} />
+                      <h1 className='text-3xl'>Quầy {counter.id}</h1>
                     </div>
                   </div>
                   
@@ -680,7 +680,7 @@ export default function KioskMainScreen() {
         )}
 
         {/* Footer Info */}
-        <div className="text-center text-gray-600">
+        <div className="text-center text-gray-600 mt-12">
           <p className="text-lg mb-2">
             🕐 Giờ làm việc: Thứ 2 - Thứ 6: 8:00 - 17:00
           </p>
