@@ -365,3 +365,120 @@ INSERT INTO users (username, full_name, role, counter_id) VALUES
 ('officer3', 'Nhân viên Quầy 3', 'officer', 3),
 ('officer4', 'Nhân viên Quầy 4', 'officer', 4);
 ```
+
+Tài liệu API Thống kê (Stats APIs - API cho Dashboard)
+Tất cả các API trong nhóm Stats đều sử dụng phương thức GET và trả về dữ liệu dưới dạng application/json.
+________________________________________
+1. /stats/tickets-per-counter
+Mô tả: Lấy tổng số vé đã phát theo từng quầy.
+🟢 Method: GET
+🔸 Query Params:
+Tên	Kiểu dữ liệu	Mô tả	Bắt buộc
+start_date	string (date)	Ngày bắt đầu (format: YYYY-MM-DD)	Không
+end_date	string (date)	Ngày kết thúc (format: YYYY-MM-DD)	Không
+🔁 Response:
+json
+Sao chépChỉnh sửa
+[
+  {
+    "counter_id": 1,
+    "total_tickets": 150
+  },
+  ...
+]
+________________________________________
+2. /stats/attended-tickets
+Mô tả: Lấy số vé đã tiếp nhận (gọi thành công) theo từng quầy.
+🟢 Method: GET
+🔸 Query Params:
+Tên	Kiểu dữ liệu	Mô tả	Bắt buộc
+start_date	string (date)	Ngày bắt đầu	Không
+end_date	string (date)	Ngày kết thúc	Không
+🔁 Response:
+json
+Sao chépChỉnh sửa
+[
+  {
+    "counter_id": 1,
+    "attended_tickets": 120
+  },
+  ...
+]
+________________________________________
+3. /stats/average-handling-time
+Mô tả: Lấy thời gian xử lý trung bình của từng quầy.
+🟢 Method: GET
+🔸 Query Params:
+Tên	Kiểu dữ liệu	Mô tả	Bắt buộc
+start_date	string (date)	Ngày bắt đầu	Không
+end_date	string (date)	Ngày kết thúc	Không
+🔁 Response:
+json
+Sao chépChỉnh sửa
+[
+  {
+    "counter_id": 1,
+    "avg_handling_time_seconds": 65.4
+  },
+  ...
+]
+________________________________________
+4. /stats/average-waiting-time
+Mô tả: Lấy thời gian chờ trung bình của người dân ở mỗi quầy.
+🟢 Method: GET
+🔸 Query Params:
+Tên	Kiểu dữ liệu	Mô tả	Bắt buộc
+start_date	string (date)	Ngày bắt đầu	Không
+end_date	string (date)	Ngày kết thúc	Không
+🔁 Response:
+json
+Sao chépChỉnh sửa
+[
+  {
+    "counter_id": 1,
+    "avg_waiting_time_seconds": 30.2
+  },
+  ...
+]
+________________________________________
+5. /stats/afk-duration
+Mô tả: Lấy tổng thời gian "vắng mặt" (AFK) theo từng quầy.
+🟢 Method: GET
+🔸 Query Params:
+Tên	Kiểu dữ liệu	Mô tả	Bắt buộc
+start_date	string (date)	Ngày bắt đầu	Không
+end_date	string (date)	Ngày kết thúc	Không
+🔁 Response:
+json
+Sao chépChỉnh sửa
+[
+  {
+    "counter_id": 1,
+    "total_afk_seconds": 3200
+  },
+  ...
+]
+________________________________________
+6. /stats/working-time-check
+Mô tả: Kiểm tra giờ làm việc (có đi làm đúng ca hay không) trong ngày.
+🟢 Method: GET
+🔸 Query Params:
+Tên	Kiểu dữ liệu	Mô tả	Bắt buộc
+date_check	string (date)	Ngày kiểm tra (YYYY-MM-DD)	Không
+🔁 Response:
+json
+Sao chépChỉnh sửa
+[
+  {
+    "counter_id": 1,
+    "started_at": "08:01:12",
+    "ended_at": "16:59:00"
+  },
+  ...
+]
+(Trường hợp schema đầy đủ có thể thêm vào phần này)
+________________________________________
+🛑 Lưu ý chung:
+•	Tất cả các thời gian được tính bằng giây.
+•	Các endpoint có thể dùng kết hợp start_date và end_date để lọc dữ liệu theo khoảng thời gian cụ thể.
+•	Nếu không truyền start_date và end_date, hệ thống sẽ lấy dữ liệu theo mặc định (có thể là ngày hiện tại hoặc toàn bộ).
