@@ -494,7 +494,7 @@ export default function KioskMainScreen() {
         >
           <div className="flex items-center gap-2">
             <Image 
-              src="/images/Logo_vang.png" 
+              src="/images/logo_vang.png" 
               alt="Logo Ban Gốc" 
               width={240}
               height={240}
