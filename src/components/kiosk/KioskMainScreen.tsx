@@ -327,20 +327,8 @@ export default function KioskMainScreen() {
 
   // ✅ Enhanced handleCounterSelect using API search data
   const handleCounterSelect = (counter: typeof counters[0]) => {
-    // Check if counter is active - Fix: Only check status field
-    if (counter.status === 'paused' || counter.status === 'offline') {
-      toast.warn(
-        <div>
-          <div>⚠️ Quầy hiện không khả dụng</div>
-          <div>🏢 {counter.name}</div>
-          <div>📊 Trạng thái: {
-            counter.status === 'paused' ? 'Tạm dừng' : 'Ngừng hoạt động'
-          }</div>
-        </div>,
-        { position: "top-center", autoClose: 3000 }
-      );
-      return;
-    }
+    // ✅ REMOVED: Pause/offline check - Allow selection of all counters per new logic
+    // People can still select paused counters and get tickets into queue
     
     // ✅ If in search mode, find matching procedure from API results
     if (isSearchMode && searchResults.length > 0) {
@@ -652,54 +640,24 @@ export default function KioskMainScreen() {
               {filteredCounters.map((counter) => (
                 <div
                   key={counter.id}
-                  onClick={() => counter.status === 'active' ? handleCounterSelect(counter) : null}
-                  className={`kiosk-card relative shadow transition-all duration-200 min-h-[180px] ${
-                    counter.status === 'paused' || counter.status === 'offline'
-                      ? 'opacity-50 cursor-not-allowed bg-gray-100' 
-                      : 'cursor-pointer hover:shadow-lg hover:scale-105'
-                  }`}
+                  onClick={() => handleCounterSelect(counter)}
+                  className="kiosk-card relative shadow transition-all duration-200 min-h-[180px] cursor-pointer hover:shadow-lg hover:scale-105"
                 >
-                  {/* Status Badge */}
-                  {(counter.status === 'paused' || counter.status === 'offline') && (
-                    <div className="absolute top-2 right-2 z-10">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        counter.status === 'paused' 
-                          ? 'bg-orange-100 text-orange-800 border border-orange-200' 
-                          : 'bg-red-100 text-red-800 border border-red-200'
-                      }`}>
-                        {counter.status === 'paused' ? '⏸️ Tạm dừng' : '❌ Không hoạt động'}
-                      </span>
-                    </div>
-                  )}
-                  
-                  {/* Active Status Badge */}
-                  {counter.status === 'active' && (
-                    <div className="absolute top-2 right-2 z-10">
-                      <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 border border-green-200">
-                        ✅ Hoạt động
-                      </span>
-                    </div>
-                  )}
-                  
                   {/* Counter Icon */}
                   <div className="text-center mb-3">
-                    <div className={`text-4xl ${counter.status !== 'active' ? 'grayscale' : ''}`}>
+                    <div className="text-4xl">
                       {counter.icon}
                     </div>
                   </div>
                   
                   {/* Counter Name */}
-                  <h3 className={`text-xl font-semibold text-center mb-4 ${
-                    counter.status !== 'active' ? 'text-gray-500' : 'text-gray-800'
-                  }`}>
+                  <h3 className="text-xl font-semibold text-center mb-4 text-gray-800">
                     {counter.name}
                   </h3>
                   
                   {/* Counter Number */}
                   <div className="text-center absolute bottom-5 left-1/2 transform -translate-x-1/2">
-                    <div className={`inline-flex items-center gap-2 font-bold text-lg ${
-                      counter.status !== 'active' ? 'text-gray-400' : 'text-blue-600'
-                    }`}>
+                    <div className="inline-flex items-center gap-2 font-bold text-lg text-blue-600">
                       <Printer size={18} />
                       Quầy {counter.id}
                     </div>

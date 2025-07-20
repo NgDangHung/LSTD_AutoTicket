@@ -39,10 +39,10 @@ export default function ConfirmCounter({ service, serviceId, selectedProcedure, 
       // Use procedure data passed from parent
       setCounters(selectedProcedure.counters);
       
-      // Auto-select first active counter
-      const firstActiveCounter = selectedProcedure.counters.find(c => c.status === 'active');
-      if (firstActiveCounter) {
-        setSelectedCounter(firstActiveCounter.id.toString());
+      // ✅ UPDATED: Auto-select first counter (any status) instead of only active
+      const firstCounter = selectedProcedure.counters[0];
+      if (firstCounter) {
+        setSelectedCounter(firstCounter.id.toString());
       }
       
       console.log('✅ Using selected procedure counters:', selectedProcedure.counters);
@@ -62,10 +62,10 @@ export default function ConfirmCounter({ service, serviceId, selectedProcedure, 
         if (targetProcedure && targetProcedure.counters) {
           setCounters(targetProcedure.counters);
           
-          // Auto-select first active counter
-          const firstActiveCounter = targetProcedure.counters.find(c => c.status === 'active');
-          if (firstActiveCounter) {
-            setSelectedCounter(firstActiveCounter.id.toString());
+          // ✅ UPDATED: Auto-select first counter (any status) instead of only active
+          const firstCounter = targetProcedure.counters[0];
+          if (firstCounter) {
+            setSelectedCounter(firstCounter.id.toString());
           }
         }
       } else {
@@ -83,24 +83,24 @@ export default function ConfirmCounter({ service, serviceId, selectedProcedure, 
         });
         setCounters(allCounters);
         
-        // Auto-select first active counter
-        const firstActiveCounter = allCounters.find(c => c.status === 'active');
-        if (firstActiveCounter) {
-          setSelectedCounter(firstActiveCounter.id.toString());
+        // ✅ UPDATED: Auto-select first counter (any status) instead of only active
+        const firstCounter = allCounters[0];
+        if (firstCounter) {
+          setSelectedCounter(firstCounter.id.toString());
         }
       }
     }
   }, [procedures, serviceId, selectedProcedure]);
 
   const handleConfirm = () => {
-    // Use the auto-selected counter (first active counter)
+    // Use the auto-selected counter (first counter regardless of status)
     if (selectedCounter) {
       onConfirm(selectedCounter);
     } else {
-      // Fallback: find first active counter
-      const firstActiveCounter = counters.find(c => c.status === 'active');
-      if (firstActiveCounter) {
-        onConfirm(firstActiveCounter.id.toString());
+      // ✅ UPDATED: Fallback - find first counter (any status) instead of only active
+      const firstCounter = counters[0];
+      if (firstCounter) {
+        onConfirm(firstCounter.id.toString());
       }
     }
   };
@@ -174,25 +174,13 @@ export default function ConfirmCounter({ service, serviceId, selectedProcedure, 
             {counters.length > 0 ? (
               <div className="space-y-2">
                 {counters.map((counter, index) => {
-                  const isActive = counter.status === 'active';
-                  
                   return (
                     <div
                       key={counter.id}
-                      className={`p-3 border rounded-lg ${
-                        !isActive 
-                          ? 'bg-gray-100 text-gray-400 border-gray-200' 
-                          : 'bg-blue-50 text-blue-700 border-blue-200'
-                      }`}
+                      className="p-3 border rounded-lg bg-blue-50 border-blue-200 text-blue-700"
                     >
                       <div className="flex items-center justify-between">
                         <span className="font-medium">{counter.name}</span>
-                        {!isActive && (
-                          <span className="text-sm text-red-500">(Không hoạt động)</span>
-                        )}
-                        {isActive && (
-                          <span className="text-sm text-green-600">✓ Sẵn sàng</span>
-                        )}
                       </div>
                     </div>
                   );
@@ -216,7 +204,7 @@ export default function ConfirmCounter({ service, serviceId, selectedProcedure, 
           </button>
           <button
             onClick={handleConfirm}
-            disabled={counters.length === 0 || !counters.some(c => c.status === 'active')}
+            disabled={counters.length === 0}
             className="flex-1 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             <Printer size={16} />
