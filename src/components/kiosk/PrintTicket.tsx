@@ -30,118 +30,31 @@ const PrintTicket: React.FC<PrintTicketProps> = ({
   // 🖨️ Generate thermal HTML với enhanced debugging
   const generateThermalTicketHTML = React.useCallback((timeString: string, dateString: string): string => {
     const ticketHTML = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="utf-8">
-        <title>Vé ${number} - ${counterName}</title>
-        <style>
-          @page {
-            size: 80mm 60mm;
-            margin: 0;
-            page-break-after: always;
-          }
-          
-          @media print {
-            * {
-              -webkit-print-color-adjust: exact;
-              print-color-adjust: exact;
-            }
-            
-            body {
-              width: 80mm;
-              height: 60mm;
-              margin: 0;
-              padding: 4mm;
-              font-family: 'Courier New', monospace;
-              font-size: 12px;
-              line-height: 1.2;
-              page-break-inside: avoid;
-              page-break-after: always;
-            }
-          }
-          
-          body {
-            width: 80mm;
-            height: 60mm;
-            margin: 0;
-            padding: 4mm;
-            font-family: 'Courier New', monospace;
-            font-size: 12px;
-            line-height: 1.2;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-          }
-          
-          .header {
-            text-align: center;
-            font-weight: bold;
-            font-size: 14px;
-            border-bottom: 1px dashed #000;
-            padding-bottom: 4px;
-            margin-bottom: 8px;
-          }
-          
-          .ticket-number {
-            text-align: center;
-            font-size: 48px;
-            font-weight: bold;
-            border: 2px solid #000;
-            padding: 8px;
-            margin: 16px 0;
-          }
-          
-          .service-info, .counter-info, .timestamp, .footer {
-            text-align: center;
-            margin: 4px 0;
-          }
-          
-          .counter-info {
-            font-size: 16px;
-            font-weight: bold;
-          }
-          
-          .timestamp {
-            font-size: 10px;
-            border-top: 1px dashed #000;
-            padding-top: 4px;
-            margin-top: auto;
-          }
-          
-          .footer {
-            font-size: 10px;
-            font-style: italic;
-          }
-        </style>
-      </head>
-      <body>
-        <div class="header">
-          TRUNG TÂM PHỤC VỤ<br>
-          HÀNH CHÍNH CÔNG<br>
-          PHƯỜNG HÀ GIANG 1
-        </div>
-        
-        <div class="service-info">SỐ THỨ TỰ</div>
-        <div class="ticket-number">${number}</div>
-        
-        <div class="counter-info">
-          🏢 ${counterName}<br>
-          Quầy số ${counterId}
-        </div>
-        
-        <div class="timestamp">
-          📅 ${dateString}<br>
-          🕐 ${timeString}
-        </div>
-        
-        <div class="footer">
-          Vui lòng chờ được gọi<br>
-          Cảm ơn quý khách!
-        </div>
-      </body>
-      </html>
-    `;
+    <div style="width:80mm;height:60mm;padding:4mm;font-family:'Courier New',monospace;font-size:12px;line-height:1.2;display:flex;flex-direction:column;justify-content:space-between;">
+      <div style="text-align:center;font-weight:bold;font-size:14px;border-bottom:1px dashed #000;padding-bottom:4px;margin-bottom:8px;">
+        TRUNG TÂM PHỤC VỤ<br>
+        HÀNH CHÍNH CÔNG<br>
+        PHƯỜNG HÀ GIANG 1
+      </div>
+      <div style="text-align:center;margin:4px 0;">SỐ THỨ TỰ</div>
+      <div style="text-align:center;font-size:48px;font-weight:bold;border:2px solid #000;padding:8px;margin:16px 0;">
+        ${number}
+      </div>
+      <div style="text-align:center;margin:4px 0;font-size:16px;font-weight:bold;">
+        🏢 ${counterName}<br>
+        Quầy số ${counterId}
+      </div>
+      <div style="text-align:center;margin:4px 0;font-size:10px;border-top:1px dashed #000;padding-top:4px;margin-top:auto;">
+        📅 ${dateString}<br>
+        🕐 ${timeString}
+      </div>
+      <div style="text-align:center;margin:4px 0;font-size:10px;font-style:italic;">
+        Vui lòng chờ được gọi<br>
+        Cảm ơn quý khách!
+      </div>
+    </div>
+  `;
+      
 
     console.log('📄 Generated thermal ticket HTML:', {
       number,
