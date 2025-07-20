@@ -70,21 +70,22 @@ const PrintTicket: React.FC<PrintTicketProps> = ({
 
   // 🖨️ In vé bằng QZ Tray (chỉ chạy ở client)
   const loadQZTrayScripts = () => {
-    if (typeof window !== 'undefined' && !(window as any).qz) {
-      const scriptJsrsasign = document.createElement('script');
-      scriptJsrsasign.src = '/jsrsasign-all-min.js';
-      scriptJsrsasign.async = false;
-      document.body.appendChild(scriptJsrsasign);
-
-      const scriptQZ = document.createElement('script');
-      scriptQZ.src = '/qz-tray.js'
-      scriptQZ.async = false;
-      document.body.appendChild(scriptQZ);
-
-      const scriptSign = document.createElement('script');
-      scriptSign.src = '/sign-message.js';
-      scriptSign.async = false;
-      document.body.appendChild(scriptSign);
+    if (typeof window !== 'undefined') {
+      // Luôn load 3 file khi mount, không phụ thuộc vào window.qz
+      const scripts = [
+        { src: '/jsrsasign-all-min.js', id: 'jsrsasign-script' },
+        { src: '/qz-tray.js', id: 'qztray-script' },
+        { src: '/sign-message.js', id: 'signmessage-script' }
+      ];
+      scripts.forEach(({ src, id }) => {
+        if (!document.getElementById(id)) {
+          const script = document.createElement('script');
+          script.src = src;
+          script.async = false;
+          script.id = id;
+          document.body.appendChild(script);
+        }
+      });
     }
   };
 
@@ -194,24 +195,26 @@ const PrintTicket: React.FC<PrintTicketProps> = ({
 
   return (
     <div className="flex flex-col space-y-4">
-      {/* Print Button */}
-      <button
-        onClick={handlePrint}
-        className="kiosk-card bg-red-600 hover:bg-red-700 text-white transition-colors duration-200 cursor-pointer p-8"
-        disabled={!number || !counterId || !counterName}
-      >
-        <div className="flex flex-col items-center justify-center h-full">
-          <div className="text-6xl mb-4">🖨️</div>
-          <div className="text-2xl font-bold text-center">In số thứ tự</div>
-          <div className="text-lg mt-2 opacity-90">Vé #{number}</div>
-          <div className="text-sm opacity-75 mt-2">
-            {counterName} - Quầy {counterId}
+      {/* Chỉ hiển thị nút in khi autoPrint=false */}
+      {!autoPrint && (
+        <button
+          onClick={handlePrint}
+          className="kiosk-card bg-red-600 hover:bg-red-700 text-white transition-colors duration-200 cursor-pointer p-8"
+          disabled={!number || !counterId || !counterName}
+        >
+          <div className="flex flex-col items-center justify-center h-full">
+            <div className="text-6xl mb-4">🖨️</div>
+            <div className="text-2xl font-bold text-center">In số thứ tự</div>
+            <div className="text-lg mt-2 opacity-90">Vé #{number}</div>
+            <div className="text-sm opacity-75 mt-2">
+              {counterName} - Quầy {counterId}
+            </div>
           </div>
-        </div>
-      </button>
+        </button>
+      )}
 
       {/* Print Status Display */}
-      {printStatus && (
+      {printStatus && !printStatus.includes('❌ Lỗi in QZ Tray') && !printStatus.includes('❌ QZ Tray chưa sẵn sàng') && !printStatus.includes('Unable to establish connection with QZ') && (
         <div className="bg-blue-100 border border-blue-300 rounded-lg p-4">
           <div className="text-blue-800 font-medium text-center">
             {printStatus}
