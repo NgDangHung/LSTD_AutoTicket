@@ -7,7 +7,11 @@
     "dev:https": "node server.js",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "kiosk:build": "npm run build && build-kiosk.bat",
+    "kiosk:deploy": "deploy-kiosk.bat",
+    "kiosk:server": "server-launcher.bat",
+    "kiosk:launcher": "kiosk-launcher.bat"
   },
   "dependencies": {
     "axios": "^1.10.0",

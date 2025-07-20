@@ -887,6 +887,20 @@ function TestQueuePage() {
           <h2 className="text-xl font-semibold mb-4 text-gray-800">🎛️ Điều khiển toàn cục</h2>
           <div className="flex gap-4 flex-wrap">
             <button
+              onClick={() => router.push('/admin')}
+              className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+            >
+              👑 Trang quản trị
+            </button>
+            
+            <button
+              onClick={() => router.push('/kiosk-test')}
+              className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+            >
+              🧪 Kiểm tra Kiosk
+            </button>
+            
+            <button
               onClick={handleClearAllQueues}
               className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
             >
