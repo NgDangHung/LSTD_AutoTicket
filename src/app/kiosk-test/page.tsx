@@ -15,6 +15,7 @@ export default function KioskTestPage() {
   const router = useRouter();
   const [testResults, setTestResults] = useState<TestResult[]>([]);
   const [isRunningTests, setIsRunningTests] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
   const [kioskInfo, setKioskInfo] = useState({
     isKioskMode: false,
     chromeVersion: '',
@@ -29,6 +30,16 @@ export default function KioskTestPage() {
       name: 'Chrome Kiosk Mode Detection',
       test: async (): Promise<TestResult> => {
         try {
+          // Check if running on client side
+          if (typeof window === 'undefined' || typeof navigator === 'undefined') {
+            return {
+              name: 'Chrome Kiosk Mode Detection',
+              status: 'error',
+              message: 'Not available during server-side rendering',
+              details: 'This test requires client-side execution'
+            };
+          }
+
           const isKiosk = !!(window as any).chrome?.runtime &&
                           navigator.userAgent.includes('Chrome');
           
@@ -71,6 +82,16 @@ export default function KioskTestPage() {
       name: 'Silent Printing Capability',
       test: async (): Promise<TestResult> => {
         try {
+          // Check if running on client side
+          if (typeof window === 'undefined') {
+            return {
+              name: 'Silent Printing Capability',
+              status: 'error',
+              message: 'Not available during server-side rendering',
+              details: 'This test requires client-side execution'
+            };
+          }
+
           // Check if we can access print functionality
           if (typeof window.print === 'function') {
             // Test if we're in kiosk-printing mode by checking for print dialog suppression
@@ -113,6 +134,16 @@ export default function KioskTestPage() {
       name: 'Touch Screen Support',
       test: async (): Promise<TestResult> => {
         try {
+          // Check if running on client side
+          if (typeof window === 'undefined' || typeof navigator === 'undefined') {
+            return {
+              name: 'Touch Screen Support',
+              status: 'error',
+              message: 'Not available during server-side rendering',
+              details: 'This test requires client-side execution'
+            };
+          }
+
           const touchSupport = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
           
           if (touchSupport) {
@@ -144,6 +175,16 @@ export default function KioskTestPage() {
       name: 'Voice Recognition Support',
       test: async (): Promise<TestResult> => {
         try {
+          // Check if running on client side
+          if (typeof window === 'undefined') {
+            return {
+              name: 'Voice Recognition Support',
+              status: 'error',
+              message: 'Not available during server-side rendering',
+              details: 'This test requires client-side execution'
+            };
+          }
+
           const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
           
           if (SpeechRecognition) {
@@ -179,6 +220,16 @@ export default function KioskTestPage() {
       name: 'Screen Resolution Check',
       test: async (): Promise<TestResult> => {
         try {
+          // Check if running on client side
+          if (typeof window === 'undefined') {
+            return {
+              name: 'Screen Resolution Check',
+              status: 'error',
+              message: 'Not available during server-side rendering',
+              details: 'This test requires client-side execution'
+            };
+          }
+
           const width = window.screen.width;
           const height = window.screen.height;
           const ratio = width / height;
@@ -219,6 +270,16 @@ export default function KioskTestPage() {
       name: 'Network Connectivity',
       test: async (): Promise<TestResult> => {
         try {
+          // Check if running on client side
+          if (typeof navigator === 'undefined') {
+            return {
+              name: 'Network Connectivity',
+              status: 'error',
+              message: 'Not available during server-side rendering',
+              details: 'This test requires client-side execution'
+            };
+          }
+
           const isOnline = navigator.onLine;
           
           if (isOnline) {
@@ -265,6 +326,9 @@ export default function KioskTestPage() {
   ];
 
   const runTests = async () => {
+    // Only run tests on client side
+    if (typeof window === 'undefined') return;
+    
     setIsRunningTests(true);
     setTestResults([]);
     
@@ -317,8 +381,9 @@ export default function KioskTestPage() {
     }
   };
 
-  // Auto-run tests on mount
+  // Auto-run tests on mount (client-side only)
   useEffect(() => {
+    setIsMounted(true);
     runTests();
   }, []);
 
@@ -394,31 +459,44 @@ export default function KioskTestPage() {
             <div className="space-y-3">
               <div>
                 <label className="text-sm font-medium text-gray-500">Browser</label>
-                <p className="text-gray-900">{navigator.userAgent}</p>
+                <p className="text-gray-900">
+                  {isMounted && typeof navigator !== 'undefined' ? navigator.userAgent : 'Loading...'}
+                </p>
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-500">Screen Resolution</label>
-                <p className="text-gray-900">{window.screen.width} x {window.screen.height}</p>
+                <p className="text-gray-900">
+                  {isMounted && typeof window !== 'undefined' ? `${window.screen.width} x ${window.screen.height}` : 'Loading...'}
+                </p>
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-500">Viewport Size</label>
-                <p className="text-gray-900">{window.innerWidth} x {window.innerHeight}</p>
+                <p className="text-gray-900">
+                  {isMounted && typeof window !== 'undefined' ? `${window.innerWidth} x ${window.innerHeight}` : 'Loading...'}
+                </p>
               </div>
             </div>
             <div className="space-y-3">
               <div>
                 <label className="text-sm font-medium text-gray-500">Touch Support</label>
                 <p className="text-gray-900">
-                  {navigator.maxTouchPoints > 0 ? `${navigator.maxTouchPoints} touch points` : 'Not supported'}
+                  {isMounted && typeof navigator !== 'undefined' 
+                    ? (navigator.maxTouchPoints > 0 ? `${navigator.maxTouchPoints} touch points` : 'Not supported')
+                    : 'Loading...'
+                  }
                 </p>
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-500">Online Status</label>
-                <p className="text-gray-900">{navigator.onLine ? 'Connected' : 'Offline'}</p>
+                <p className="text-gray-900">
+                  {isMounted && typeof navigator !== 'undefined' ? (navigator.onLine ? 'Connected' : 'Offline') : 'Loading...'}
+                </p>
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-500">Language</label>
-                <p className="text-gray-900">{navigator.language}</p>
+                <p className="text-gray-900">
+                  {isMounted && typeof navigator !== 'undefined' ? navigator.language : 'Loading...'}
+                </p>
               </div>
             </div>
           </div>

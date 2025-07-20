@@ -1,11 +1,15 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { format } from "date-fns";
 import { BarChart2, UserCheck, Clock, Hourglass, Slash } from "lucide-react";
+
+// Helper function to format date as yyyy-MM-dd
+const formatDate = (date: Date): string => {
+  return date.toISOString().split('T')[0];
+};
 
 export default function Dashboard() {
   const [startDate, setStartDate] = useState("2024-01-01");
-  const [endDate, setEndDate] = useState(format(new Date(), "yyyy-MM-dd"));
+  const [endDate, setEndDate] = useState(formatDate(new Date()));
   const [data, setData] = useState<{
     tickets?: any[];
     attended?: any[];
