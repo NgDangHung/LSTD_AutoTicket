@@ -904,6 +904,35 @@ var qz = (function() {
             },
 
             /* Converts config defaults to match previous version */
+            config: function(config, dirty) {
+                if (_qz.tools.isVersion(2, 0)) {
+                    if (!dirty.rasterize) {
+                        config.rasterize = true;
+                    }
+                }
+                if(_qz.tools.versionCompare(2, 2) < 0) {
+                    if(config.forceRaw !== 'undefined') {
+                        config.altPrinting = config.forceRaw;
+                        delete config.forceRaw;
+                    }
+                }
+                if(_qz.tools.versionCompare(2, 1, 2, 11) < 0) {
+                    if(config.spool) {
+                        if(config.spool.size) {
+                            config.perSpool = config.spool.size;
+                            delete config.spool.size;
+                        }
+                        if(config.spool.end) {
+                            config.endOfDoc = config.spool.end;
+                            delete config.spool.end;
+                        }
+                        delete config.spool;
+                    }
+                }
+                return config;
+            },
+
+            /** Compat wrapper with previous version **/
             networking: function(hostname, port, signature, signingTimestamp, mappingCallback) {
                 // Use 2.0
                 if (_qz.tools.isVersion(2, 0)) {
@@ -1926,7 +1955,6 @@ var qz = (function() {
              * Event data will contain <code>{string} vendorId</code> and <code>{string} productId</code> for all types.
              *  For RECEIVE types, <code>{Array} output</code> (in hexadecimal format).
              *  For ERROR types, <code>{string} exception</code>.
-             *  For ACTION types, <code>{string} actionType</code>.
              *
              * @param {Function|Array<Function>} calls Single or array of <code>Function({Object} eventData)</code> calls.
              *
@@ -2818,4 +2846,15 @@ var qz = (function() {
     };
 
     return qz;
+})();
+
+
+(function() {
+    if (typeof define === 'function' && define.amd) {
+        define(qz);
+    } else if (typeof exports === 'object') {
+        module.exports = qz;
+    } else {
+        window.qz = qz;
+    }
 })();
