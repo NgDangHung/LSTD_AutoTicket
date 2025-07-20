@@ -383,11 +383,11 @@ export default function KioskMainScreen() {
     try {
       // Call API to create ticket instead of generating random number
       const newTicket = await createTicket(parseInt(counterId));
-      
+
       if (newTicket) {
         // Find counter name from selectedProcedure or fallback
         let counterName = `Quầy ${counterId}`;
-        
+
         if (selectedProcedure && selectedProcedure.counters) {
           const counter = selectedProcedure.counters.find(c => c.id === parseInt(counterId));
           if (counter) {
@@ -396,7 +396,7 @@ export default function KioskMainScreen() {
         }
 
         console.log('✅ Ticket created successfully:', newTicket);
-        
+
         // 🔥 ADD TO TV QUEUE
         const queueItem = CounterQueueManager.addToCounterQueue(newTicket.counter_id.toString(), {
           number: newTicket.number.toString(),
@@ -409,19 +409,22 @@ export default function KioskMainScreen() {
           createdAt: newTicket.created_at,
           estimatedWaitTime: 15 // Default 15 minutes
         });
-        
+
         console.log('✅ Added to TV queue:', queueItem);
 
-        // 🖨️ Gửi dữ liệu cho PrintNow component
-        // setPrintData({ number: newTicket.number, counterId, counterName });
+        // 🖨️ Gửi dữ liệu cho PrintTicket component
+        setPrintData({
+          number: newTicket.number,
+          counterId: newTicket.counter_id.toString(),
+          counterName: counterName
+        });
 
-        
         // Reset states
         setShowConfirmCounter(false);
         setSelectedService('');
         setSelectedServiceName('');
         setSelectedProcedure(null);
-        
+
         // Show success toast with data from BE
         toast.success(
           <div style={{ lineHeight: '1.6' }}>
