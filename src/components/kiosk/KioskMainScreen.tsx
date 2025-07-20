@@ -493,13 +493,13 @@ export default function KioskMainScreen() {
           style={{ backgroundColor: '#c31313' }}
         >
           <div className="flex items-center gap-2">
-            <Image 
+            <Image
               src="/images/logo_vang.png" 
               alt="logo_vang" 
               width={240}
               height={240}
               className="w-60 h-60 object-contain"
-              priority
+              unoptimized
             />
             <div style={{ marginLeft: '30px' }}>
               <h1 className="text-4xl font-bold text-white-800 mb-4" style={{ lineHeight: '1.5' }}>
