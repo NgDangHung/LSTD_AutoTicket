@@ -1,70 +1,134 @@
 'use client';
-import { useEffect } from 'react';
 
-interface Props {
+import React from 'react';
+
+interface PrintTicketProps {
   number: number;
   counterId: string;
   counterName: string;
   autoPrint?: boolean;
+  onPrintComplete?: () => void;
 }
 
-// 🔧 Enhanced kiosk-printing mode detection
+// � Enhanced kiosk-printing mode detection
 const checkKioskPrintingMode = async (): Promise<boolean> => {
   try {
-    // Method 1: Check UI elements visibility (kiosk mode indicators)
-    const isKioskUI = !window.locationbar.visible && 
-                     !window.menubar.visible && 
-                     !window.toolbar.visible &&
-                     window.outerHeight === window.screen.height &&
-                     window.outerWidth === window.screen.width;
+    // Method 1: Check window properties for kiosk mode
+    const isKioskUI = () => {
+      try {
+        return (
+          window.outerHeight === window.screen.height &&
+          window.outerWidth === window.screen.width &&
+          (!window.locationbar || !window.locationbar.visible) &&
+          (!window.menubar || !window.menubar.visible) &&
+          (!window.toolbar || !window.toolbar.visible) &&
+          (!window.statusbar || !window.statusbar.visible)
+        );
+      } catch {
+        // Fallback for browsers that don't support these properties
+        return window.outerHeight === window.screen.height &&
+               window.outerWidth === window.screen.width;
+      }
+    };
 
-    // Method 2: Check URL and HTTPS
-    const isProductionKiosk = window.location.hostname.includes('netlify.app') ||
-                             window.location.pathname === '/kiosk';
-
-    // Method 3: Test print behavior timing
+    // Method 2: Test print behavior for silent printing capability
     const testSilentPrint = (): Promise<boolean> => {
       return new Promise((resolve) => {
+        let hasDialog = false;
+        let printExecuted = false;
+        
+        // Create hidden test iframe
+        const testFrame = document.createElement('iframe');
+        testFrame.style.position = 'absolute';
+        testFrame.style.left = '-9999px';
+        testFrame.style.width = '1px';
+        testFrame.style.height = '1px';
+        testFrame.style.opacity = '0';
+        
+        document.body.appendChild(testFrame);
+        
+        const frameDoc = testFrame.contentDocument || testFrame.contentWindow?.document;
+        if (!frameDoc) {
+          document.body.removeChild(testFrame);
+          resolve(false);
+          return;
+        }
+
+        frameDoc.write(`
+          <html>
+            <head><title>Test</title></head>
+            <body style="display:none;">Test Print Detection</body>
+          </html>
+        `);
+        frameDoc.close();
+        
         const startTime = Date.now();
-        let resolved = false;
-
-        const originalPrint = window.print;
-        window.print = function() {
-          if (!resolved) {
+        
+        // Override print to detect execution behavior
+        const originalPrint = testFrame.contentWindow?.print;
+        if (testFrame.contentWindow && originalPrint) {
+          testFrame.contentWindow.print = function() {
+            printExecuted = true;
             const executionTime = Date.now() - startTime;
-            const isSilent = executionTime < 100; // Silent print is immediate
-            resolved = true;
-            window.print = originalPrint;
-            resolve(isSilent);
-          }
-          return originalPrint.call(this);
-        };
+            
+            // In kiosk-printing mode, print executes immediately (< 50ms)
+            // In browser mode, print dialog causes delay (> 100ms)
+            hasDialog = executionTime > 100;
+            
+            // Cleanup and resolve
+            setTimeout(() => {
+              document.body.removeChild(testFrame);
+              resolve(!hasDialog && printExecuted);
+            }, 10);
+            
+            return originalPrint.call(this);
+          };
 
-        // Trigger test print
-        setTimeout(() => {
-          if (!resolved) {
-            window.print = originalPrint;
-            resolve(false);
-          }
-        }, 200);
-
-        window.print();
+          // Execute test print
+          setTimeout(() => {
+            try {
+              testFrame.contentWindow?.print();
+              
+              // Fallback timeout in case print doesn't execute
+              setTimeout(() => {
+                if (!printExecuted) {
+                  document.body.removeChild(testFrame);
+                  resolve(false);
+                }
+              }, 300);
+            } catch (error) {
+              document.body.removeChild(testFrame);
+              resolve(false);
+            }
+          }, 50);
+        } else {
+          document.body.removeChild(testFrame);
+          resolve(false);
+        }
       });
     };
 
+    const isKioskInterface = isKioskUI();
     const hasSilentPrint = await testSilentPrint();
 
-    console.log('🔍 Kiosk printing detection:', {
-      isKioskUI,
-      isProductionKiosk,
+    // Additional checks
+    const isHTTPS = window.location.protocol === 'https:';
+    const isChrome = navigator.userAgent.includes('Chrome');
+    const isKioskURL = window.location.pathname.includes('/kiosk');
+
+    console.log('🔍 Kiosk printing detection results:', {
+      isKioskInterface,
       hasSilentPrint,
-      finalResult: isKioskUI && hasSilentPrint
+      isHTTPS,
+      isChrome,
+      isKioskURL,
+      finalResult: isKioskInterface && hasSilentPrint && isHTTPS && isChrome
     });
 
-    return isKioskUI && hasSilentPrint;
+    return isKioskInterface && hasSilentPrint && isHTTPS && isChrome;
 
   } catch (error) {
-    console.log('❌ Kiosk detection failed:', error);
+    console.error('❌ Kiosk print mode detection failed:', error);
     return false;
   }
 };
@@ -195,92 +259,195 @@ const generateThermalTicketHTML = (number: number, counterId: string, counterNam
   `;
 };
 
-// 🔧 Silent printing for kiosk mode
-const performSilentPrint = async (number: number, counterId: string, counterName: string, timeString: string, dateString: string) => {
+// �️ Silent printing for kiosk mode using iframe method
+const performSilentPrint = async (number: number, counterId: string, counterName: string, timeString: string, dateString: string): Promise<void> => {
   try {
-    console.log('🖨️ Performing silent print for thermal printer...');
+    console.log('🖨️ Performing silent thermal print...');
+
+    // Generate thermal printer HTML
+    const thermalPrintHTML = generateThermalTicketHTML(number, counterId, counterName, timeString, dateString);
     
-    const thermalHTML = generateThermalTicketHTML(number, counterId, counterName, timeString, dateString);
+    // Create hidden iframe for printing
+    const printFrame = document.createElement('iframe');
+    printFrame.style.position = 'absolute';
+    printFrame.style.left = '-9999px';
+    printFrame.style.top = '-9999px';
+    printFrame.style.width = '80mm';
+    printFrame.style.height = '60mm';
+    printFrame.style.border = 'none';
+    printFrame.style.visibility = 'hidden';
     
-    // Store original content
-    const originalContent = document.body.innerHTML;
-    const originalTitle = document.title;
+    document.body.appendChild(printFrame);
     
-    // Set optimized content for thermal printing
-    document.title = `Vé số ${number} - ${counterName}`;
-    document.body.innerHTML = thermalHTML;
-    
-    // Silent print
-    window.print();
-    
-    // Restore and reload after print
-    setTimeout(() => {
-      document.body.innerHTML = originalContent;
-      document.title = originalTitle;
-      console.log('✅ Silent print completed, reloading kiosk...');
-      window.location.reload();
-    }, 1000);
-    
+    // Load content and execute print
+    const frameDoc = printFrame.contentDocument || printFrame.contentWindow?.document;
+    if (frameDoc) {
+      frameDoc.open();
+      frameDoc.write(thermalPrintHTML);
+      frameDoc.close();
+      
+      // Wait for content to load then print
+      setTimeout(() => {
+        try {
+          printFrame.contentWindow?.print();
+          console.log('✅ Silent print executed successfully');
+          
+          // Cleanup after print
+          setTimeout(() => {
+            if (document.body.contains(printFrame)) {
+              document.body.removeChild(printFrame);
+            }
+          }, 2000);
+          
+        } catch (printError) {
+          console.error('❌ Print execution failed:', printError);
+          if (document.body.contains(printFrame)) {
+            document.body.removeChild(printFrame);
+          }
+          throw printError;
+        }
+      }, 800); // Increased delay for content loading
+    } else {
+      if (document.body.contains(printFrame)) {
+        document.body.removeChild(printFrame);
+      }
+      throw new Error('Failed to access iframe document');
+    }
+
   } catch (error) {
     console.error('❌ Silent print failed:', error);
-    // Fallback to normal print
-    performBrowserPrint(number, counterId, counterName, timeString, dateString);
+    throw error;
   }
 };
 
-// 🔧 Browser print fallback
-const performBrowserPrint = (number: number, counterId: string, counterName: string, timeString: string, dateString: string) => {
-  console.log('🖨️ Performing browser print with dialog...');
-  
-  document.body.innerHTML = `
-    <div style="
-      width: 300px;
-      margin: auto;
-      padding: 12px;
-      font-family: monospace;
-      font-size: 16px;
-      text-align: center;
-    ">
-      <div style="font-size: 18px; font-weight: bold;">SỐ THỨ TỰ</div>
-      <div style="font-size: 64px; font-weight: bold; margin: 20px 0;">${number}</div>
-      <div style="font-size: 16px;">Quầy số ${counterId} - ${counterName}</div>
-      <div style="font-size: 14px; margin-top: 8px;">${timeString} ${dateString}</div>
-    </div>
-  `;
+// �️ Fallback browser print with enhanced thermal layout
+const performBrowserPrint = async (number: number, counterId: string, counterName: string, timeString: string, dateString: string): Promise<void> => {
+  try {
+    console.log('🖨️ Performing browser print with dialog...');
 
-  window.print();
-  window.onafterprint = () => {
-    window.location.reload();
-  };
+    const thermalPrintHTML = generateThermalTicketHTML(number, counterId, counterName, timeString, dateString);
+    
+    // Create new window for printing to avoid disrupting main interface
+    const printWindow = window.open('', '_blank', 'width=400,height=600');
+    if (!printWindow) {
+      throw new Error('Failed to open print window');
+    }
+
+    printWindow.document.open();
+    printWindow.document.write(thermalPrintHTML);
+    printWindow.document.close();
+
+    // Focus and print
+    printWindow.focus();
+    
+    setTimeout(() => {
+      printWindow.print();
+      
+      // Close print window after print dialog closes
+      printWindow.onafterprint = () => {
+        printWindow.close();
+      };
+      
+      // Fallback close after timeout
+      setTimeout(() => {
+        if (!printWindow.closed) {
+          printWindow.close();
+        }
+      }, 5000);
+    }, 500);
+
+  } catch (error) {
+    console.error('❌ Browser print failed:', error);
+    throw error;
+  }
 };
 
-export default function PrintNow({ number, counterId, counterName, autoPrint }: Props) {
-  useEffect(() => {
-    if (!autoPrint) return;
+// 🎯 Main print handler
+const handlePrint = async (number: number, counterId: string, counterName: string, onComplete?: () => void) => {
+  try {
+    const now = new Date();
+    const timeString = now.toLocaleTimeString('vi-VN', {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    });
+    const dateString = now.toLocaleDateString('vi-VN', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
 
-    const executePrint = async () => {
-      const now = new Date();
-      const timeString = now.toLocaleTimeString('vi-VN', {
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false,
-      });
-      const dateString = now.toLocaleDateString('vi-VN');
+    console.log('🎯 Starting print process...');
+    console.log('📄 Ticket details:', { number, counterName, counterId, timeString, dateString });
 
-      // 🔧 Detect kiosk-printing mode and choose appropriate method
-      const isKioskPrintMode = await checkKioskPrintingMode();
-      
-      console.log(`🎯 Print mode detected: ${isKioskPrintMode ? 'KIOSK-PRINTING (Silent)' : 'BROWSER (Dialog)'}`);
+    // Check if in kiosk-printing mode
+    const isKioskPrintMode = await checkKioskPrintingMode();
+    
+    if (isKioskPrintMode) {
+      console.log('🏛️ Kiosk printing mode detected - performing silent print');
+      await performSilentPrint(number, counterId, counterName, timeString, dateString);
+    } else {
+      console.log('🖥️ Browser mode detected - showing print dialog');
+      await performBrowserPrint(number, counterId, counterName, timeString, dateString);
+    }
 
-      if (isKioskPrintMode) {
-        await performSilentPrint(number, counterId, counterName, timeString, dateString);
-      } else {
-        performBrowserPrint(number, counterId, counterName, timeString, dateString);
-      }
-    };
+    // Call completion callback
+    onComplete?.();
 
-    executePrint();
-  }, [number, counterId, counterName, autoPrint]);
+  } catch (error) {
+    console.error('❌ Print process failed:', error);
+    
+    // Show error message to user
+    if (typeof window !== 'undefined' && window.alert) {
+      window.alert('Lỗi in vé. Vui lòng thử lại hoặc liên hệ nhân viên hỗ trợ.');
+    }
+    
+    throw error;
+  }
+};
 
-  return <div id="print-area" style={{ display: 'none' }} />;
-}
+// 🎯 PrintTicket React Component
+const PrintTicket: React.FC<PrintTicketProps> = ({ 
+  number, 
+  counterId, 
+  counterName, 
+  autoPrint = false, 
+  onPrintComplete 
+}) => {
+  
+  // 🖨️ Handle print button click
+  const handlePrintClick = async () => {
+    try {
+      await handlePrint(number, counterId, counterName, onPrintComplete);
+    } catch (error) {
+      console.error('Print failed:', error);
+    }
+  };
+
+  // � Auto-print on component mount if autoPrint is true
+  React.useEffect(() => {
+    if (autoPrint) {
+      handlePrintClick();
+    }
+  }, [autoPrint, number, counterId, counterName]);
+
+  // 🎨 Render print button UI
+  return (
+    <button
+      onClick={handlePrintClick}
+      className="kiosk-card bg-red-600 hover:bg-red-700 text-white transition-colors duration-200 cursor-pointer"
+      disabled={!number || !counterId || !counterName}
+    >
+      <div className="flex flex-col items-center justify-center h-full p-6">
+        <div className="text-6xl mb-4">🖨️</div>
+        <div className="text-2xl font-bold text-center mb-2">In số thứ tự</div>
+        <div className="text-lg opacity-90">Vé #{number}</div>
+        <div className="text-sm opacity-75 mt-2">
+          {counterName} - Quầy {counterId}
+        </div>
+      </div>
+    </button>
+  );
+};
+
+export default PrintTicket;
