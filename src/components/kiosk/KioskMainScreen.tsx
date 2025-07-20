@@ -15,6 +15,85 @@ import { countersAPI, Counter } from '@/libs/rootApi';
 import '@/app/index.css';
 import PrintNow from '@/components/kiosk/PrintTicket'; 
 
+// 🔍 Debug component for kiosk mode detection
+const KioskDebugPanel: React.FC = () => {
+  const [debugInfo, setDebugInfo] = useState<any>(null);
+  const [showDebug, setShowDebug] = useState<boolean>(false);
+
+  useEffect(() => {
+    const checkKioskMode = () => {
+      const debug = {
+        windowHeight: window.outerHeight,
+        screenHeight: window.screen.height,
+        windowWidth: window.outerWidth,
+        screenWidth: window.screen.width,
+        locationbarVisible: window.locationbar?.visible,
+        menubarVisible: window.menubar?.visible,
+        toolbarVisible: window.toolbar?.visible,
+        statusbarVisible: window.statusbar?.visible,
+        isHTTPS: window.location.protocol === 'https:',
+        userAgent: navigator.userAgent.includes('Chrome') ? 'Chrome' : 'Other',
+        isKioskInterface: window.outerHeight === window.screen.height &&
+                         window.outerWidth === window.screen.width &&
+                         !window.locationbar?.visible &&
+                         !window.menubar?.visible &&
+                         !window.toolbar?.visible,
+        timestamp: new Date().toLocaleTimeString('vi-VN')
+      };
+      setDebugInfo(debug);
+      console.log('🔍 Kiosk Debug Info:', debug);
+    };
+
+    checkKioskMode();
+    const interval = setInterval(checkKioskMode, 5000); // Update every 5 seconds
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div className="fixed bottom-4 right-4 z-50">
+      {/* Debug Toggle Button */}
+      <button
+        onClick={() => setShowDebug(!showDebug)}
+        className={`mb-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+          debugInfo?.isKioskInterface ? 
+          'bg-green-600 hover:bg-green-700 text-white' : 
+          'bg-red-600 hover:bg-red-700 text-white'
+        }`}
+      >
+        {showDebug ? '🔽 Ẩn Debug' : '🔍 Debug Kiosk'} 
+        {debugInfo?.isKioskInterface ? ' ✅' : ' ❌'}
+      </button>
+
+      {/* Debug Panel */}
+      {showDebug && debugInfo && (
+        <div className="bg-white border-2 border-gray-300 rounded-lg p-4 text-xs font-mono shadow-xl max-w-sm">
+          <div className="flex items-center mb-3">
+            <span className={`inline-block w-3 h-3 rounded-full mr-2 ${
+              debugInfo.isKioskInterface ? 'bg-green-500' : 'bg-red-500'
+            }`}></span>
+            <span className="font-bold">
+              {debugInfo.isKioskInterface ? '✅ Kiosk Mode' : '❌ Browser Mode'}
+            </span>
+          </div>
+
+          <div className="space-y-1 text-black">
+            <div><strong>Window:</strong> {debugInfo.windowWidth}x{debugInfo.windowHeight}</div>
+            <div><strong>Screen:</strong> {debugInfo.screenWidth}x{debugInfo.screenHeight}</div>
+            <div><strong>HTTPS:</strong> {debugInfo.isHTTPS ? '✅' : '❌'}</div>
+            <div><strong>Browser:</strong> {debugInfo.userAgent}</div>
+            <div><strong>Location Bar:</strong> {debugInfo.locationbarVisible ? '👁️' : '🚫'}</div>
+            <div><strong>Menu Bar:</strong> {debugInfo.menubarVisible ? '👁️' : '🚫'}</div>
+            <div><strong>Tool Bar:</strong> {debugInfo.toolbarVisible ? '👁️' : '🚫'}</div>
+            <div className="border-t pt-1 mt-2 text-gray-600">
+              <strong>Updated:</strong> {debugInfo.timestamp}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}; 
+
 
 const services = [
   { id: 1, name: 'Chứng thực' },
@@ -724,6 +803,8 @@ export default function KioskMainScreen() {
         isActive={isVoiceActive}
         stopTrigger={voiceStopTrigger}
       />
+      
+      {/* Print Component */}
       {printData && (
         <PrintNow
           number={printData.number}
@@ -732,6 +813,9 @@ export default function KioskMainScreen() {
           autoPrint={true}
         />
       )}
+
+      {/* Kiosk Debug Panel */}
+      <KioskDebugPanel />
     </div>
   );
 }
