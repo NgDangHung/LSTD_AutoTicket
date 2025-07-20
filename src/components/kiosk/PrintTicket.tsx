@@ -1,9 +1,10 @@
-declare global {
-  interface Window {
-    qz?: any;
-  }
-}
 'use client';
+
+// declare global {
+//   interface Window {
+//     qz: any;
+//   }
+// }
 
 import React, { useState, useEffect } from 'react';
 
@@ -27,7 +28,7 @@ const PrintTicket: React.FC<PrintTicketProps> = ({
   // ...removed kiosk detection logic...
 
   // 🖨️ Generate thermal HTML với enhanced debugging
-  const generateThermalTicketHTML = (timeString: string, dateString: string): string => {
+  const generateThermalTicketHTML = React.useCallback((timeString: string, dateString: string): string => {
     const ticketHTML = `
       <!DOCTYPE html>
       <html>
@@ -152,12 +153,11 @@ const PrintTicket: React.FC<PrintTicketProps> = ({
     });
 
     return ticketHTML;
-  };
+  }, [number, counterName, counterId]);
 
   // 🖨️ In vé bằng QZ Tray (chỉ chạy ở client)
   const loadQZTrayScripts = () => {
-    // Chỉ load nếu chưa có window.qz
-    if (typeof window !== 'undefined' && !window.qz) {
+    if (typeof window !== 'undefined' && !(window as any).qz) {
       const scriptQZ = document.createElement('script');
       scriptQZ.src = '/src/components/kiosk/qz-tray.js';
       scriptQZ.async = false;
@@ -170,20 +170,25 @@ const PrintTicket: React.FC<PrintTicketProps> = ({
     }
   };
 
-  const performQZTrayPrint = async (timeString: string, dateString: string): Promise<void> => {
+  const performQZTrayPrint = React.useCallback(async (timeString: string, dateString: string) => {
     try {
-      if (typeof window === 'undefined' || !window.qz) {
+      if (typeof window === 'undefined') {
         setPrintStatus('❌ QZ Tray chưa sẵn sàng hoặc không hỗ trợ trên server');
         return;
       }
+      const qz = (window as any).qz;
+      if (!qz) {
+        setPrintStatus('❌ QZ Tray chưa sẵn sàng hoặc không hỗ trợ trên client');
+        return;
+      }
       setPrintStatus('🖨️ Đang kết nối QZ Tray...');
-      if (!window.qz.websocket.isActive()) {
-        await window.qz.websocket.connect();
+      if (!qz.websocket.isActive()) {
+        await qz.websocket.connect();
       }
 
       setPrintStatus('🖨️ Đang gửi lệnh in qua QZ Tray...');
       const ticketHTML = generateThermalTicketHTML(timeString, dateString);
-      const config = window.qz.configs.create('W80', {
+      const config = qz.configs.create('W80', {
         encoding: 'RAW',
         copies: 1,
         rasterize: true
@@ -191,7 +196,7 @@ const PrintTicket: React.FC<PrintTicketProps> = ({
       const data = [
         { type: 'html', format: 'plain', data: ticketHTML }
       ];
-      await window.qz.print(config, data);
+      await qz.print(config, data);
       setPrintStatus('✅ Đã gửi lệnh in thành công qua QZ Tray');
       onPrintComplete?.();
       setTimeout(() => setPrintStatus(''), 3000);
@@ -199,7 +204,7 @@ const PrintTicket: React.FC<PrintTicketProps> = ({
       setPrintStatus('❌ Lỗi in QZ Tray: ' + (err instanceof Error ? err.message : String(err)));
       console.error(err);
     }
-  };
+  }, [onPrintComplete, generateThermalTicketHTML]);
 
   // 🖨️ Browser print with dialog fallback
   const performBrowserPrint = async (timeString: string, dateString: string): Promise<void> => {
@@ -233,7 +238,7 @@ const PrintTicket: React.FC<PrintTicketProps> = ({
   };
 
   // 🎯 Main print handler: in qua QZ Tray
-  const handlePrint = async () => {
+  const handlePrint = React.useCallback(async () => {
     try {
       const now = new Date();
       const timeString = now.toLocaleTimeString('vi-VN', {
@@ -254,7 +259,7 @@ const PrintTicket: React.FC<PrintTicketProps> = ({
         window.alert(`Lỗi in vé: ${error instanceof Error ? error.message : 'Unknown error'}\nVui lòng thử lại hoặc liên hệ nhân viên hỗ trợ.`);
       }
     }
-  };
+  }, [performQZTrayPrint]);
 
   // 🔄 Auto-load QZ Tray scripts và auto-print khi mount
   useEffect(() => {
@@ -267,7 +272,7 @@ const PrintTicket: React.FC<PrintTicketProps> = ({
     if (autoPrint) {
       handlePrint();
     }
-  }, [autoPrint, number, counterId, counterName]);
+  }, [autoPrint, number, counterId, counterName, handlePrint]);
 
   return (
     <div className="flex flex-col space-y-4">
