@@ -71,6 +71,11 @@ const PrintTicket: React.FC<PrintTicketProps> = ({
   // 🖨️ In vé bằng QZ Tray (chỉ chạy ở client)
   const loadQZTrayScripts = () => {
     if (typeof window !== 'undefined' && !(window as any).qz) {
+      const scriptJsrsasign = document.createElement('script');
+      scriptJsrsasign.src = '/jsrsasign-all-min.js';
+      scriptJsrsasign.async = false;
+      document.body.appendChild(scriptJsrsasign);
+
       const scriptQZ = document.createElement('script');
       scriptQZ.src = '/qz-tray.js'
       scriptQZ.async = false;
