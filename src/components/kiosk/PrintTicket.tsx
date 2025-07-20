@@ -72,12 +72,12 @@ const PrintTicket: React.FC<PrintTicketProps> = ({
   const loadQZTrayScripts = () => {
     if (typeof window !== 'undefined' && !(window as any).qz) {
       const scriptQZ = document.createElement('script');
-      scriptQZ.src = '/src/components/kiosk/qz-tray.js';
+      scriptQZ.src = '/qz-tray.js'
       scriptQZ.async = false;
       document.body.appendChild(scriptQZ);
 
       const scriptSign = document.createElement('script');
-      scriptSign.src = '/src/components/kiosk/sign-message.js';
+      scriptSign.src = '/sign-message.js';
       scriptSign.async = false;
       document.body.appendChild(scriptSign);
     }
