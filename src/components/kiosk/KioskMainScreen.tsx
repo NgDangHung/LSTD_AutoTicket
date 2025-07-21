@@ -14,6 +14,7 @@ import { CounterQueueManager } from '@/libs/counterQueue';
 import { countersAPI, Counter } from '@/libs/rootApi';
 import '@/app/index.css';
 import PrintTicket from '@/components/kiosk/PrintTicket';
+import DateTimeVN from '../shared/DateTimeVN';
 
 
 const services = [
@@ -512,10 +513,16 @@ export default function KioskMainScreen() {
           </div>
         </div>
 
+        {/* DateTimeVN Component */}
+        <div className="text-center ">
+          <DateTimeVN />
+        </div>
+
         {/* Search Bar */}
-        <div className="flex justify-center gap-4 mb-12">
+        <div className="flex justify-center gap-4 mb-12 mt-12" style={{ marginTop: '9rem'}}>
           <div className="relative" style={{ marginTop: '-28px'}}>
             <input 
+              
               name='voice-search'
               value={searchQuery}
               onClick={handleSearchClick}
@@ -536,6 +543,7 @@ export default function KioskMainScreen() {
                 border: '1px solid #ccc', 
                 color: 'black', 
                 backgroundColor: isVoiceActive ? '#fef2f2' : 'white',
+                lineHeight: '44px',
               }}
             />
             <AudioLines 
@@ -549,7 +557,7 @@ export default function KioskMainScreen() {
             {/* Voice Status Indicator */}
             {isVoiceActive && (
               <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-red-500 text-white px-3 py-1 rounded-full text-sm font-medium animate-pulse">
-                🎤 {voiceStopTrigger === 'enter-key' ? 'Đang nghe... (Enter để dừng)' : 'Đang nghe...'}
+                🎤 {voiceStopTrigger === 'enter-key' ? 'Đang nghe... (Enter để dừng)' : 'Bấm ra ngoài để dừng ... '}
               </div>
             )}
           </div>
@@ -642,7 +650,7 @@ export default function KioskMainScreen() {
                 <div
                   key={counter.id}
                   onClick={() => handleCounterSelect(counter)}
-                  className="flex flex-direction: column items-center justify-center text-center kiosk-card relative shadow transition-all duration-200 min-h-[220px] min-w-[220px] cursor-pointer hover:shadow-lg hover:scale-105"
+                  className="flex flex-direction: column items-center justify-center text-center kiosk-card relative transition-all duration-200 min-h-[220px] min-w-[220px] cursor-pointer border-2 border-red-600 shadow-[0_6px_32px_0_rgba(200,0,0,0.12)] hover:shadow-[0_8px_40px_0_rgba(200,0,0,0.18)] active:border-red-700 hover:scale-105 bg-white/90"
                 >
                   {/* Counter Icon */}
                   {/* <div className="text-center mb-3">
@@ -680,12 +688,12 @@ export default function KioskMainScreen() {
         )}
 
         {/* Footer Info */}
-        <div className="text-center text-gray-600 mt-12">
-          <p className="text-lg mb-2">
-            🕐 Giờ làm việc: Thứ 2 - Thứ 6: 8:00 - 17:00
+        <div className="text-center text-gray-600" style={{ marginTop: '6rem'}}>
+          <p className="text-lg mb-2 ">
+            🕐 Giờ làm việc: Thứ 2 - Thứ 6, 8:00 - 17:00
           </p>
-          <p className="text-lg">
-            📞 Hotline hỗ trợ: 1900-1234
+          <p className="text-lg ">
+            📞 Hotline hỗ trợ: 0219-1022
           </p>
         </div>
       </div>

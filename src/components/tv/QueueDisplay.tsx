@@ -1,5 +1,5 @@
 'use client';
-
+import Image from 'next/image';
 import React, { useState, useEffect, useCallback } from 'react';
 import NumberAnimation from './NumberAnimation';
 import { useWebSocketQueue } from '@/hooks/useWebSocketQueue';
@@ -600,8 +600,8 @@ export default function QueueDisplay() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-900 to-purple-900 text-white"
       style={{
-        backgroundImage: 'linear-gradient(135deg, #1e3a8a 0%, #7c3aed 100%)',
-        fontFamily: 'Inter, system-ui, sans-serif'
+        backgroundImage: 'linear-gradient(135deg, #ffffffff 0%, #ffffffff 0%)',
+        
       }}
     >
       {/* Announcement Banner */}
@@ -667,120 +667,88 @@ export default function QueueDisplay() {
         </div>
       )}
 
-      {/* Header */}
-      <header className={`bg-black bg-opacity-30 p-6 text-center ${
-        announcement || currentTTSAnnouncement ? 'mt-24' : 
-        ttsQueueStatus.queueLength > 0 ? 'mt-10' : ''
-      }`}>
-        <h1 className="text-4xl font-bold mb-2">
-          TRUNG TÂM HÀNH CHÍNH CÔNG
-        </h1>
-        <div className="flex justify-between items-center">
-          <p className="text-xl opacity-90">
-            Thông tin số thứ tự - {new Date().toLocaleDateString('vi-VN')}
-          </p>
-          
-          {/* Connection Status Indicator */}
-          <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm ${
-            connectionType === 'websocket' 
-              ? 'bg-green-500 bg-opacity-20 text-green-300' 
-              : connectionType === 'polling'
-              ? 'bg-yellow-500 bg-opacity-20 text-yellow-300'
-              : 'bg-red-500 bg-opacity-20 text-red-300'
-          }`}>
-            <div className={`w-2 h-2 rounded-full ${
-              connectionType === 'websocket' ? 'bg-green-400 animate-pulse' 
-              : connectionType === 'polling' ? 'bg-yellow-400'
-              : 'bg-red-400'
-            }`}></div>
-            {connectionType === 'websocket' && '🚀 WebSocket'}
-            {connectionType === 'polling' && '🔄 Polling'}
-            {connectionType === 'offline' && '📡 Offline'}
+      {/* Header with logo and title */}
+      <div 
+        className="flex items-center justify-center mb-12"
+        style={{ backgroundColor: '#ffffffff' }}
+      >
+        <div className="flex items-center gap-2" style={{marginLeft: '292px'}}>
+          <Image
+            src="/images/logo_ban_goc.png" 
+            alt="logo_ban_goc" 
+            width={240}
+            height={240}
+            className="w-60 h-60 object-contain"
+            unoptimized
+          />
+          <div style={{ marginLeft: '30px', width: '60%' }}>
+            <h1 className="text-4xl font-extrabold text-red-600 mb-4" style={{ lineHeight: '1.5' }}>
+              TRUNG TÂM PHỤC VỤ HÀNH CHÍNH CÔNG PHƯỜNG HÀ GIANG 1
+            </h1>
+            <h2 className="text-3xl text-red-600 font-bold">
+              Hành chính phục vụ
+            </h2>
           </div>
+          
         </div>
-      </header>
+      </div>
+      <>
+        <div className="flex justify-between items-center" style={{flexDirection: 'row-reverse'}}>
+          <h2 className="text-xl text-red-600 font-bold italic" style={{position: 'relative',top: '-95px',left: '-220px'}}>
+            Tuyên Quang - {new Date().toLocaleDateString('vi-VN')}
+          </h2>
+        </div>
+      </>
 
-      {/* Main Display với forced 2-column grid */}
-      <div className="flex-1 p-8">
-        <div 
-          style={{ 
-            display: 'grid',
-            gridTemplateColumns: '1fr 1fr', // Force exactly 2 columns always
-            gap: '2rem',
-            maxWidth: '1400px',
-            margin: '0 auto',
-            minHeight: '500px'
-          }}
-        >
-          
-          {/* Currently Serving Column */}
-          <div className="bg-white bg-opacity-10 backdrop-blur-lg rounded-2xl p-8">
-            <h2 className="text-3xl font-bold text-center mb-6 text-yellow-300">
-              🔊 ĐANG PHỤC VỤ
-            </h2>
-            
-            <div className="space-y-4">
-              {processedCounters.map((counter) => {
-                return (
-                  <div key={counter.counter_id} className="bg-gray-600 bg-opacity-50 rounded-xl p-4">
-                    <div className="text-lg font-semibold text-white mb-2">
-                      QUẦY {counter.counter_id} | {counter.counter_name}:
-                    </div>
-                    <div className="text-3xl font-bold text-white">
-                      {/* ✅ UNIFIED: Check both counter.serving_number and wsServingTickets */}
-                      {counter.serving_number || wsServingTickets[counter.counter_id] ? (
-                        <NumberAnimation 
-                          number={(counter.serving_number || wsServingTickets[counter.counter_id]?.number)?.toString() || '0'} 
-                        />
-                      ) : (
-                        <span className="text-xl text-gray-300">Chưa có số được phục vụ</span>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+      {/* Main Display dạng bảng giống mẫu */}
+      <div className="flex-1 p-4 flex flex-col items-center">
+        <div className="w-full max-w-7xl">
+          {/* Header table */}
+          <div className="grid grid-cols-3" >
+            <div className="bg-red-700 text-white text-center py-4 text-xl font-bold border border-white border-b-0 rounded-tl-xl uppercase tracking-wide">QUẦY PHỤC VỤ</div>
+            <div className="bg-red-700 text-white text-center py-4 text-xl font-bold border border-white border-b-0 uppercase tracking-wide">ĐANG PHỤC VỤ</div>
+            <div className="bg-red-700 text-white text-center py-4 text-xl font-bold border border-white border-b-0 rounded-tr-xl uppercase tracking-wide">ĐANG CHỜ</div>
           </div>
-
-          {/* Waiting Queue Column */}
-          <div className="bg-white bg-opacity-10 backdrop-blur-lg rounded-2xl p-8">
-            <h2 className="text-3xl font-bold text-center mb-6 text-green-300">
-              ⏳ SỐ ĐANG CHỜ
-            </h2>
-            
-            <div className="max-h-96 overflow-y-auto space-y-4">
-              {processedCounters.map((counter) => (
-                <div key={counter.counter_id} className="border-b border-white border-opacity-20 pb-3 last:border-b-0">
-                  <div className="text-lg font-semibold mb-2 text-blue-200">
-                    QUẦY {counter.counter_id} | {counter.counter_name}:
-                  </div>
-                  {counter.waiting_numbers.length > 0 ? (
-                    <div className="text-xl font-bold text-white">
-                      {counter.waiting_numbers.slice(0, 10).map((number, index) => (
-                        <span key={`waiting-${counter.counter_id}-${number}-${index}`}>
-                          <NumberAnimation number={number.toString()} />
-                          {index < Math.min(counter.waiting_numbers.length - 1, 9) ? ', ' : ''}
-                        </span>
-                      ))}
-                      {counter.waiting_numbers.length > 10 && (
-                        <span className="text-base text-gray-300">
-                          ... và {counter.waiting_numbers.length - 10} số khác
-                        </span>
-                      )}
-                    </div>
+          {/* Table body */}
+          {processedCounters.map((counter, idx) => {
+            const isEven = idx % 2 === 0;
+            return (
+              <div key={counter.counter_id} className={`grid grid-cols-3 border-b border-white last:rounded-b-xl ${isEven ? 'bg-gray-300 bg-opacity-80' : 'bg-pink-100  bg-opacity-80'}`} style={{minHeight: 140, alignItems: 'center'}}>
+                {/* Quầy phục vụ */}
+                <div className="text-xl font-extrabold text-red-800 px-4 py-3 border-r border-white uppercase">
+                  QUẦY {counter.counter_id} | {counter.counter_name}
+                </div>
+                {/* Đang phục vụ - logic cũ: nếu có số thì hiển thị, không thì hiện 'Chưa có số được phục vụ' */}
+                <div className="text-4xl font-extrabold text-center text-red-800 px-4 py-3 border-r border-white">
+                  {counter.serving_number || wsServingTickets[counter.counter_id] ? (
+                    <NumberAnimation number={(counter.serving_number || wsServingTickets[counter.counter_id]?.number)?.toString() || '0'} />
                   ) : (
-                    <div className="text-lg text-gray-400">
-                      Không có số nào đang chờ
-                    </div>
+                    <span className="text-gray-400 text-xl font-bold">Chưa có số được phục vụ</span>
                   )}
                 </div>
-              ))}
-            </div>
-          </div>
+                {/* Đang chờ */}
+                <div className="text-2xl font-extrabold text-center text-red-800 px-4 py-3">
+                  {counter.waiting_numbers.length > 0 ? (
+                    <>
+                      {counter.waiting_numbers.slice(0, 6).map((number, index) => (
+                        <span key={`waiting-${counter.counter_id}-${number}-${index}`}>{number}{index < Math.min(counter.waiting_numbers.length - 1, 5) ? ', ' : ''}</span>
+                      ))}
+                      {counter.waiting_numbers.length > 6 && (
+                        <span className="text-base text-gray-500 font-normal"> ... </span>
+                      )}
+                    </>
+                  ) : (
+                    <span className="text-gray-400 text-xl font-bold">Không có số đang chờ</span>
+                  )}
+                </div>
+              </div>
+            );
+          })}
         </div>
+      </div>
 
         {/* Stats */}
-        <div className="mt-8 max-w-7xl mx-auto">
+        {/* <div className="mt-8 max-w-7xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="bg-white bg-opacity-10 backdrop-blur-lg rounded-xl p-4 text-center">
               <div className="text-2xl font-bold text-yellow-300">
@@ -807,13 +775,13 @@ export default function QueueDisplay() {
       </div>
 
       {/* Footer */}
-      <footer className="bg-black bg-opacity-30 p-4 text-center">
-        <div className="flex justify-center items-center gap-8 text-lg">
-          <span>🕐 Giờ làm việc: Thứ 2 - Thứ 6: 8:00 - 17:00</span>
-          <span>📞 Hotline: 1900-1234</span>
+      <footer className="bg-white p-4 text-center fixed bottom-0 left-0 w-full z-40">
+        <div className="flex justify-center items-center gap-8 text-lg italic text-red-600 text-2xl font-extrabold">
+          <span> Giờ làm việc: Thứ 2 - Thứ 6, 7:30 - 17:30</span>
+          <span> Hotline: 0219-1022 </span>
           {lastUpdated && (
-            <span className="text-sm text-gray-300">
-              Cập nhật lúc: {new Date(lastUpdated).toLocaleTimeString('vi-VN')}
+            <span className="text-lg text-red-600 text-2xl font-extrabold">
+              Thời gian: {new Date().toLocaleTimeString('vi-VN')}
             </span>
           )}
         </div>
