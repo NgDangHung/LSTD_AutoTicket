@@ -519,7 +519,7 @@ export default function KioskMainScreen() {
         </div>
 
         {/* Search Bar */}
-        <div className="flex justify-center gap-4 mb-12 mt-12" style={{ marginTop: '9rem'}}>
+        <div className="flex justify-center gap-4 mb-12 mt-12" style={{ marginTop: '7rem'}}>
           <div className="relative" style={{ marginTop: '-28px'}}>
             <input 
               
@@ -646,34 +646,33 @@ export default function KioskMainScreen() {
               //   maxHeight: '500px' // Increased height for portrait layout
               // }}
             >
-              {filteredCounters.map((counter) => (
-                <div
-                  key={counter.id}
-                  onClick={() => handleCounterSelect(counter)}
-                  className="flex flex-direction: column items-center justify-center text-center kiosk-card relative transition-all duration-200 min-h-[220px] min-w-[220px] cursor-pointer border-2 border-red-600 shadow-[0_6px_32px_0_rgba(200,0,0,0.12)] hover:shadow-[0_8px_40px_0_rgba(200,0,0,0.18)] active:border-red-700 hover:scale-105 bg-white/90"
-                >
-                  {/* Counter Icon */}
-                  {/* <div className="text-center mb-3">
-                    <div className="text-4xl">
-                      {counter.icon}
-                    </div>
-                  </div> */}
-                  
-                  {/* Counter Name */}
-                  <h3 className="text-4xl font-semibold text-center mb-4 text-gray-800">
-                    {counter.name}
-                  </h3>
-                  
-                  {/* Counter Number */}
-                  <div className="text-center absolute bottom-5 left-1/2 transform -translate-x-1/2">
-                    <div className="inline-flex items-center gap-2 font-bold text-lg text-blue-600">
-                      <Printer size={36} />
-                      <h1 className='text-3xl'>Quầy {counter.id}</h1>
+              {filteredCounters.map((counter) => {
+                // Quầy 1 và 4 màu đỏ, còn lại trắng
+                const isActive = counter.id === 1 || counter.id === 4;
+                return (
+                  <div
+                    key={counter.id}
+                    onClick={() => handleCounterSelect(counter)}
+                    className={`flex flex-col items-center justify-center text-center kiosk-card relative transition-all duration-200 min-h-[220px] min-w-[220px] cursor-pointer rounded-2xl
+                      ${isActive
+                        ? 'bg-red-600 text-white border-2 border-red-600 shadow-lg hover:bg-red-700 hover:border-red-700'
+                        : 'bg-white text-red-700 border-2 border-red-600 shadow-lg hover:bg-red-50'}
+                      hover:scale-105`}
+                  >
+                    {/* Counter Name */}
+                    <h3 className={`text-2xl md:text-3xl font-extrabold text-center mb-4 ${isActive ? 'text-white' : 'text-red-700'}`}>
+                      {counter.name}
+                    </h3>
+                    {/* Counter Number */}
+                    <div className="text-center absolute bottom-5 left-1/2 transform -translate-x-1/2">
+                      <div className={`inline-flex items-center gap-2 font-bold text-lg ${isActive ? 'text-white' : 'text-red-700'}`}>
+                        <Printer size={36} />
+                        <h1 className='text-2xl md:text-3xl font-extrabold'>Quầy {counter.id}</h1>
+                      </div>
                     </div>
                   </div>
-                  
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
