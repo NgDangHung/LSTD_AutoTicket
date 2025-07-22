@@ -515,7 +515,7 @@ export default function KioskMainScreen() {
         </div>
 
         {/* DateTimeVN Component */}
-        <div className="text-center text-xl font-extrabold text-red-700" style = {{position: 'relative', right: '-300px', top: '-50px'}}>
+        <div className="text-center text-xl font-extrabold text-red-700" style = {{position: 'relative', right: '-260px', top: '-50px'}}>
           <DateTimeVN />
         </div>
 
@@ -647,47 +647,25 @@ export default function KioskMainScreen() {
             <div 
               className="service-grid-container grid grid-cols-2 gap-6 overflow-y-auto p-4 border rounded-lg bg-white/50 backdrop-blur-sm"
             >
-              {/* Nội dung từng thẻ theo đúng hình, không có icon máy in */}
-              <div
-                onClick={() => handleCounterSelect(counters[0])}
-                className="flex flex-col items-center justify-center text-center kiosk-card relative transition-all duration-200 min-h-[220px] min-w-[380px] cursor-pointer rounded-2xl bg-red-600 text-white border-2 border-red-600 shadow-lg hover:bg-red-700 hover:border-red-700 hover:scale-105"
-                style={{minHeight: 300}}
-              >
-                <div className="flex flex-col items-center justify-center w-full h-full">
-                  <span className="text-xl font-bold mb-2">QUẦY 01</span>
-                  <span className="text-2xl font-extrabold mb-2">TƯ PHÁP</span>
-                </div>
-              </div>
-              <div
-                onClick={() => handleCounterSelect(counters[1])}
-                className="flex flex-col items-center justify-center text-center kiosk-card relative transition-all duration-200 min-h-[220px] min-w-[380px] cursor-pointer rounded-2xl bg-white text-red-700 border-2 border-red-600 shadow-lg hover:bg-red-50 hover:scale-105"
-                style={{minHeight: 300}}
-              >
-                <div className="flex flex-col items-center justify-center w-full h-full">
-                  <span className="text-xl font-bold mb-2">QUẦY 02</span>
-                  <span className="text-2xl font-extrabold mb-2">KINH TẾ - HẠ TẦNG- ĐÔ THỊ</span>
-                </div>
-              </div>
-              <div
-                onClick={() => handleCounterSelect(counters[2])}
-                className="flex flex-col items-center justify-center text-center kiosk-card relative transition-all duration-200 min-h-[220px] min-w-[380px] cursor-pointer rounded-2xl bg-white text-red-700 border-2 border-red-600 shadow-lg hover:bg-red-50 hover:scale-105"
-                style={{minHeight: 300}}
-              >
-                <div className="flex flex-col items-center justify-center w-full h-full">
-                  <span className="text-xl font-bold mb-2">QUẦY 03</span>
-                  <span className="text-2xl font-extrabold mb-2">VĂN PHÒNG ĐĂNG KÝ ĐẤT ĐAI</span>
-                </div>
-              </div>
-              <div
-                onClick={() => handleCounterSelect(counters[3])}
-                className="flex flex-col items-center justify-center text-center kiosk-card relative transition-all duration-200 min-h-[220px] min-w-[380px] cursor-pointer rounded-2xl bg-red-600 text-white border-2 border-red-600 shadow-lg hover:bg-red-700 hover:border-red-700 hover:scale-105"
-                style={{minHeight: 300}}
-              >
-                <div className="flex flex-col items-center justify-center w-full h-full">
-                  <span className="text-xl font-bold mb-2">QUẦY 04</span>
-                  <span className="text-2xl font-extrabold mb-2">VĂN HOÁ - XÃ HỘI</span>
-                </div>
-              </div>
+              {filteredCounters.map((counter, idx) => {
+                // Chỉ quầy 1 (idx 0) và quầy 4 (idx 3) nền đỏ, còn lại nền trắng
+                const isRed = idx === 0 || idx === 3;
+                return (
+                  <div
+                    key={counter.id}
+                    onClick={() => handleCounterSelect(counter)}
+                    className={`flex flex-col items-center justify-center text-center kiosk-card relative transition-all duration-200 min-h-[220px] min-w-[380px] cursor-pointer rounded-2xl border-2 border-red-600 shadow-lg hover:scale-105 ${
+                      isRed ? 'bg-red-600 text-white hover:bg-red-700 hover:border-red-700' : 'bg-white text-red-700 hover:bg-red-50'
+                    }`}
+                    style={{minHeight: 300}}
+                  >
+                    <div className="flex flex-col items-center justify-center w-full h-full">
+                      <span className="text-xl font-bold mb-2">{`QUẦY ${String(idx + 1).padStart(2, '0')}`}</span>
+                      <span className="text-2xl font-extrabold mb-2">{counter.name?.toUpperCase()}</span>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}
@@ -702,7 +680,7 @@ export default function KioskMainScreen() {
         )}
 
         {/* Footer Info */}
-        <div className="flex items-center w-full text-gray-600 italic" style={{ marginTop: '24rem', justifyContent: 'space-around' }}>
+        <div className="flex items-center w-full text-gray-600 italic" style={{ position: 'relative', top: '42rem', justifyContent: 'space-around' }}>
           <p className="text-xl font-extrabold text-red-700 ">
               Giờ làm việc (Thứ 2 - Thứ 6): 07h30 - 17h30
           </p>

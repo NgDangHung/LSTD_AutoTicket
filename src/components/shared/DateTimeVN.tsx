@@ -17,7 +17,7 @@ export default function DateTimeVN() {
     return () => clearInterval(timer);
   }, []);
 
-  const time = now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', hour12: false });
+  const time = now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
 
   return (
     <div className="text-xl font-semibold text-red-700 italic">
