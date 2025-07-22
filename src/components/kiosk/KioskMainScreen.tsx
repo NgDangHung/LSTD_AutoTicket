@@ -15,6 +15,7 @@ import { countersAPI, Counter } from '@/libs/rootApi';
 import '@/app/index.css';
 import PrintTicket from '@/components/kiosk/PrintTicket';
 import DateTimeVN from '../shared/DateTimeVN';
+import { relative } from 'path/win32';
 
 
 const services = [
@@ -430,7 +431,6 @@ export default function KioskMainScreen() {
         toast.success(
           <div style={{ lineHeight: '1.6' }}>
             <div>🎫 Đã in số thứ tự thành công!</div>
-            <div>📋 Dịch vụ: {selectedServiceName}</div>
             <div>🏢 Quầy: {counterName}</div>
             <div>🎟️ Vé số: {newTicket.number}</div>
             <div>⏰ Thời gian: {new Date().toLocaleTimeString('vi-VN')}</div>
@@ -491,69 +491,75 @@ export default function KioskMainScreen() {
         {/* Header */}
         <div 
           className="flex items-center justify-center mb-12"
-          style={{ backgroundColor: '#c31313' }}
+          style={{ backgroundColor: '' }}
         >
           <div className="flex items-center gap-2">
             <Image
-              src="/images/logo_vang.png" 
-              alt="logo_vang" 
+              src="/images/logo_ban_goc.png" 
+              alt="logo_ban_goc" 
               width={240}
               height={240}
               className="w-60 h-60 object-contain"
               unoptimized
             />
             <div style={{ marginLeft: '30px' }}>
-              <h1 className="text-4xl font-bold text-white mb-4" style={{ lineHeight: '1.5' }}>
+              <h1 className="text-4xl font-bold text-red-700 " style={{ lineHeight: '1.5' }}>
                 TRUNG TÂM PHỤC VỤ HÀNH CHÍNH CÔNG PHƯỜNG HÀ GIANG 1
               </h1>
-              <h2 className="text-3xl text-white">
-                Hành chính phục vụ
-              </h2>
             </div>
           </div>
         </div>
 
         {/* DateTimeVN Component */}
-        <div className="text-center ">
+        <div className="text-center " style = {{position: 'relative', right: '-300px'}}>
           <DateTimeVN />
         </div>
 
         {/* Search Bar */}
         <div className="flex justify-center gap-4 mb-12 mt-12" style={{ marginTop: '7rem'}}>
-          <div className="relative" style={{ marginTop: '-28px'}}>
-            <input 
-              
-              name='voice-search'
-              value={searchQuery}
-              onClick={handleSearchClick}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className={`flex items-center gap-2 px-6 py-3 text-lg pr-12 Shadow cursor-pointer transition-all duration-300 ${
-                showVirtualKeyboard ? 'ring-2 ring-blue-500 border-blue-500' : ''
-              } ${
-                isVoiceActive ? 'ring-2 ring-red-500 border-red-500 bg-red-50' : ''
-              }`}
-              type="text"
-              placeholder={isVoiceActive ? 
-                (voiceStopTrigger === 'enter-key' ? 'Đang nghe... Bấm Enter trên bàn phím để dừng' : 'Đang nghe... Bấm ra ngoài để dừng') 
-                : 'Tìm kiếm thủ tục cụ thể (ví dụ: "đăng ký khai sinh")'
-              }
-              style={{ 
-                width: '600px', 
-                borderRadius: '9999px', 
-                border: '1px solid #ccc', 
-                color: 'black', 
-                backgroundColor: isVoiceActive ? '#fef2f2' : 'white',
-                lineHeight: '44px',
-              }}
-            />
-            <AudioLines 
-              size={24} 
-              className={`absolute right-4 top-1/2 transform -translate-y-1/2 cursor-pointer transition-colors ${
-                isVoiceActive ? 'text-red-500 animate-pulse' : 'text-blue-500 hover:text-blue-700'
-              }`}
+          <div className="relative flex items-center w-full max-w-5xl" style={{ marginTop: '-28px', maxWidth: '61rem' }}>
+            <div className="relative flex-1"> 
+              <input 
+                name='voice-search'
+                value={searchQuery}
+                onClick={handleSearchClick}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className={`flex items-center gap-2 px-6 py-3 text-lg pr-12 Shadow cursor-pointer transition-all duration-300 w-full ${
+                  showVirtualKeyboard ? 'ring-2 ring-blue-500 border-blue-500' : ''
+                } ${
+                  isVoiceActive ? 'ring-2 ring-red-500 border-red-500 bg-red-50' : ''
+                }`}
+                type="text"
+                placeholder={isVoiceActive ? 
+                  (voiceStopTrigger === 'enter-key' ? 'Đang nghe... Bấm Enter trên bàn phím để dừng' : 'Đang nghe... Bấm ra ngoài để dừng') 
+                  : 'Tìm kiếm thủ tục cụ thể (ví dụ: "đăng ký khai sinh")'
+                }
+                style={{ 
+                  borderRadius: '8px', 
+                  border: '1px solid rgb(220 38 38)', 
+                  color: 'black', 
+                  backgroundColor: isVoiceActive ? '#fef2f2' : 'white',
+                  lineHeight: '44px',
+                }}
+              />
+              <AudioLines 
+                size={24} 
+                className={`absolute right-4 top-1/2 transform -translate-y-1/2 cursor-pointer transition-colors ${
+                  isVoiceActive ? 'text-red-500 animate-pulse' : 'text-blue-500 hover:text-blue-700'
+                }`}
+                onClick={handleVoiceSearch}
+              />
+            </div>
+            {/* Button nằm ngang cạnh SearchBar */}
+            <button
               onClick={handleVoiceSearch}
-            />
-            
+              className="ml-4 px-5 py-3 bg-red-600 text-white font-extrabold text-base shadow-lg hover:bg-red-700 transition-colors flex items-center gap-2"
+              style={{ whiteSpace: 'nowrap', minHeight: '70px', borderRadius: '8px' }}
+            >
+              <span style={{fontSize: '1.2rem', fontWeight: 'bold'
+              }}>Tìm kiếm bằng giọng nói</span>
+            </button>
+
             {/* Voice Status Indicator */}
             {isVoiceActive && (
               <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-red-500 text-white px-3 py-1 rounded-full text-sm font-medium animate-pulse">
@@ -561,7 +567,6 @@ export default function KioskMainScreen() {
               </div>
             )}
           </div>
-          
           {/* Clear Search Button - Hiển thị khi có text trong search */}
           {searchQuery.trim() && (
             <button
@@ -640,7 +645,7 @@ export default function KioskMainScreen() {
             )}
             
             <div 
-              className="service-grid-container grid grid-cols-2 gap-6 overflow-y-auto p-4 border rounded-lg bg-white/50 backdrop-blur-sm w-[1000px] h-[1100px]"
+              className="service-grid-container grid grid-cols-2 gap-6 overflow-y-auto p-4 border rounded-lg bg-white/50 backdrop-blur-sm"
               // style={{ 
               //   maxWidth: '800px', // Reduced width for 2 columns
               //   maxHeight: '500px' // Increased height for portrait layout
@@ -653,11 +658,12 @@ export default function KioskMainScreen() {
                   <div
                     key={counter.id}
                     onClick={() => handleCounterSelect(counter)}
-                    className={`flex flex-col items-center justify-center text-center kiosk-card relative transition-all duration-200 min-h-[220px] min-w-[220px] cursor-pointer rounded-2xl
+                    className={`flex flex-col items-center justify-center text-center kiosk-card relative transition-all duration-200 min-h-[220px] min-w-[380px] cursor-pointer rounded-2xl
                       ${isActive
                         ? 'bg-red-600 text-white border-2 border-red-600 shadow-lg hover:bg-red-700 hover:border-red-700'
                         : 'bg-white text-red-700 border-2 border-red-600 shadow-lg hover:bg-red-50'}
                       hover:scale-105`}
+                      style={{minHeight: 300}}
                   >
                     {/* Counter Name */}
                     <h3 className={`text-2xl md:text-3xl font-extrabold text-center mb-4 ${isActive ? 'text-white' : 'text-red-700'}`}>
@@ -687,12 +693,12 @@ export default function KioskMainScreen() {
         )}
 
         {/* Footer Info */}
-        <div className="text-center text-gray-600" style={{ marginTop: '6rem'}}>
-          <p className="text-lg mb-2 ">
-            🕐 Giờ làm việc: Thứ 2 - Thứ 6, 8:00 - 17:00
+        <div className="flex justify-between items-center w-full text-gray-600" style={{ marginTop: '24rem'}}>
+          <p className="text-xl font-extrabold text-red-700 ">
+              Giờ làm việc (Thứ 2 - Thứ 6): 07h30 - 17h30
           </p>
-          <p className="text-lg ">
-            📞 Hotline hỗ trợ: 0219-1022
+          <p className="text-xl font-extrabold text-red-700 ">
+             Hotline hỗ trợ: 0219-1022
           </p>
         </div>
       </div>

@@ -685,9 +685,7 @@ export default function QueueDisplay() {
             <h1 className="text-4xl font-extrabold text-red-600 mb-4" style={{ lineHeight: '1.5' }}>
               TRUNG TÂM PHỤC VỤ HÀNH CHÍNH CÔNG PHƯỜNG HÀ GIANG 1
             </h1>
-            <h2 className="text-3xl text-red-600 font-bold">
-              Hành chính phục vụ
-            </h2>
+           
           </div>
           
         </div>
