@@ -43,7 +43,7 @@ const PrintTicket: React.FC<PrintTicketProps> = ({
           ${number}
         </div>
         <div style="margin-top:4px;font-weight: 20;">QUẦY PHỤC VỤ 0${counterId}</div>
-        <div style="font-weight:900;font-size:18px">${upperCounterName}</div>
+        <div style="font-weight:900;font-size:18px">${counterName}</div>
       </div>
       <div>
         <div style="margin-top:12px;font-weight: 20;font-size:12px;">
