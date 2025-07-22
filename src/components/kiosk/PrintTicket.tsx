@@ -24,11 +24,12 @@ const PrintTicket: React.FC<PrintTicketProps> = ({
   onPrintComplete
 }) => {
   const [printStatus, setPrintStatus] = useState<string>('');
+  const [qzReady, setQzReady] = useState(false);
 
   // ...removed kiosk detection logic...
 
   // 🖨️ Generate thermal HTML với enhanced debugging
-  const generateThermalTicketHTML = React.useCallback((timeString: string, dateString: string): string => {
+    const generateThermalTicketHTML = React.useCallback((timeString: string, dateString: string): string => {
       const ticketHTML = `
     <div style="width:80mm;height:60mm;padding:0;margin:0;font-family:'Arial', monospace;font-size:12px;line-height:1.4;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:space-between;">
       <div>
@@ -55,19 +56,20 @@ const PrintTicket: React.FC<PrintTicketProps> = ({
       </div>
     </div>
   `;
-      
 
-    console.log('📄 Generated thermal ticket HTML:', {
-      number,
-      counterName,
-      counterId,
-      timeString,
-      dateString,
-      htmlLength: ticketHTML.length
-    });
+  console.log('📄 Generated thermal ticket HTML:', {
+    number,
+    counterId,
+    counterName,
+    timeString,
+    dateString,
+    htmlLength: ticketHTML.length
+  });
 
-    return ticketHTML;
-  }, [number, counterName, counterId]);
+  return ticketHTML;
+}, [number, counterId, counterName]);
+
+
 
   // 🖨️ In vé bằng QZ Tray (chỉ chạy ở client)
   const loadQZTrayScripts = () => {
@@ -75,16 +77,27 @@ const PrintTicket: React.FC<PrintTicketProps> = ({
       // Luôn load 3 file khi mount, không phụ thuộc vào window.qz
       const scripts = [
         { src: 'jsrsasign-all-min.js', id: 'jsrsasign-script' },
-        { src: 'qz-tray.js', id: 'qztray-script' },
+        { src: 'qz-tray.js', id: 'qztray-script', 
+          onload: () => {
+            console.log('qz-tray.js loaded');
+            setQzReady(true);
+          }
+         },
         { src: 'sign-message.js', id: 'signmessage-script' }
       ];
-      scripts.forEach(({ src, id }) => {
+      scripts.forEach(({ src, id, onload}) => {
         if (!document.getElementById(id)) {
           const script = document.createElement('script');
           script.src = src;
           script.async = false;
           script.id = id;
+          if (onload) script.onload = onload;
           document.body.appendChild(script);
+        } else if (id === 'qztray-script') {
+          setQzReady(true);
+          if (autoPrint) {
+            setTimeout(() => handlePrint(), 300);
+          }
         }
       });
     }
@@ -138,7 +151,7 @@ const PrintTicket: React.FC<PrintTicketProps> = ({
 
       setPrintStatus('🖨️ Đang gửi lệnh in qua QZ Tray...');
       const ticketHTML = generateThermalTicketHTML(timeString, dateString);
-      const config = qz.configs.create('W80', {
+      const config = qz.configs.create('Microsoft Print to PDF', {
         encoding: 'RAW',
         copies: 1,
         rasterize: true
@@ -218,11 +231,12 @@ const PrintTicket: React.FC<PrintTicketProps> = ({
     }
   }, []);
 
-  useEffect(() => {
-    if (autoPrint) {
-      handlePrint();
-    }
-  }, [autoPrint, number, counterId, counterName, handlePrint]);
+useEffect(() => {
+  if (autoPrint && qzReady) {
+    handlePrint();
+  }
+}, [autoPrint, qzReady, number, counterId, counterName, handlePrint]);
+
 
   return (
     <div className="flex flex-col space-y-4">
