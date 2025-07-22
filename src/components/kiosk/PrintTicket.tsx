@@ -30,7 +30,7 @@ const PrintTicket: React.FC<PrintTicketProps> = ({
   // 🖨️ Generate thermal HTML với enhanced debugging
   const generateThermalTicketHTML = React.useCallback((timeString: string, dateString: string): string => {
       const ticketHTML = `
-    <div style="width:80mm;height:60mm;padding:0;margin:0;font-family:'Arial', monospace;font-size:12px;line-height:1.4;text-align:center;display:flex;flex-direction:column;justify-content:space-between;">
+    <div style="width:80mm;height:60mm;padding:0;margin:0;font-family:'Arial', monospace;font-size:12px;line-height:1.4;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:space-between;">
       <div>
         <div style="font-weight:bold;font-size:14px;">
           TRUNG TÂM DỊCH VỤ HÀNH CHÍNH CÔNG
