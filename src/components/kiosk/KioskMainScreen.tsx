@@ -507,7 +507,7 @@ export default function KioskMainScreen() {
               <h1 className="text-4xl font-bold text-red-700 " style={{ lineHeight: '1.5' }}>
                 TRUNG TÂM PHỤC VỤ HÀNH CHÍNH CÔNG PHƯỜNG HÀ GIANG 1
               </h1>
-              <p className='text-xl font-extrabold text-red-700' style={{fontSize: '1.5rem'}}>
+              <p className='text-xl font-extrabold text-red-700 mt-3' style={{fontSize: '1.5rem'}}>
                 Hành chính phục vụ 
               </p>
             </div>
