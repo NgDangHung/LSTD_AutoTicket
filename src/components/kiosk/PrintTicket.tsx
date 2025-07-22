@@ -29,28 +29,29 @@ const PrintTicket: React.FC<PrintTicketProps> = ({
 
   // 🖨️ Generate thermal HTML với enhanced debugging
   const generateThermalTicketHTML = React.useCallback((timeString: string, dateString: string): string => {
-    const ticketHTML = `
-    <div style="width:80mm;height:60mm;padding:4mm;font-family:'Courier New',monospace;font-size:12px;line-height:1.2;display:flex;flex-direction:column;justify-content:space-between;">
-      <div style="text-align:center;font-weight:bold;font-size:14px;border-bottom:1px dashed #000;padding-bottom:4px;margin-bottom:8px;">
-        TRUNG TÂM PHỤC VỤ<br>
-        HÀNH CHÍNH CÔNG<br>
-        PHƯỜNG HÀ GIANG 1
+      const ticketHTML = `
+    <div style="width:80mm;height:60mm;padding:4mm;font-family:'Arial', monospace;font-size:12px;line-height:1.4;text-align:center;display:flex;flex-direction:column;justify-content:space-between;">
+      <div>
+        <div style="font-weight:bold;font-size:14px;">
+          TRUNG TÂM DỊCH VỤ HÀNH CHÍNH CÔNG
+        </div>
+        <div style="font-weight:bold;font-size:18px;">
+          PHƯỜNG HÀ GIANG 1
+        </div>
+        <div style="margin-top:8px;font-weight: 20;">SỐ THỨ TỰ</div>
+        <div style="font-size:60px;font-weight:900;margin:8px 0;">
+          ${number}
+        </div>
+        <div style="margin-top:4px;font-weight: 20;">QUẦY PHỤC VỤ 0${counterId}</div>
+        <div style="font-weight:900;font-size:18px">${upperCounterName}</div>
       </div>
-      <div style="text-align:center;margin:4px 0;">SỐ THỨ TỰ</div>
-      <div style="text-align:center;font-size:48px;font-weight:bold;border:2px solid #000;padding:8px;margin:16px 0;">
-        ${number}
-      </div>
-      <div style="text-align:center;margin:4px 0;font-size:16px;font-weight:bold;">
-        Quầy số ${counterId} <br>
-        ${counterName}
-      </div>
-      <div style="text-align:center;margin:4px 0;font-size:15px;border-top:1px dashed #000;padding-top:4px;margin-top:auto;">
-         ${dateString}<br>
-         ${timeString}
-      </div>
-      <div style="text-align:center;margin:4px 0;font-size:15px;font-style:italic;">
-        Vui lòng chờ được gọi<br>
-        Cảm ơn quý khách!
+      <div>
+        <div style="margin-top:12px;font-weight: 20;font-size:12px;">
+          THỜI GIAN IN VÉ:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ${dateString} - ${timeString}
+        </div>
+        <div style="font-style:italic;font-weight: bold;margin-top:8px;font-size:14px;">
+          Cảm ơn Quý khách!
+        </div>
       </div>
     </div>
   `;
