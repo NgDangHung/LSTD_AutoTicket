@@ -26,7 +26,7 @@ Json
 {
   "event": "ticket_called",
   "ticket_number": 20,
-  "counter_name": "Quầy 1"
+  "counter_name": "Văn phòng"
 }
 📌 Ý nghĩa:
 •	Hệ thống gọi khách có số vé 20 tới quầy

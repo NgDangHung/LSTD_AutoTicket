@@ -1,6 +1,6 @@
 'use client';
 import Image from 'next/image';
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import NumberAnimation from './NumberAnimation';
 import { useWebSocketQueue } from '@/hooks/useWebSocketQueue';
 import { TTSService, type TTSService as TTSServiceType } from '@/libs/ttsService';
@@ -37,6 +37,8 @@ interface CounterAPI {
 }
 
 export default function QueueDisplay() {
+    // Lưu các ticket đã phát TTS (counterId-ticketNumber)
+  const announcedTicketsRef = useRef<Set<string>>(new Set());
   // ✅ Safe TTS Service initialization
   const [ttsService, setTtsService] = useState<TTSServiceType | null>(null);
   
@@ -111,16 +113,11 @@ export default function QueueDisplay() {
     return found ? found.name : `Quầy ${counterId}`;
   };
 
-  // ✅ Counter ID parsing from name (API-driven)
+  // ✅ Counter ID parsing from name (API-driven, strict match)
   const getCounterIdFromName = (counterName: string): number | null => {
-    const found = apiCounters.find(c => c.name === counterName);
-    if (found) return found.id;
-    // Fallback: Extract number từ "Quầy X"
-    const counterIdMatch = counterName.match(/(?:Quầy\s*)?(\d+)/i);
-    if (counterIdMatch) {
-      return parseInt(counterIdMatch[1]);
-    }
-    return null;
+    // So sánh tuyệt đối, loại bỏ fallback số quầy để tránh bug mapping
+    const found = apiCounters.find(c => c.name.trim().toLowerCase() === counterName.trim().toLowerCase());
+    return found ? found.id : null;
   };
 
   // ✅ Fetch all tickets from real API
@@ -339,66 +336,65 @@ export default function QueueDisplay() {
     // ✅ Handle ticket_called event từ BE documentation - UPDATED for WebSocket state
     const handleTicketCalledEvent = async (eventData: { event: string, ticket_number: number, counter_name: string }) => {
       console.log('📞 Ticket called via WebSocket:', eventData);
-      console.log('🔍 Parsing counter name:', eventData.counter_name);
-      
-      // ✅ Parse counter ID using mapping function
-      const counterId = getCounterIdFromName(eventData.counter_name);
-      console.log('🎯 Parsed counter ID:', counterId);
-      
-      if (counterId && eventData.ticket_number) {
-        // ✅ Store serving ticket in WebSocket state
-        const servingTicket = {
-          number: eventData.ticket_number,
-          counter_name: eventData.counter_name,
+      const { ticket_number, counter_name } = eventData;
+      const counterId = getCounterIdFromName(counter_name);
+      console.log('🎯 Parsed counter ID from counter_name:', counterId, 'for name:', counter_name);
+
+      if (!counterId || !ticket_number) return;
+
+      // Key duy nhất cho mỗi quầy - vé
+      const key = `${counterId}-${ticket_number}`;
+      // Nếu đã phát rồi thì bỏ qua
+      if (announcedTicketsRef.current.has(key)) {
+        console.log(`⏩ Skip duplicate TTS: ${key}`);
+        return;
+      }
+
+      // Nếu có currentCounter, chỉ phát cho đúng quầy hiện tại (nếu không có thì bỏ qua check này)
+      // Giả sử currentCounter lấy từ processedCounters hoặc props/context tuỳ bạn, ở đây sẽ bỏ qua check này nếu không có
+
+      // Đánh dấu đã phát
+      announcedTicketsRef.current.add(key);
+
+      // Cập nhật state phục vụ cho quầy
+      setWsServingTickets(prev => ({
+        ...prev,
+        [counterId]: {
+          number: ticket_number,
+          counter_name: counter_name,
           called_at: new Date().toISOString(),
           source: 'websocket-production'
-        };
-        
-        console.log(`🎯 TV storing serving ticket via WebSocket for counter ${counterId}:`, servingTicket);
-        
-        // ✅ Update WebSocket serving tickets state
-        setWsServingTickets(prev => {
-          const newState = {
-            ...prev,
-            [counterId]: servingTicket
-          };
-          console.log('📺 TV WebSocket serving state updated:', {
-            counterId,
-            ticket: servingTicket,
-            newState
-          });
-          return newState;
-        });
-        
-        // ✅ Show announcement cho TV display
-        setAnnouncement({
-          ticketNumber: eventData.ticket_number,
-          counterName: eventData.counter_name,
-          timestamp: new Date().toISOString()
-        });
-        
-        // ✅ TTS announcement if available
-        if (ttsService) {
-          try {
-            await ttsService.queueAnnouncement(
-              counterId,
-              eventData.ticket_number,
-              1, // First attempt
-              'manual', // Source type: manual (từ WebSocket)
-              new Date().toISOString()
-            );
-          } catch (error) {
-            console.warn('⚠️ TTS announcement failed:', error);
-          }
         }
+      }));
 
-        // Auto-hide announcement after 4 seconds
-        setTimeout(() => setAnnouncement(null), 4000);
-        
-      } else {
-        console.warn('⚠️ Invalid ticket_called data:', { counterId, ticketNumber: eventData.ticket_number, counterName: eventData.counter_name });
+      // Show announcement cho TV display
+      setAnnouncement({
+        ticketNumber: ticket_number,
+        counterName: counter_name,
+        timestamp: new Date().toISOString()
+      });
+
+      // TTS announcement nếu chưa phát
+      if (ttsService) {
+        try {
+          await ttsService.queueAnnouncement(
+            counterId,
+            ticket_number,
+            1, // First attempt
+            'manual', // Source type: manual (từ WebSocket)
+            new Date().toISOString()
+          );
+          console.log(`📢 TTS queued for Counter ${counterId} - Ticket ${ticket_number}`);
+        } catch (error) {
+          console.warn('⚠️ Failed to queue TTS:', error);
+          // Xoá khỏi set nếu queue thất bại để retry sau
+          announcedTicketsRef.current.delete(key);
+        }
       }
-      
+
+      // Auto-hide announcement after 4 seconds
+      setTimeout(() => setAnnouncement(null), 4000);
+
       // Refresh queue data sau khi gọi vé (waiting tickets will be updated)
       await fetchAndProcessQueueData(false);
     };

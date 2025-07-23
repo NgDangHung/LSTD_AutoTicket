@@ -1,4 +1,7 @@
+  // ...properties...
+
 import { ttsAPI } from './api';
+import { rootApi } from '@/libs/rootApi';
 
 interface TTSRequest {
   counterId: number;
@@ -22,6 +25,24 @@ interface SeatInfo {
 }
 
 export class TTSService {
+  // ...existing properties...
+
+  // Gọi API /counters và cache mapping name->id
+  private async loadCounters() {
+    if (this.countersLoaded) return;
+    try {
+      const response = await rootApi.get('/counters/');
+      if (Array.isArray(response.data)) {
+        response.data.forEach((c: { id: number, name: string }) => {
+          this.counterMapping[c.name.trim()] = c.id;
+        });
+        this.countersLoaded = true;
+        console.log('✅ [TTSService] Loaded counter mapping:', this.counterMapping);
+      }
+    } catch (error) {
+      console.warn('⚠️ [TTSService] Failed to load counters:', error);
+    }
+  }
   private static instance: TTSService | null = null;
   private audioQueue: TTSRequest[] = [];
   private isPlaying: boolean = false;
@@ -41,6 +62,7 @@ export class TTSService {
     this.apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || '';
     // ✅ Only setup WebSocket on client-side to prevent SSR error
     if (typeof window !== 'undefined') {
+      this.loadCounters();
       this.setupWebSocketListener();
     }
   }
@@ -57,10 +79,13 @@ export class TTSService {
       const handleTicketCalled = (event: Event) => {
         const customEvent = event as CustomEvent;
         const { ticket_number, counter_name, timestamp } = customEvent.detail;
-      
+
         // Extract counter_id từ counter_name hoặc mapping logic
         const counterId = this.extractCounterIdFromName(counter_name);
-        
+        if (counterId == null) {
+          console.warn('❌ Không xác định được counterId từ counter_name:', counter_name);
+          return;
+        }
         this.queueAnnouncement(counterId, ticket_number, 1, 'ai', timestamp);
       };
 
@@ -70,16 +95,19 @@ export class TTSService {
     }
   }
 
-  private extractCounterIdFromName(counterName: string): number {
-    // Mapping logic từ counter_name → counter_id
-    const counterMapping: { [key: string]: number } = {
-      'Tư pháp': 1,
-      'Kinh tế - Hạ tầng - Đô thị': 2,
-      'Văn phòng đăng ký đất đai': 3,
-      'Văn hóa - Xã hội': 4
-    };
-    
-    return counterMapping[counterName] || 1;
+  // Mapping cache: name -> id
+  private counterMapping: { [key: string]: number } = {};
+  private countersLoaded: boolean = false;
+
+  /**
+   * Trả về counterId nếu tên quầy match tuyệt đối, ngược lại trả về null (không phát TTS nếu không xác định được)
+   */
+  private extractCounterIdFromName(counterName: string): number | null {
+    if (!counterName) return null;
+    const normalized = counterName.trim();
+    // Nếu mapping chưa load, thử load lại (async không block)
+    if (!this.countersLoaded) this.loadCounters();
+    return this.counterMapping[normalized] ?? null;
   }
 
   async queueAnnouncement(
