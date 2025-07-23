@@ -20,44 +20,50 @@ import { Content } from 'next/font/google';
 
 
 const services = [
-  { id: 1, name: 'Chứng thực' },
-  { id: 2, name: 'Hộ tịch' },
-  { id: 3, name: 'Kiểm Lâm' },
-  { id: 4, name: 'Thành lập và hoạt động của hộ kinh doanh' },
-  { id: 5, name: 'Hoạt động xây dựng'},
-  { id: 6, name: 'Đất đai'},
-  { id: 7, name: 'Bảo trợ xã hội'}
+  { id: 1, name: 'Tư pháp' },
+  { id: 2, name: 'Thanh tra' },
+  { id: 3, name: 'Văn hóa TT - DL' },
+  { id: 4, name: 'Giáo dục Đào tạo' },
+  { id: 5, name: 'Y tế' },
+  { id: 6, name: 'Nông nghiệp và Môi trường' },
+  { id: 7, name: 'Xây dựng' },
+  { id: 8, name: 'Tài chính' },
+  { id: 9, name: 'Công thương' },
+  { id: 10, name: 'Nội vụ' },
+  { id: 11, name: 'Dân tộc - Tôn giáo' },
 ];
 
 // Mapping lĩnh vực với quầy phục vụ - DEPRECATED: Use API data instead
 const legacyCounters = [
-  { 
-    id: 1, 
-    name: 'Tư pháp', 
-    serviceIds: [1, 2],
-    serviceNames: 'Chứng thực, Hộ tịch',
-    icon: '⚖️'
+  {
+    id: 1,
+    name: 'Văn phòng',
+    serviceNames: 'Nội vụ, Dân tộc - Tôn giáo',
+    serviceIds: [10, 11], // Nội vụ (10), Dân tộc - Tôn giáo (11)
   },
-  { 
-    id: 2, 
-    name: 'Kinh tế - Hạ tầng - Đô Thị', 
-    serviceIds: [3, 4, 5],
-    serviceNames: 'Kiểm Lâm, Thành lập và hoạt động của hộ kinh doanh, Hoạt động xây dựng',
-    icon: '🏗️'
+  {
+    id: 2,
+    name: 'Tư pháp - Hộ tịch',
+    serviceNames: 'Tư pháp, Thanh tra',
+    serviceIds: [1, 2], // Tư pháp (1), Thanh tra (2)
   },
-  { 
-    id: 3, 
-    name: 'Văn phóng đăng ký đất đai', 
-    serviceIds: [6],
-    serviceNames: 'Đất đai',
-    icon: '🏘️'
+  {
+    id: 3,
+    name: 'Đô thị - Công thương',
+    serviceNames: 'Xây dựng, Tài chính, Công thương',
+    serviceIds: [7, 8, 9], // Xây dựng (7), Tài chính (8), Công thương (9)
   },
-  { 
-    id: 4, 
-    name: 'Văn hóa - Xã hội', 
-    serviceIds: [7],
-    serviceNames: 'Bảo trợ xã hội',
-    icon: '🏛️'
+  {
+    id: 4,
+    name: 'Văn hóa',
+    serviceNames: 'Văn hóa TT - DL, Giáo dục Đào tạo, Y tế',
+    serviceIds: [3, 4, 5], // Văn hóa TT - DL (3), Giáo dục Đào tạo (4), Y tế (5)
+  },
+  {
+    id: 5,
+    name: 'Nông nghiệp - Môi trường',
+    serviceNames: 'Nông nghiệp và Môi trường',
+    serviceIds: [6], // Nông nghiệp và Môi trường (6)
   }
 ];
 
@@ -648,8 +654,8 @@ export default function KioskMainScreen() {
               className="service-grid-container grid grid-cols-2 gap-6 overflow-y-auto p-4 border rounded-lg bg-white/50 backdrop-blur-sm"
             >
               {filteredCounters.map((counter, idx) => {
-                // Chỉ quầy 1 (idx 0) và quầy 4 (idx 3) nền đỏ, còn lại nền trắng
-                const isRed = idx === 0 || idx === 3;
+                // So le: idx 0,3,4,... (quầy 1,4,5,...) nền đỏ; idx 1,2,5,... nền trắng
+                const isRed = idx === 0 || idx === 3 || idx === 4;
                 return (
                   <div
                     key={counter.id}
@@ -680,7 +686,7 @@ export default function KioskMainScreen() {
         )}
 
         {/* Footer Info */}
-        <div className="flex items-center w-full text-gray-600 italic" style={{ position: 'relative', top: '42rem', justifyContent: 'space-around' }}>
+        <div className="flex items-center w-full text-gray-600 italic" style={{ position: 'relative', top: '22rem', justifyContent: 'space-around' }}>
           <p className="text-xl font-extrabold text-red-700 ">
               Giờ làm việc (Thứ 2 - Thứ 6): 07h30 - 17h30
           </p>

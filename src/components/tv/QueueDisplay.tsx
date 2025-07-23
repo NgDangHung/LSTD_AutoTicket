@@ -28,6 +28,14 @@ interface ProcessedCounterData {
   waiting_count: number;              // Total waiting count
 }
 
+// ✅ Counter API type
+interface CounterAPI {
+  id: number;
+  name: string;
+  is_active: boolean;
+  status: string;
+}
+
 export default function QueueDisplay() {
   // ✅ Safe TTS Service initialization
   const [ttsService, setTtsService] = useState<TTSServiceType | null>(null);
@@ -79,50 +87,39 @@ export default function QueueDisplay() {
     }
   }, []);
 
-  // ✅ Counter name mapping (both directions)
-  const getCounterName = (counterId: number): string => {
-    const counterNames: Record<number, string> = {
-      1: 'Tư pháp',
-      2: 'Kinh tế - Hạ tầng - Đô Thị', 
-      3: 'Văn phòng đăng ký đất đai',
-      4: 'Văn hóa - Xã hội'
+  // ✅ State: counters from API
+  const [apiCounters, setApiCounters] = useState<CounterAPI[]>([]);
+
+  // ✅ Fetch counters from API on mount
+  useEffect(() => {
+    const fetchCounters = async () => {
+      try {
+        const response = await rootApi.get('/counters/');
+        setApiCounters(response.data);
+        console.log('✅ Counters from API:', response.data);
+      } catch (error) {
+        console.error('❌ Failed to fetch counters:', error);
+        setApiCounters([]);
+      }
     };
-    return counterNames[counterId] || `Quầy ${counterId}`;
+    fetchCounters();
+  }, []);
+
+  // ✅ Counter name mapping (API-driven)
+  const getCounterName = (counterId: number): string => {
+    const found = apiCounters.find(c => c.id === counterId);
+    return found ? found.name : `Quầy ${counterId}`;
   };
 
-  // ✅ Enhanced counter ID parsing from counter name
+  // ✅ Counter ID parsing from name (API-driven)
   const getCounterIdFromName = (counterName: string): number | null => {
-    // Direct mapping từ actual counter names
-    const nameToIdMap: Record<string, number> = {
-      'Tư pháp': 1,
-      'Kinh tế - Hạ tầng - Đô Thị': 2,
-      'Văn phóng đăng ký đất đai': 3,
-      'Văn phòng đăng ký đất đai': 3, // Alternative spelling
-      'Văn hóa - Xã hội': 4
-    };
-    
-    // ✅ Exact match first
-    if (nameToIdMap[counterName]) {
-      console.log(`✅ Exact match found: "${counterName}" -> ${nameToIdMap[counterName]}`);
-      return nameToIdMap[counterName];
-    }
-    
-    // ✅ Fallback: Extract number từ "Quầy X" format
+    const found = apiCounters.find(c => c.name === counterName);
+    if (found) return found.id;
+    // Fallback: Extract number từ "Quầy X"
     const counterIdMatch = counterName.match(/(?:Quầy\s*)?(\d+)/i);
     if (counterIdMatch) {
-      const id = parseInt(counterIdMatch[1]);
-      console.log(`✅ Regex match found: "${counterName}" -> ${id}`);
-      return id;
+      return parseInt(counterIdMatch[1]);
     }
-    
-    // ✅ Additional fuzzy matching for common variations
-    const lowerName = counterName.toLowerCase().trim();
-    if (lowerName.includes('tư pháp') || lowerName.includes('tu phap')) return 1;
-    if (lowerName.includes('kinh tế') || lowerName.includes('kinh te') || lowerName.includes('hạ tầng')) return 2;
-    if (lowerName.includes('đất đai') || lowerName.includes('dat dai') || lowerName.includes('đăng ký đất')) return 3;
-    if (lowerName.includes('văn hóa') || lowerName.includes('van hoa') || lowerName.includes('xã hội')) return 4;
-    
-    console.warn('⚠️ Could not parse counter ID from:', counterName);
     return null;
   };
 
@@ -165,45 +162,38 @@ export default function QueueDisplay() {
     }
   };
 
-  // ✅ Process tickets into counter groups với WebSocket serving state
+  // ✅ Process tickets into counter groups với WebSocket serving state (API-driven counters)
   const processTicketsToCounters = (tickets: RealTicket[]): ProcessedCounterData[] => {
     console.log('🔧 Processing tickets into counter groups with WebSocket serving state...');
-    
     const countersMap = new Map<number, ProcessedCounterData>();
-    
-    // Initialize all counters (1-4)
-    for (let counterId = 1; counterId <= 4; counterId++) {
-      countersMap.set(counterId, {
-        counter_id: counterId,
-        counter_name: getCounterName(counterId),
+    // Khởi tạo tất cả quầy từ API
+    apiCounters.forEach(counterApi => {
+      countersMap.set(counterApi.id, {
+        counter_id: counterApi.id,
+        counter_name: counterApi.name,
         serving_tickets: [],
         waiting_tickets: [],
         serving_number: null,
         waiting_numbers: [],
         waiting_count: 0
       });
-    }
-    
+    });
     // ✅ Filter out 'done' tickets và only process waiting tickets from API
     const waitingTickets = tickets.filter(ticket => ticket.status === 'waiting');
     console.log('📋 Waiting tickets from API:', waitingTickets);
     console.log('🎯 WebSocket serving tickets:', wsServingTickets);
-    
     // Process waiting tickets
     waitingTickets.forEach(ticket => {
       const counter = countersMap.get(ticket.counter_id);
       if (!counter) return;
-      
       counter.waiting_tickets.push(ticket);
     });
-    
     // ✅ Process each counter data with WebSocket serving state
     countersMap.forEach(counter => {
       // Sort waiting tickets by ID (FIFO order)
       counter.waiting_tickets.sort((a, b) => a.id - b.id);
       counter.waiting_numbers = counter.waiting_tickets.map(t => t.number);
       counter.waiting_count = counter.waiting_tickets.length;
-      
       // ✅ Get serving number from WebSocket state instead of API tickets
       const wsServing = wsServingTickets[counter.counter_id];
       if (wsServing) {
@@ -212,7 +202,6 @@ export default function QueueDisplay() {
       } else {
         console.log(`📭 Counter ${counter.counter_id} has no serving ticket in WebSocket state`);
       }
-      
       console.log(`📊 Counter ${counter.counter_id} processed:`, {
         serving: counter.serving_number,
         waiting: counter.waiting_numbers,
@@ -220,26 +209,28 @@ export default function QueueDisplay() {
         wsServing: wsServing ? `#${wsServing.number}` : 'none'
       });
     });
-    
+    // Trả về danh sách quầy theo thứ tự id tăng dần
     return Array.from(countersMap.values()).sort((a, b) => a.counter_id - b.counter_id);
   };
 
   // ✅ Main data fetching và processing function
   const fetchAndProcessQueueData = useCallback(async (showLoading = false) => {
     try {
-      // Only show loading on initial load, not on polling updates
       if (showLoading) {
         setIsLoading(true);
       }
       setApiError(null);
-      
+      // Đảm bảo đã có apiCounters trước khi process
+      if (apiCounters.length === 0) {
+        setProcessedCounters([]);
+        setIsLoading(false);
+        return;
+      }
       const tickets = await fetchAllTickets();
       const processedData = processTicketsToCounters(tickets);
-      
       setProcessedCounters(processedData);
       setLastUpdated(new Date().toISOString());
       console.log('✅ Queue data updated:', processedData);
-      
     } catch (error: any) {
       console.error('❌ Queue data fetch failed:', error);
       setApiError(error.message || 'Failed to fetch queue data');
@@ -249,7 +240,7 @@ export default function QueueDisplay() {
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // No dependencies needed
+  }, [apiCounters]);
 
   // ✅ Simplified: No need to re-process since we render directly from wsServingTickets
   // useEffect removed - direct rendering is more reliable
@@ -400,9 +391,9 @@ export default function QueueDisplay() {
             console.warn('⚠️ TTS announcement failed:', error);
           }
         }
-        
-        // Auto-hide announcement after 10 seconds
-        setTimeout(() => setAnnouncement(null), 10000);
+
+        // Auto-hide announcement after 4 seconds
+        setTimeout(() => setAnnouncement(null), 4000);
         
       } else {
         console.warn('⚠️ Invalid ticket_called data:', { counterId, ticketNumber: eventData.ticket_number, counterName: eventData.counter_name });
@@ -478,9 +469,9 @@ export default function QueueDisplay() {
           counterName: counter_name,
           timestamp: new Date().toISOString()
         });
-        
-        // Auto-hide announcement after 10 seconds
-        setTimeout(() => setAnnouncement(null), 10000);
+
+        // Auto-hide announcement after 4 seconds
+        setTimeout(() => setAnnouncement(null), 4000);
       }
       
       // Refresh queue data
@@ -494,10 +485,10 @@ export default function QueueDisplay() {
       
       setAnnouncement({ ticketNumber, counterName, timestamp });
       setCurrentTTSAnnouncement(null); // Clear TTS to ensure only 1 banner
-      // Auto-hide announcement after 10 seconds
+      // Auto-hide announcement after 4 seconds
       setTimeout(() => {
         setAnnouncement(null);
-      }, 10000);
+      }, 4000);
     };
 
     // TTS announcement handler
@@ -505,8 +496,8 @@ export default function QueueDisplay() {
       const customEvent = event as CustomEvent;
       setCurrentTTSAnnouncement(customEvent.detail);
       setAnnouncement(null); // Clear announcement to ensure only 1 banner
-      // Hide announcement after 8 seconds
-      setTimeout(() => setCurrentTTSAnnouncement(null), 8000);
+      // Hide announcement after 4 seconds
+      setTimeout(() => setCurrentTTSAnnouncement(null), 4000);
     };
     
     // Event listeners
@@ -612,23 +603,12 @@ export default function QueueDisplay() {
             <span>
               {currentTTSAnnouncement
                 ? `MỜI KHÁCH HÀNG SỐ ${currentTTSAnnouncement.ticketNumber} ĐẾN QUẦY ${currentTTSAnnouncement.counterId}`
-                : `MỜI SỐ ${announcement?.ticketNumber} ĐẾN ${announcement?.counterName}`}
+                : `MỜI KHÁCH HÀNG SỐ  ${announcement?.ticketNumber} ĐẾN QUẦY ${announcement?.counterName}`}
             </span>
-            {currentTTSAnnouncement && (
-              <>
-                <span className="text-sm bg-white text-blue-600 px-3 py-1 rounded-full">
-                  Lần {currentTTSAnnouncement.callAttempt}/3
-                </span>
-                <span className="text-xs bg-black bg-opacity-50 px-2 py-1 rounded">
-                  {currentTTSAnnouncement.source === 'manual' ? '👤 Thủ công' : '🤖 Tự động'}
-                </span>
-                {ttsQueueStatus.isPlaying && <span className="animate-pulse text-yellow-300">🔊</span>}
-              </>
-            )}
           </div>
           <div className="text-sm mt-1 opacity-75">
             {currentTTSAnnouncement
-              ? (ttsQueueStatus.isPlaying ? 'Đang phát thông báo...' : 'Vui lòng đến quầy phục vụ')
+              ? ''
               : `Thời gian: ${announcement ? new Date(announcement.timestamp).toLocaleTimeString('vi-VN') : ''}`}
           </div>
         </div>
@@ -663,29 +643,6 @@ export default function QueueDisplay() {
         </div>
       )}
 
-      {/* Header with logo and title */}
-      {/* <div 
-        className="flex items-center justify-center mb-12"
-        style={{ backgroundColor: '#ffffffff' }}
-      >
-        <div className="flex items-center gap-2" style={{marginLeft: '292px'}}>
-          <Image
-            src="/images/logo_ban_goc.png" 
-            alt="logo_ban_goc" 
-            width={240}
-            height={240}
-            className="w-60 h-60 object-contain"
-            unoptimized
-          />
-          <div style={{ marginLeft: '30px', width: '60%' }}>
-            <h1 className="text-4xl font-extrabold text-red-600 mb-4" style={{ lineHeight: '1.5' }}>
-              TRUNG TÂM PHỤC VỤ HÀNH CHÍNH CÔNG PHƯỜNG HÀ GIANG 1
-            </h1>
-           
-          </div>
-          
-        </div>
-      </div> */}
       <div 
         className="flex items-center justify-center"
         style={{ backgroundColor: '' }}
@@ -730,7 +687,7 @@ export default function QueueDisplay() {
           {processedCounters.map((counter, idx) => {
             const isEven = idx % 2 === 0;
             return (
-              <div key={counter.counter_id} className={`grid border-b border-white last:rounded-b-xl ${isEven ? 'bg-gray-300 bg-opacity-80' : 'bg-pink-100  bg-opacity-80'}`} style={{minHeight: 140, alignItems: 'center', gridTemplateColumns: '1.5fr 1fr 1fr'}}>
+              <div key={counter.counter_id} className={`grid border-b border-white last:rounded-b-xl ${isEven ? 'bg-gray-300 bg-opacity-80' : 'bg-pink-100  bg-opacity-80'}`} style={{minHeight: 120, alignItems: 'center', gridTemplateColumns: '1.5fr 1fr 1fr'}}>
                 {/* Quầy phục vụ */}
                 <div className="text-xl font-extrabold text-red-800 px-4 py-3 border-r border-white uppercase" style={{fontSize: '1.7rem'}}>
                   QUẦY {counter.counter_id} | {counter.counter_name}
