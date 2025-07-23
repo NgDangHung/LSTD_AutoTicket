@@ -540,28 +540,26 @@ export default function KioskMainScreen() {
         </div>
 
          {/* Navigation Bar */}
-
-        
-          <div className="flex space-x-4 mb-16" style={{alignItems: 'center', justifyContent: 'space-evenly', minHeight: '60px'}}>
+          <div className="flex space-x-4 mb-16" style={{marginLeft: '44px', minHeight: '50px'}}>
             {/* Current: "bg-gray-900 text-white", Default: "text-gray-300 hover:bg-gray-700 hover:text-white" */}
             <button
               aria-current="page"
-              className="rounded-md bg-red-500 px-3 py-2 text-sm font-medium hover:bg-red-700 text-white"
-              style={{ lineHeight: '40px' }}
+              className="rounded-md bg-red-600 px-3 py-2 text-sm font-medium hover:bg-red-700 text-white"
+              style={{ lineHeight: '50px' }}
               onClick={() => handleOpenPopup('https://dichvucong.gov.vn/p/home/dvc-thanh-toan-phi-le-phi-ho-so.html')}
             >
               Dịch Vụ Công Quốc Gia
             </button>
             <button
-              className="rounded-md bg-red-500 px-3 py-2 text-sm font-medium text-white hover:bg-red-700"
-              style={{ lineHeight: '40px' }}
+              className="rounded-md bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700"
+              style={{ lineHeight: '50px' }}
               onClick={() => handleOpenPopup('https://dichvucong.gov.vn/p/home/dvc-thanh-toan-phi-le-phi-ho-so.html')}
             >
               Thanh Toán Trực Tuyến
             </button>
             <button
-              className="rounded-md bg-red-500 px-3 py-2 text-sm font-medium text-white hover:bg-red-700"
-              style={{ lineHeight: '40px' }}
+              className="rounded-md bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700"
+              style={{ lineHeight: '50px' }}
               onClick={() => handleOpenPopup('https://thutuc.dichvucong.gov.vn/p/home/dvc-tthc-trang-chu.html')}
             >
               Tra Cứu Thủ Tục Hành Chính
