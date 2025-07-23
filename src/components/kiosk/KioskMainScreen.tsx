@@ -14,6 +14,7 @@ import { CounterQueueManager } from '@/libs/counterQueue';
 import { countersAPI, Counter } from '@/libs/rootApi';
 import '@/app/index.css';
 import PrintTicket from '@/components/kiosk/PrintTicket';
+import PopUp from './PopUp';
 import DateTimeVN from '../shared/DateTimeVN';
 import { relative } from 'path/win32';
 import { Content } from 'next/font/google';
@@ -91,6 +92,19 @@ interface ProcedureResult {
 
 export default function KioskMainScreen() {
   
+   // Popup state (phải nằm trong thân component)
+  const [popupUrl, setPopupUrl] = useState<string | null>(null);
+  const [popupOpen, setPopupOpen] = useState(false);
+
+  const handleOpenPopup = (url: string) => {
+    setPopupUrl(url);
+    setPopupOpen(true);
+  };
+  const handleClosePopup = () => {
+    setPopupOpen(false);
+    setPopupUrl(null);
+  };
+
   // Original states
   const [printData, setPrintData] = useState<{ number: number; counterId: string; counterName: string } | null>(null);
   const [selectedService, setSelectedService] = useState<string>('');
@@ -496,25 +510,6 @@ export default function KioskMainScreen() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 p-8">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
-
-        {/* Navigation Bar */}
-
-        <nav className="bg-white shadow-md mb-8">
-          <div className="mx-auto max-w-7xl px-2 sm:px-6 lg:px-8">
-            <div className="relative flex h-16 items-center justify-between">
-              <div className="flex flex-1 items-center justify-center sm:items-stretch sm:justify-start">
-                <div className="hidden sm:ml-6 sm:block">
-                  <div className="flex space-x-4">
-                    {/* Current: "bg-gray-900 text-white", Default: "text-gray-300 hover:bg-gray-700 hover:text-white" */}
-                    <a href="https://dichvucong.gov.vn/p/home/dvc-trang-chu.html" aria-current="page" className="rounded-md bg-red-500 px-3 py-2 text-sm font-medium hover:bg-red-700 text-white" target="_blank" rel="noopener noreferrer">Dịch Vụ Công Quốc Gia</a>
-                    <a href="https://dichvucong.gov.vn/p/home/dvc-thanh-toan-truc-tuyen.html" className="rounded-md bg-red-500 px-3 py-2 text-sm font-medium text-white hover:bg-red-700" target="_blank" rel="noopener noreferrer">Thanh Toán Trực Tuyến</a>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </nav>
-
         <div 
           className="flex items-center justify-center mb-12"
           style={{ backgroundColor: '' }}
@@ -543,6 +538,38 @@ export default function KioskMainScreen() {
         <div className="text-center text-xl font-extrabold text-red-700" style = {{position: 'relative', right: '-260px', top: '-50px'}}>
           <DateTimeVN />
         </div>
+
+         {/* Navigation Bar */}
+
+        
+          <div className="flex space-x-4 mb-16" style={{alignItems: 'center', justifyContent: 'space-evenly', minHeight: '60px'}}>
+            {/* Current: "bg-gray-900 text-white", Default: "text-gray-300 hover:bg-gray-700 hover:text-white" */}
+            <button
+              aria-current="page"
+              className="rounded-md bg-red-500 px-3 py-2 text-sm font-medium hover:bg-red-700 text-white"
+              style={{ lineHeight: '40px' }}
+              onClick={() => handleOpenPopup('https://dichvucong.gov.vn/p/home/dvc-thanh-toan-phi-le-phi-ho-so.html')}
+            >
+              Dịch Vụ Công Quốc Gia
+            </button>
+            <button
+              className="rounded-md bg-red-500 px-3 py-2 text-sm font-medium text-white hover:bg-red-700"
+              style={{ lineHeight: '40px' }}
+              onClick={() => handleOpenPopup('https://dichvucong.gov.vn/p/home/dvc-thanh-toan-phi-le-phi-ho-so.html')}
+            >
+              Thanh Toán Trực Tuyến
+            </button>
+            <button
+              className="rounded-md bg-red-500 px-3 py-2 text-sm font-medium text-white hover:bg-red-700"
+              style={{ lineHeight: '40px' }}
+              onClick={() => handleOpenPopup('https://thutuc.dichvucong.gov.vn/p/home/dvc-tthc-trang-chu.html')}
+            >
+              Tra Cứu Thủ Tục Hành Chính
+            </button>
+          </div>
+      {/* PopUp component (headless) */}
+          <PopUp url={popupUrl || ''} open={popupOpen} onClose={handleClosePopup} timeoutMs={20000} />
+        
 
         {/* Search Bar */}
         <div className="flex justify-center gap-4 mb-12 mt-12" style={{ marginTop: '2rem'}}>
@@ -763,4 +790,4 @@ export default function KioskMainScreen() {
 
     </div>
   );
-}
+} 
