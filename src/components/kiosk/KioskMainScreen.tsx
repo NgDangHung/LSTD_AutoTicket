@@ -496,6 +496,25 @@ export default function KioskMainScreen() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 p-8">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
+
+        {/* Navigation Bar */}
+
+        <nav className="bg-white shadow-md mb-8">
+          <div className="mx-auto max-w-7xl px-2 sm:px-6 lg:px-8">
+            <div className="relative flex h-16 items-center justify-between">
+              <div className="flex flex-1 items-center justify-center sm:items-stretch sm:justify-start">
+                <div className="hidden sm:ml-6 sm:block">
+                  <div className="flex space-x-4">
+                    {/* Current: "bg-gray-900 text-white", Default: "text-gray-300 hover:bg-gray-700 hover:text-white" */}
+                    <a href="https://dichvucong.gov.vn/p/home/dvc-trang-chu.html" aria-current="page" className="rounded-md bg-red-500 px-3 py-2 text-sm font-medium hover:bg-red-700 text-white" target="_blank" rel="noopener noreferrer">Dịch Vụ Công Quốc Gia</a>
+                    <a href="https://dichvucong.gov.vn/p/home/dvc-thanh-toan-truc-tuyen.html" className="rounded-md bg-red-500 px-3 py-2 text-sm font-medium text-white hover:bg-red-700" target="_blank" rel="noopener noreferrer">Thanh Toán Trực Tuyến</a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </nav>
+
         <div 
           className="flex items-center justify-center mb-12"
           style={{ backgroundColor: '' }}
@@ -686,7 +705,7 @@ export default function KioskMainScreen() {
         )}
 
         {/* Footer Info */}
-        <div className="flex items-center w-full text-gray-600 italic" style={{ position: 'relative', top: '22rem', justifyContent: 'space-around' }}>
+        <div className="flex items-center w-full text-gray-600 italic" style={{ position: 'relative', top: '16rem', justifyContent: 'space-around' }}>
           <p className="text-xl font-extrabold text-red-700 ">
               Giờ làm việc (Thứ 2 - Thứ 6): 07h30 - 17h30
           </p>
