@@ -121,9 +121,6 @@ const PrintTicket: React.FC<PrintTicketProps> = ({
           document.body.appendChild(script);
         } else if (id === 'qztray-script') {
           setQzReady(true);
-          if (autoPrint) {
-            setTimeout(() => handlePrint(), 300);
-          }
         }
       });
     }
@@ -258,8 +255,26 @@ const PrintTicket: React.FC<PrintTicketProps> = ({
   }, []);
 
 useEffect(() => {
+  // Chỉ gọi in khi autoPrint=true và qzReady=true
   if (autoPrint && qzReady) {
-    handlePrint();
+    // Đảm bảo QZ Tray websocket đã kết nối
+    const tryPrint = async () => {
+      const qz = (window as any).qz;
+      if (qz && qz.websocket && qz.websocket.isActive()) {
+        await handlePrint();
+      } else if (qz && qz.websocket) {
+        // Nếu chưa kết nối, thử kết nối rồi in
+        try {
+          await qz.websocket.connect();
+          await handlePrint();
+        } catch (err) {
+          setPrintStatus('❌ QZ Tray chưa sẵn sàng hoặc không thể kết nối. Vui lòng kiểm tra lại QZ Tray.');
+        }
+      } else {
+        setPrintStatus('❌ QZ Tray chưa sẵn sàng trên kiosk.');
+      }
+    };
+    tryPrint();
   }
 }, [autoPrint, qzReady, number, counterId, counterName, handlePrint]);
 
