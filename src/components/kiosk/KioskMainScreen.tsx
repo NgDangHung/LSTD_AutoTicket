@@ -36,7 +36,7 @@ const services = [
 // Mapping lĩnh vực với quầy phục vụ - DEPRECATED: Use API data instead
 const legacyCounters = [
   { id: 1, name: 'Thuế', serviceNames: 'Thuế', serviceIds: [] },
-  { id: 2, name: 'Văn phòng đăng kí đất đai khu vực XI', serviceNames: 'Văn phòng đăng kí đất đai khu vực XI', serviceIds: [] },
+  { id: 2, name: 'Văn phòng đăng kí đất đai khu vực 9', serviceNames: 'Văn phòng đăng kí đất đai khu vực 9', serviceIds: [] },
   { id: 3, name: 'Lĩnh vực Kinh tế', serviceNames: 'Lĩnh vực Kinh tế', serviceIds: [] },
   { id: 4, name: 'Tư pháp - Hộ tịch (Chứng thực điện tử)', serviceNames: 'Tư pháp - Hộ tịch (Chứng thực điện tử)', serviceIds: [] },
   { id: 5, name: 'Tư pháp - Hộ tịch', serviceNames: 'Tư pháp - Hộ tịch', serviceIds: [] },
