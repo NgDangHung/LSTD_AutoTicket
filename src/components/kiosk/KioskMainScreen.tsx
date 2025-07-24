@@ -92,7 +92,7 @@ interface ProcedureResult {
 
 export default function KioskMainScreen() {
   
-   // Popup state (phải nằm trong thân component)
+   // Popup state 
   const [popupUrl, setPopupUrl] = useState<string | null>(null);
   const [popupOpen, setPopupOpen] = useState(false);
 
@@ -516,8 +516,8 @@ export default function KioskMainScreen() {
         >
           <div className="flex items-center gap-2">
             <Image
-              src="/images/logo_ban_goc.png" 
-              alt="logo_ban_goc" 
+              src="/images/logo_vang.png" 
+              alt="logo_vang" 
               width={240}
               height={240}
               className="w-60 h-60 object-contain"
@@ -539,35 +539,31 @@ export default function KioskMainScreen() {
           <DateTimeVN />
         </div>
 
-         {/* Navigation Bar */}
-          <div className="flex space-x-4 mb-16" style={{marginLeft: '44px', minHeight: '50px'}}>
-            {/* Current: "bg-gray-900 text-white", Default: "text-gray-300 hover:bg-gray-700 hover:text-white" */}
-            <button
-              aria-current="page"
-              className="rounded-md bg-red-600 px-3 py-2 text-sm font-medium hover:bg-red-700 text-white"
-              style={{ lineHeight: '50px' }}
-              onClick={() => handleOpenPopup('https://dichvucong.gov.vn/p/home/dvc-thanh-toan-phi-le-phi-ho-so.html')}
-            >
-              Dịch Vụ Công Quốc Gia
-            </button>
-            <button
-              className="rounded-md bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700"
-              style={{ lineHeight: '50px' }}
-              onClick={() => handleOpenPopup('https://dichvucong.gov.vn/p/home/dvc-thanh-toan-phi-le-phi-ho-so.html')}
-            >
-              Thanh Toán Trực Tuyến
-            </button>
-            <button
-              className="rounded-md bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700"
-              style={{ lineHeight: '50px' }}
-              onClick={() => handleOpenPopup('https://thutuc.dichvucong.gov.vn/p/home/dvc-tthc-trang-chu.html')}
-            >
-              Tra Cứu Thủ Tục Hành Chính
-            </button>
-          </div>
-      {/* PopUp component (headless) */}
-          <PopUp url={popupUrl || ''} open={popupOpen} onClose={handleClosePopup} timeoutMs={20000} />
-        
+        {/* Navigation Bar */}
+        <div className="flex space-x-4 mb-16" style={{marginLeft: '44px', minHeight: '50px'}}>
+          <button
+            aria-current="page"
+            className="rounded-md bg-red-600 px-3 py-2 text-sm font-medium hover:bg-red-700 text-white"
+            style={{ lineHeight: '50px' }}
+            onClick={() => handleOpenPopup('https://dichvucong.gov.vn/p/home/dvc-trang-chu.html')}
+          >
+            Dịch Vụ Công Quốc Gia
+          </button>
+          <button
+            className="rounded-md bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700"
+            style={{ lineHeight: '50px' }}
+            onClick={() => handleOpenPopup('https://dichvucong.gov.vn/p/home/dvc-thanh-toan-phi-le-phi-ho-so.html')}
+          >
+            Thanh Toán Trực Tuyến
+          </button>
+          <button
+            className="rounded-md bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700"
+            style={{ lineHeight: '50px' }}
+            onClick={() => handleOpenPopup('https://thutuc.dichvucong.gov.vn/p/home/dvc-tthc-trang-chu.html')}
+          >
+            Tra Cứu Thủ Tục Hành Chính
+          </button>
+        </div>
 
         {/* Search Bar */}
         <div className="flex justify-center gap-4 mb-12 mt-12" style={{ marginTop: '2rem'}}>
@@ -695,7 +691,7 @@ export default function KioskMainScreen() {
             )}
             
             <div 
-              className="service-grid-container grid grid-cols-2 gap-6 overflow-y-auto p-4 border rounded-lg bg-white/50 backdrop-blur-sm"
+              className="service-grid-container grid grid-cols-2 gap-6 overflow-y-auto p-4 border rounded-lg backdrop-blur-sm"
             >
               {filteredCounters.map((counter, idx) => {
                 // So le: idx 0,3,4,... (quầy 1,4,5,...) nền đỏ; idx 1,2,5,... nền trắng
@@ -776,6 +772,7 @@ export default function KioskMainScreen() {
         stopTrigger={voiceStopTrigger}
       />
       
+
       {/* Print Component */}
       {printData && (
         <PrintTicket
@@ -785,6 +782,9 @@ export default function KioskMainScreen() {
           autoPrint={true}
         />
       )}
+
+      {/* PopUp component (headless, render cuối cùng ngoài nav) */}
+      <PopUp url={popupUrl || ''} open={popupOpen} onClose={handleClosePopup} />
 
     </div>
   );
