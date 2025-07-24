@@ -457,21 +457,21 @@ export default function KioskMainScreen() {
           <button
             aria-current="page"
             className="rounded-md bg-red-600 px-3 py-2 text-sm font-medium hover:bg-red-700 text-white"
-            style={{ lineHeight: '50px' }}
+            style={{ lineHeight: '50px', fontSize: '20px' }}
             onClick={() => handleOpenPopup('https://dichvucong.gov.vn/p/home/dvc-trang-chu.html')}
           >
             Dịch Vụ Công Quốc Gia
           </button>
           <button
             className="rounded-md bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700"
-            style={{ lineHeight: '50px' }}
+            style={{ lineHeight: '50px', fontSize: '20px'}}
             onClick={() => handleOpenPopup('https://dichvucong.gov.vn/p/home/dvc-thanh-toan-phi-le-phi-ho-so.html')}
           >
             Thanh Toán Trực Tuyến
           </button>
           <button
             className="rounded-md bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700"
-            style={{ lineHeight: '50px' }}
+            style={{ lineHeight: '50px', fontSize: '20px' }}
             onClick={() => handleOpenPopup('https://dichvucong.gov.vn/p/home/dvc-dich-vu-cong-truc-tuyen-ds.html?pCoQuanId=384979')}
           >
             Tra Cứu Thủ Tục Hành Chính
@@ -480,7 +480,19 @@ export default function KioskMainScreen() {
 
         {/* Search Bar */}
         <div className="flex justify-center gap-4 mb-12 mt-12" style={{ marginTop: '2rem'}}>
-          <div className="relative flex items-center w-full max-w-5xl" style={{ marginTop: '-28px', maxWidth: '58rem' }}>
+          <div className="relative flex items-center w-full max-w-5xl" style={{ marginTop: '-28px', maxWidth: '70rem' }}>
+            <button
+              onClick={searchQuery.trim() ? () => setSearchQuery('') : handleVoiceSearch}
+              className="px-5 py-3 bg-red-600 text-white font-extrabold text-base shadow-lg hover:bg-red-700 transition-colors flex items-center justify-center gap-2"
+              style={{ whiteSpace: 'nowrap', minHeight: '70px', minWidth: '140px', borderRadius: '8px', textAlign: 'center' }}
+            >
+              {searchQuery.trim() ? (
+                <span style={{fontSize: '1.2rem', fontWeight: 'bold'}}>🗑️ Xóa tìm kiếm</span>
+              ) : (
+                <span style={{fontSize: '1.2rem', fontWeight: 'bold', width: '100%', display: 'inline-block', textAlign: 'center'}}>Tìm kiếm</span>
+              )}
+            </button>
+            <div style={{ width: '20px' }}></div>
             <div className="relative flex-1"> 
               <input 
                 name='voice-search'
@@ -505,29 +517,7 @@ export default function KioskMainScreen() {
                   lineHeight: '44px',
                 }}
               />
-              <AudioLines 
-                size={24} 
-                className={`absolute right-4 top-1/2 transform -translate-y-1/2 cursor-pointer transition-colors ${
-                  isVoiceActive ? 'text-red-500 animate-pulse' : 'text-blue-500 hover:text-blue-700'
-                }`}
-                onClick={handleVoiceSearch}
-              />
             </div>
-            {/* Nút kết hợp voice/xóa tìm kiếm */}
-            <button
-              onClick={searchQuery.trim() ? () => setSearchQuery('') : handleVoiceSearch}
-              className="ml-4 px-5 py-3 bg-red-600 text-white font-extrabold text-base shadow-lg hover:bg-red-700 transition-colors flex items-center gap-2"
-              style={{ whiteSpace: 'nowrap', minHeight: '70px', borderRadius: '8px' }}
-            >
-              {searchQuery.trim() ? (
-                <>
-                  <span style={{fontSize: '1.2rem', fontWeight: 'bold'}}>🗑️ Xóa tìm kiếm</span>
-                </>
-              ) : (
-                <span style={{fontSize: '1.2rem', fontWeight: 'bold'}}>Tìm kiếm bằng giọng nói</span>
-              )}
-            </button>
-
             {/* Voice Status Indicator */}
             {isVoiceActive && (
               <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-red-500 text-white px-3 py-1 rounded-full text-sm font-medium animate-pulse">
