@@ -559,7 +559,7 @@ export default function KioskMainScreen() {
           <button
             className="rounded-md bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700"
             style={{ lineHeight: '50px' }}
-            onClick={() => handleOpenPopup('https://thutuc.dichvucong.gov.vn/p/home/dvc-tthc-trang-chu.html')}
+            onClick={() => handleOpenPopup('https://dichvucong.gov.vn/p/home/dvc-dich-vu-cong-truc-tuyen-ds.html?pCoQuanId=384979')}
           >
             Tra Cứu Thủ Tục Hành Chính
           </button>
