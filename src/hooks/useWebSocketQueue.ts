@@ -5,6 +5,7 @@ interface NewTicketEvent {
   event: 'new_ticket';
   ticket_number: number;
   counter_id: number;
+  tenxa: string
 }
 
 interface TicketCalledEvent {
@@ -12,6 +13,7 @@ interface TicketCalledEvent {
   ticket_number: number;
   counter_name: string;
   timestamp: string; // ISO timestamp
+  tenxa: string
 }
 
 type WebSocketEvent = NewTicketEvent | TicketCalledEvent;

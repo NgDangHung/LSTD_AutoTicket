@@ -9,6 +9,7 @@ interface TTSRequest {
   callAttempt: number; // 1, 2, hoặc 3
   timestamp: string; // ISO timestamp từ called_at hoặc WebSocket
   source: 'manual' | 'ai'; // Để tracking, không dùng cho priority
+  tenxa: string; // Optional, chỉ dùng khi cần xác định tenXa
 }
 
 interface TTSResponse {
@@ -31,7 +32,7 @@ export class TTSService {
   private async loadCounters() {
     if (this.countersLoaded) return;
     try {
-      const response = await rootApi.get('/counters?tenxa=xavixuyen');
+      const response = await rootApi.get('/counters', { params: { tenxa: 'xavixuyen' } });
       if (Array.isArray(response.data)) {
         response.data.forEach((c: { id: number, name: string }) => {
           this.counterMapping[c.name.trim()] = c.id;
@@ -137,7 +138,8 @@ export class TTSService {
       ticketNumber,
       callAttempt,
       timestamp: timestamp || new Date().toISOString(),
-      source
+      source,
+      tenxa: 'xavixuyen' // Default tenxa, có thể thay đổi nếu cần
     };
 
     // Insert vào queue theo timestamp (FIFO based on called_at time)
@@ -172,7 +174,7 @@ export class TTSService {
       console.log(`🔊 Processing TTS: Counter ${request.counterId}, Ticket ${request.ticketNumber}, Source: ${request.source}`);
       
       // Call TTS API
-      const response = await this.callTTSAPI(request.counterId, request.ticketNumber);
+      const response = await this.callTTSAPI(request.counterId, request.ticketNumber, request.tenxa);
       
       if (response.success) {
         // Play audio
@@ -194,21 +196,15 @@ export class TTSService {
     }
   }
 
-  private async callTTSAPI(counterId: number, ticketNumber: number): Promise<TTSResponse> {
+  private async callTTSAPI(counterId: number, ticketNumber: number, tenxa: string): Promise<TTSResponse> {
     try {
-      console.log(`🎵 Calling TTS API for Counter ${counterId}, Ticket ${ticketNumber}`);
-      
-      // Sử dụng ttsAPI để generate MP3 audio blob
-      const audioBlob = await ttsAPI.generateAudio(counterId, ticketNumber);
-      
-      // Create object URL cho HTML5 audio playback
+      console.log(`🎵 Calling TTS API for Counter ${counterId}, Ticket ${ticketNumber}, tenxa: ${tenxa}`);
+      // Chuẩn hóa truyền tenxa vào object request
+      const audioBlob = await ttsAPI.generateAudio(counterId, ticketNumber, tenxa);
       const audioUrl = URL.createObjectURL(audioBlob);
-      
       console.log(`✅ TTS API success - Generated MP3 blob (${audioBlob.size} bytes)`);
       console.log(`🎵 Audio URL created: ${audioUrl}`);
-      
       return { audioUrl, success: true };
-      
     } catch (error) {
       console.error(`❌ TTS API failed for Counter ${counterId}, Ticket ${ticketNumber}:`, error);
       
@@ -332,7 +328,7 @@ export class TTSService {
   // Helper method để download MP3 file từ TTS API
   async downloadAudio(counterId: number, ticketNumber: number): Promise<void> {
     try {
-      const audioBlob = await ttsAPI.generateAudio(counterId, ticketNumber);
+      const audioBlob = await ttsAPI.generateAudio(counterId, ticketNumber, 'xavixuyen');
       
       // Create download link
       const downloadUrl = URL.createObjectURL(audioBlob);
@@ -358,7 +354,7 @@ export class TTSService {
   // Helper method để tạo HTML5 audio element
   async createAudioElement(counterId: number, ticketNumber: number): Promise<HTMLAudioElement> {
     try {
-      const audioBlob = await ttsAPI.generateAudio(counterId, ticketNumber);
+      const audioBlob = await ttsAPI.generateAudio(counterId, ticketNumber, 'xavixuyen');
       const audioUrl = URL.createObjectURL(audioBlob);
       
       const audio = new Audio(audioUrl);

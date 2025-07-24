@@ -61,7 +61,8 @@ function AdminPage() {
       const response = await rootApi.get('/auths/me', {
         headers: {
           'Authorization': `Bearer ${authToken}`
-        }
+        },
+        params: { tenxa: 'xavixuyen' }
       });
       
       const userData = response.data;

@@ -262,8 +262,8 @@ export const countersAPI = {
 export const ttsAPI = {
   // Generate TTS audio file - POST /app/tts
   // Returns MP3 audio blob with Content-Type: audio/mpeg
-  generateAudio: async (counterId: number, ticketNumber: number): Promise<Blob> => {
-    const response = await fetch(`${axiosInstance.defaults.baseURL}/tts`, {
+  generateAudio: async (counterId: number, ticketNumber: number, tenxa: string): Promise<Blob> => {
+    const response = await fetch(`${axiosInstance.defaults.baseURL}/tts?tenxa=${encodeURIComponent(tenxa)}`, {
       method: 'POST',
       headers: { 
         'Content-Type': 'application/json',
@@ -271,8 +271,9 @@ export const ttsAPI = {
       },
       body: JSON.stringify({
         counter_id: counterId,
-        ticket_number: ticketNumber
-      })
+        ticket_number: ticketNumber,
+      }),
+      
     });
 
     if (!response.ok) {

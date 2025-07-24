@@ -100,6 +100,7 @@ export default function QueueDisplay() {
         setApiCounters(response.data);
         console.log('✅ Counters from API:', response.data);
       } catch (error) {
+        
         console.error('❌ Failed to fetch counters:', error);
         setApiCounters([]);
       }

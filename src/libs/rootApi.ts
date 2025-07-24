@@ -154,7 +154,7 @@ export const ttsAPI = {
         'Content-Type': 'application/json',
         'Accept': 'audio/mpeg, audio/*'
       },
-      body: JSON.stringify(request)
+      body: JSON.stringify({ ...request, tenxa: 'xavixuyen' })
     });
 
     if (!response.ok) {
