@@ -96,7 +96,7 @@ export default function QueueDisplay() {
   useEffect(() => {
     const fetchCounters = async () => {
       try {
-        const response = await rootApi.get('/counters/');
+        const response = await rootApi.get('/counters/', { params: { tenxa: 'xavixuyen' } });
         setApiCounters(response.data);
         console.log('✅ Counters from API:', response.data);
       } catch (error) {
@@ -126,7 +126,7 @@ export default function QueueDisplay() {
       console.log('🔄 Fetching all tickets from real API...');
       
       // GET /tickets/waiting - get all tickets (waiting + called + done)
-      const response = await rootApi.get('/tickets/waiting');
+      const response = await rootApi.get('/tickets/waiting', { params: { tenxa: 'xavixuyen' } });
       const tickets: RealTicket[] = response.data;
       
       console.log('📡 Real API Response:', tickets);
@@ -148,7 +148,7 @@ export default function QueueDisplay() {
       
       for (let counterId = 1; counterId <= 4; counterId++) {
         try {
-          const response = await rootApi.get(`/tickets/waiting?counter_id=${counterId}`);
+          const response = await rootApi.get('/tickets/waiting', { params: { counter_id: counterId, tenxa: 'xavixuyen' } });
           allTickets.push(...response.data);
         } catch (counterError) {
           console.warn(`⚠️ Failed to fetch tickets for counter ${counterId}:`, counterError);

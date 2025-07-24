@@ -149,7 +149,7 @@ export const queueAPI = {
 // Counter Management API
 export const counterAPI = {
   // Get all counters
-  getCounters: () => api.get('/counters?tenxa=xavixuyen'),
+  getCounters: () => api.get('/counters', { params: { tenxa: 'xavixuyen' } }),
   
   // Update counter status
   updateStatus: (counterId: string, status: 'active' | 'paused' | 'offline', reason?: string) =>
@@ -221,13 +221,13 @@ export const serviceAPI = {
 export const proceduresAPI = {
   // 🔍 [GET] `/procedures/` – Lấy danh sách thủ tục
   getProcedures: (search?: string): Promise<{ data: Procedure[] }> => {
-    const params = search ? { search } : {};
+    const params = search ? { search, tenxa: 'xavixuyen' } : { tenxa: 'xavixuyen' };
     return api.get('/procedures/', { params });
   },
   
   // 🔎 [GET] `/procedures/search-extended` – Tìm kiếm thủ tục kèm quầy
   searchExtended: (search?: string): Promise<{ data: ProcedureExtended[] }> => {
-    const params = search ? { search } : {};
+    const params = search ? { search, tenxa: 'xavixuyen' } : { tenxa: 'xavixuyen' };
     return api.get('/procedures/search-extended', { params });
   },
 };
@@ -236,7 +236,7 @@ export const proceduresAPI = {
 export const ticketsAPI = {
   // 📝 [POST] `/tickets/` – Tạo phiếu mới
   createTicket: (data: CreateTicketRequest): Promise<{ data: Ticket }> => {
-    return api.post('/tickets/', data);
+    return api.post('/tickets/', data, { params: { tenxa: 'xavixuyen' } });
   },
 };
 
@@ -244,17 +244,17 @@ export const ticketsAPI = {
 export const countersAPI = {
   // ⏭️ [POST] `/counters/{counter_id}/call-next` – Gọi lượt tiếp theo
   callNext: (counterId: number): Promise<{ data: CallNextResponse }> => {
-    return api.post(`/counters/${counterId}/call-next`);
+    return api.post(`/counters/${counterId}/call-next`, null, { params: { tenxa: 'xavixuyen' } });
   },
   
   // ⏸️ [POST] `/counters/{counter_id}/pause` – Tạm dừng quầy
   pauseCounter: (counterId: number, reason: string): Promise<{ data: PauseCounterResponse }> => {
-    return api.post(`/counters/${counterId}/pause`, { reason });
+    return api.post(`/counters/${counterId}/pause`, { reason }, { params: { tenxa: 'xavixuyen' } });
   },
   
   // ▶️ [PUT] `/counters/{counter_id}/resume` – Tiếp tục quầy
   resumeCounter: (counterId: number): Promise<{ data: ResumeCounterResponse }> => {
-    return api.put(`/counters/${counterId}/resume`);
+    return api.put(`/counters/${counterId}/resume`, null, { params: { tenxa: 'xavixuyen' } });
   },
 };
 
