@@ -63,7 +63,7 @@ const PrintTicket: React.FC<PrintTicketProps> = ({
         TRUNG TÂM DỊCH VỤ HÀNH CHÍNH CÔNG
       </div>
       <div style="font-weight:bold;font-size:18px;">
-        XÃ VỊ XUYÊN 1
+        XÃ VỊ XUYÊN 
       </div>
       <div style="margin-top:8px;font-weight: bold;">SỐ THỨ TỰ</div>
       <div style="font-size:60px;font-weight:900;margin:8px 0;">

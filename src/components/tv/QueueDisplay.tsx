@@ -689,9 +689,12 @@ export default function QueueDisplay() {
             className="w-60 h-60 object-contain"
             unoptimized
           />
-          <div style={{ marginLeft: '30px'  }}>
+          <div style={{ marginLeft: '15px'  }}>
             <h1 className="text-5xl font-bold text-red-700 " style={{ lineHeight: '1.5' }}>
-              TRUNG TÂM PHỤC VỤ HÀNH CHÍNH CÔNG XÃ VỊ XUYÊN 1
+              TRUNG TÂM PHỤC VỤ HÀNH CHÍNH CÔNG  
+            </h1>
+            <h1 className="text-5xl font-bold text-red-700 " style={{ lineHeight: '1.3' }}>
+              XÃ VỊ XUYÊN
             </h1>
             <p className='text-2xl font-extrabold text-red-700 mt-3' style={{fontSize: '2rem'}}>
               Hành chính phục vụ 
