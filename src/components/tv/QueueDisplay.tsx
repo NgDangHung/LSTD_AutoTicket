@@ -682,8 +682,8 @@ export default function QueueDisplay() {
       >
         <div className="flex items-center gap-2">
           <Image
-            src="/images/logo_ban_goc.png" 
-            alt="logo_ban_goc" 
+            src="/images/logo_vang.png" 
+            alt="logo_vang" 
             width={240}
             height={240}
             className="w-60 h-60 object-contain"
@@ -691,7 +691,7 @@ export default function QueueDisplay() {
           />
           <div style={{ marginLeft: '30px'  }}>
             <h1 className="text-5xl font-bold text-red-700 " style={{ lineHeight: '1.5' }}>
-              TRUNG TÂM PHỤC VỤ HÀNH CHÍNH CÔNG PHƯỜNG HÀ GIANG 1
+              TRUNG TÂM PHỤC VỤ HÀNH CHÍNH CÔNG XÃ VỊ XUYÊN 1
             </h1>
             <p className='text-2xl font-extrabold text-red-700 mt-3' style={{fontSize: '2rem'}}>
               Hành chính phục vụ 
@@ -701,14 +701,14 @@ export default function QueueDisplay() {
       </div>
       <>
         <div className="flex justify-between items-center" style={{flexDirection: 'row-reverse'}}>
-          <h2 className="text-2xl text-red-700 font-bold italic" style={{position: 'relative',top: '-25px',left: '-180px', fontSize: '2rem'}}>
-            Tuyên Quang - Ngày {new Date().toLocaleDateString('vi-VN')}
+          <h2 className="text-2xl text-red-700 font-bold italic" style={{position: 'relative',top: '-50px',left: '-180px', fontSize: '2rem'}}>
+            Vị Xuyên - Ngày {new Date().toLocaleDateString('vi-VN')}
           </h2>
         </div>
       </>
 
       {/* Main Display dạng bảng giống mẫu */}
-      <div className="flex-1 p-4 flex flex-col items-center">
+      <div className="flex-1 p-4 flex flex-col items-center" style={{position: 'relative',top: '-37px'}}>
         <div className="w-full" style={{maxWidth: 1500}}>
           {/* Header table */}
           <div className="grid" style={{gridTemplateColumns: '1.5fr 1fr 1fr', fontSize: '1.7rem'}}>
@@ -720,13 +720,13 @@ export default function QueueDisplay() {
           {processedCounters.map((counter, idx) => {
             const isEven = idx % 2 === 0;
             return (
-              <div key={counter.counter_id} className={`grid border-b border-white last:rounded-b-xl ${isEven ? 'bg-gray-300 bg-opacity-80' : 'bg-pink-100  bg-opacity-80'}`} style={{minHeight: 120, alignItems: 'center', gridTemplateColumns: '1.5fr 1fr 1fr'}}>
+              <div key={counter.counter_id} className={`grid border-b border-white last:rounded-b-xl ${isEven ? 'bg-gray-300 bg-opacity-80' : 'bg-pink-100  bg-opacity-80'}`} style={{minHeight: 80, alignItems: 'center', gridTemplateColumns: '1.5fr 1fr 1fr'}}>
                 {/* Quầy phục vụ */}
-                <div className="text-xl font-extrabold text-red-800 px-4 py-3 border-r border-white uppercase" style={{fontSize: '1.7rem'}}>
+                <div className="text-xl font-extrabold text-red-800 px-4 py-3 border-r border-white uppercase" style={{fontSize: '1.3rem'}}>
                   QUẦY {counter.counter_id} | {counter.counter_name}
                 </div>
                 {/* Đang phục vụ - logic cũ: nếu có số thì hiển thị, không thì hiện 'Chưa có số được phục vụ' */}
-                <div className="text-6xl font-extrabold text-center text-red-800 px-4 py-3 border-r border-white"  >
+                <div className="text-5xl font-extrabold text-center text-red-800 px-4 py-3 border-r border-white"  >
                   {counter.serving_number || wsServingTickets[counter.counter_id] ? (
                     <NumberAnimation number={(counter.serving_number || wsServingTickets[counter.counter_id]?.number)?.toString() || '0'} />
                   ) : (

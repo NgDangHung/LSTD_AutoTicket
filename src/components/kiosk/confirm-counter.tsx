@@ -154,13 +154,7 @@ export default function ConfirmCounter({ service, serviceId, selectedProcedure, 
           </button>
         </div>
 
-        {/* Service Area Information */}
-        {selectedProcedure?.serviceNames && (
-          <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-            <h3 className="text-lg font-semibold mb-2 text-blue-800">Phục vụ lĩnh vực:</h3>
-            <p className="text-blue-700">{selectedProcedure.serviceNames}</p>
-          </div>
-        )}
+        
 
         <div className="mb-6">
           <h3 className="text-lg font-semibold mb-3 text-black">Quầy phục vụ:</h3>

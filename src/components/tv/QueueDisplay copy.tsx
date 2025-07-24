@@ -683,7 +683,7 @@ export default function QueueDisplay() {
           />
           <div style={{ marginLeft: '30px', width: '60%' }}>
             <h1 className="text-4xl font-extrabold text-red-600 mb-4" style={{ lineHeight: '1.5' }}>
-              TRUNG TÂM PHỤC VỤ HÀNH CHÍNH CÔNG PHƯỜNG HÀ GIANG 1
+              TRUNG TÂM PHỤC VỤ HÀNH CHÍNH CÔNG XÃ VỊ XUYÊN 1
             </h1>
             <h2 className="text-3xl text-red-600 font-bold">
               Hành chính phục vụ
@@ -695,7 +695,7 @@ export default function QueueDisplay() {
       <>
         <div className="flex justify-between items-center" style={{flexDirection: 'row-reverse'}}>
           <h2 className="text-xl text-red-600 font-bold italic" style={{position: 'relative',top: '-95px',left: '-220px'}}>
-            Tuyên Quang - {new Date().toLocaleDateString('vi-VN')}
+            VỊ XUYÊN - {new Date().toLocaleDateString('vi-VN')}
           </h2>
         </div>
       </>
