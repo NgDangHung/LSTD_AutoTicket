@@ -109,7 +109,7 @@ export const authsAPI = {
     formData.append('username', credentials.username);
     formData.append('password', credentials.password);
     
-    return rootApi.post('/auths/login', formData, {
+    return rootApi.post('/auths/login?tenxa=xavixuyen', formData, {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
     }).then(response => response.data);
   },
@@ -119,7 +119,7 @@ export const authsAPI = {
    * Create new user account
    */
   createUser: (userData: CreateUserRequest): Promise<User> => {
-    return rootApi.post('/auths/users/', userData).then(response => response.data);
+    return rootApi.post('/auths/users?tenxa=xavixuyen', userData).then(response => response.data);
   },
 
   /**
@@ -127,7 +127,7 @@ export const authsAPI = {
    * Get current authenticated user information
    */
   getCurrentUser: (): Promise<User> => {
-    return rootApi.get('/auths/me').then(response => response.data);
+    return rootApi.get('/auths/me?tenxa=xavixuyen').then(response => response.data);
   },
 };
 
@@ -205,7 +205,7 @@ export const proceduresAPI = {
    */
   getProcedures: (search?: string): Promise<Procedure[]> => {
     const params = search ? { search } : {};
-    return rootApi.get('/procedures/', { params }).then(response => response.data);
+    return rootApi.get('/procedures?tenxa=xavixuyen', { params }).then(response => response.data);
   },
 
   /**
@@ -214,7 +214,7 @@ export const proceduresAPI = {
    */
   searchExtended: (search?: string): Promise<ProcedureExtended[]> => {
     const params = search ? { search } : {};
-    return rootApi.get('/procedures/search-extended', { params }).then(response => response.data);
+    return rootApi.get('/procedures/search-extended?tenxa=xavixuyen', { params }).then(response => response.data);
   },
 };
 
@@ -270,7 +270,7 @@ export const ticketsAPI = {
    * Create new ticket for queue
    */
   createTicket: (request: CreateTicketRequest): Promise<Ticket> => {
-    return rootApi.post('/tickets/', request).then(response => response.data);
+    return rootApi.post('/tickets?tenxa=xavixuyen', request).then(response => response.data);
   },
 
   /**
@@ -278,7 +278,7 @@ export const ticketsAPI = {
    * Get all waiting tickets in queue
    */
   getWaitingTickets: (): Promise<WaitingTicketsResponse> => {
-    return rootApi.get('/tickets/waiting').then(response => response.data);
+    return rootApi.get('/tickets/waiting?tenxa=xavixuyen').then(response => response.data);
   },
 
   /**
@@ -319,7 +319,7 @@ export const seatsAPI = {
    * Get all seats
    */
   getSeats: (): Promise<Seat[]> => {
-    return rootApi.get('/seats/').then(response => response.data);
+    return rootApi.get('/seats?tenxa=xavixuyen').then(response => response.data);
   },
 
   /**
@@ -379,7 +379,7 @@ export const countersAPI = {
    * Get all counters information
    */
   getCounters: (): Promise<Counter[]> => {
-    return rootApi.get('/counters/').then(response => response.data);
+    return rootApi.get('/counters?tenxa=xavixuyen').then(response => response.data);
   },
 
   /**
@@ -428,42 +428,42 @@ export const statsDashboardAPI = {
    * Tổng số vé đã phát theo từng quầy
    */
   getTicketsPerCounter: (params?: { start_date?: string; end_date?: string }) =>
-    rootApi.get('/stats/tickets-per-counter', { params }).then(res => res.data),
+    rootApi.get('/stats/tickets-per-counter?tenxa=xavixuyen', { params }).then(res => res.data),
 
   /**
    * 🟢 [GET] /stats/attended-tickets
    * Số vé đã tiếp nhận theo từng quầy
    */
   getAttendedTickets: (params?: { start_date?: string; end_date?: string }) =>
-    rootApi.get('/stats/attended-tickets', { params }).then(res => res.data),
+    rootApi.get('/stats/attended-tickets?tenxa=xavixuyen', { params }).then(res => res.data),
 
   /**
    * 🟢 [GET] /stats/average-handling-time
    * Thời gian xử lý trung bình từng quầy
    */
   getAverageHandlingTime: (params?: { start_date?: string; end_date?: string }) =>
-    rootApi.get('/stats/average-handling-time', { params }).then(res => res.data),
+    rootApi.get('/stats/average-handling-time?tenxa=xavixuyen', { params }).then(res => res.data),
 
   /**
    * 🟢 [GET] /stats/average-waiting-time
    * Thời gian chờ trung bình từng quầy
    */
   getAverageWaitingTime: (params?: { start_date?: string; end_date?: string }) =>
-    rootApi.get('/stats/average-waiting-time', { params }).then(res => res.data),
+    rootApi.get('/stats/average-waiting-time?tenxa=xavixuyen', { params }).then(res => res.data),
 
   /**
    * 🟢 [GET] /stats/afk-duration
    * Tổng thời gian vắng mặt từng quầy
    */
   getAfkDuration: (params?: { start_date?: string; end_date?: string }) =>
-    rootApi.get('/stats/afk-duration', { params }).then(res => res.data),
+    rootApi.get('/stats/afk-duration?tenxa=xavixuyen', { params }).then(res => res.data),
 
   /**
    * 🟢 [GET] /stats/working-time-check
    * Giờ làm việc từng quầy trong ngày
    */
   getWorkingTimeCheck: (params?: { date_check?: string }) =>
-    rootApi.get('/stats/working-time-check', { params }).then(res => res.data),
+    rootApi.get('/stats/working-time-check?tenxa=xavixuyen', { params }).then(res => res.data),
 };
 
 // ===================================

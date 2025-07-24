@@ -31,7 +31,7 @@ export class TTSService {
   private async loadCounters() {
     if (this.countersLoaded) return;
     try {
-      const response = await rootApi.get('/counters/');
+      const response = await rootApi.get('/counters?tenxa=xavixuyen');
       if (Array.isArray(response.data)) {
         response.data.forEach((c: { id: number, name: string }) => {
           this.counterMapping[c.name.trim()] = c.id;

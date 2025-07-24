@@ -72,8 +72,8 @@ export const getWaitingTickets = async (): Promise<WaitingTicketsResponse> => {
     // ✅ Try multiple possible endpoints
     const possiblePaths = [
 
-      '/tickets/waiting',        // Current path
-      '/tickets',               // Base tickets endpoint
+      '/tickets/waiting?tenxa=xavixuyen',        // Current path
+      '/tickets?tenxa=xavixuyen',               // Base tickets endpoint
       '/waiting-tickets',       // Alternative naming
       '/queue/waiting'          // Queue-based naming
     ];
@@ -120,7 +120,7 @@ export const getCounterQueue = async (counterId: number): Promise<CounterDetail 
 export const createTicket = async (request: CreateTicketRequest): Promise<CreateTicketResponse> => {
   try {
     console.log('🔄 Creating new ticket:', request);
-    const response = await api.post<CreateTicketResponse>('/tickets', request);
+    const response = await api.post<CreateTicketResponse>('/tickets?tenxa=xavixuyen', request);
     console.log('✅ Successfully created ticket:', response.data);
     return response.data;
   } catch (error: any) {
