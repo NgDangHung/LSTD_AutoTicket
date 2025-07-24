@@ -7,7 +7,7 @@
 
 ---
 
-### 🔐 [POST] `/auths/auth/token` – Đăng nhập lấy access token
+### 🔐 [POST] `/auths/login` – Đăng nhập lấy access token
 
 - **Body (x-www-form-urlencoded):**
   | Field         | Type     | Required | Description        |

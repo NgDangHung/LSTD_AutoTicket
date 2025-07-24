@@ -108,7 +108,7 @@ export const authsAPI = {
     const formData = new URLSearchParams();
     formData.append('username', credentials.username);
     formData.append('password', credentials.password);
-    
+    // Sử dụng đúng endpoint và truyền params qua query string
     return rootApi.post('/auths/login', formData, {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       params: { tenxa: 'xavixuyen' }

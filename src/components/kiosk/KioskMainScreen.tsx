@@ -4,13 +4,11 @@ import React, { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import { AudioLines } from 'lucide-react';
 import { toast } from 'react-toastify';
-import Button from '@/components/shared/Button';
 import ConfirmCounter from '@/components/kiosk/confirm-counter';
 import VirtualKeyboard from './VirtualKeyboard';
 import SpeechToText from './SpeechToText';
 import { useCreateTicket } from '@/hooks/useApi';
 import { useOptimizedSearch } from '@/hooks/useOptimizedSearch';
-import { CounterQueueManager } from '@/libs/counterQueue';
 import { countersAPI, Counter } from '@/libs/rootApi';
 import '@/app/index.css';
 import PrintTicket from '@/components/kiosk/PrintTicket';
@@ -327,23 +325,6 @@ export default function KioskMainScreen() {
             counterName = counter.name;
           }
         }
-
-        // ...existing code...
-
-        // 🔥 ADD TO TV QUEUE
-        const queueItem = CounterQueueManager.addToCounterQueue(newTicket.counter_id.toString(), {
-          number: newTicket.number.toString(),
-          serviceId: selectedService,
-          serviceName: selectedServiceName,
-          counterId: counterId,
-          counterName: counterName,
-          status: 'waiting',
-          priority: 1,
-          createdAt: newTicket.created_at,
-          estimatedWaitTime: 15 // Default 15 minutes
-        });
-
-        // ...existing code...
 
         // 🖨️ Gửi dữ liệu cho PrintTicket component
         setPrintData({

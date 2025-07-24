@@ -149,40 +149,40 @@ export const queueAPI = {
 // Counter Management API
 export const counterAPI = {
   // Get all counters
-  getCounters: () => api.get('/counters', { params: { tenxa: 'xavixuyen' } }),
+  getCounters: () => axiosInstance.get('/counters', { params: { tenxa: 'xavixuyen' } }),
   
   // Update counter status
   updateStatus: (counterId: string, status: 'active' | 'paused' | 'offline', reason?: string) =>
-    api.patch(`/counters/${counterId}/status`, { status, reason }),
+    axiosInstance.patch(`/counters/${counterId}/status`, { status, reason }),
   
   // Get counter statistics
   getStats: (counterId: string, period?: string) =>
-    api.get(`/counters/${counterId}/stats`, { params: { period } }),
+    axiosInstance.get(`/counters/${counterId}/stats`, { params: { period, tenxa: 'xavixuyen' } }),
 };
 
 // User Management API
 export const userAPI = {
   // Get all users
-  getUsers: () => api.get('/users'),
-  
+  getUsers: () => axiosInstance.get('/users', { params: { tenxa: 'xavixuyen' } }),
+
   // Create new user
-  createUser: (userData: any) => api.post('/users', userData),
-  
+  createUser: (userData: any) => axiosInstance.post('/users', userData, { params: { tenxa: 'xavixuyen' } }),
+
   // Update user
-  updateUser: (userId: string, userData: any) => 
-    api.patch(`/users/${userId}`, userData),
-  
+  updateUser: (userId: string, userData: any) =>
+    axiosInstance.patch(`/users/${userId}`, userData, { params: { tenxa: 'xavixuyen' } }),
+
   // Delete user
-  deleteUser: (userId: string) => api.delete(`/users/${userId}`),
-  
-  // Login - Authentication API  
+  deleteUser: (userId: string) => axiosInstance.delete(`/users/${userId}`, { params: { tenxa: 'xavixuyen' } }),
+
+  // Login - Authentication API
   login: (credentials: { username: string; password: string }) => {
     // Try form-urlencoded format
     const formData = new URLSearchParams();
     formData.append('username', credentials.username);
     formData.append('password', credentials.password);
-    
-    return axiosInstance.post('/auths/login', formData, {
+
+    return axiosInstance.post('/auths/login?tenxa=xavixuyen', formData, {
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded'
       }
@@ -191,30 +191,30 @@ export const userAPI = {
   
   // Register new user
   register: (userData: { username: string; password: string }) =>
-    api.post('/auths/users/', userData),
-  
+    axiosInstance.post('/auths/users', userData, { params: { tenxa: 'xavixuyen' } }),
+
   // Get current user info
   getCurrentUser: () =>
-    api.get('/auths/me'),
-  
+    axiosInstance.get('/auths/me', { params: { tenxa: 'xavixuyen' } }),
+
   // Logout
-  logout: () => api.post('/auth/logout'),
+  logout: () => axiosInstance.post('/auth/logout', null, { params: { tenxa: 'xavixuyen' } }),
 };
 
 // Service Management API
 export const serviceAPI = {
   // Get all services
-  getServices: () => api.get('/services'),
-  
+  getServices: () => axiosInstance.get('/services'),
+
   // Create new service
-  createService: (serviceData: any) => api.post('/services', serviceData),
-  
+  createService: (serviceData: any) => axiosInstance.post('/services', serviceData),
+
   // Update service
   updateService: (serviceId: string, serviceData: any) =>
-    api.patch(`/services/${serviceId}`, serviceData),
-  
+    axiosInstance.patch(`/services/${serviceId}`, serviceData),
+
   // Delete service
-  deleteService: (serviceId: string) => api.delete(`/services/${serviceId}`),
+  deleteService: (serviceId: string) => axiosInstance.delete(`/services/${serviceId}`),
 };
 
 // 📋 Procedures API - Quản lý thủ tục
@@ -222,13 +222,13 @@ export const proceduresAPI = {
   // 🔍 [GET] `/procedures/` – Lấy danh sách thủ tục
   getProcedures: (search?: string): Promise<{ data: Procedure[] }> => {
     const params = search ? { search, tenxa: 'xavixuyen' } : { tenxa: 'xavixuyen' };
-    return api.get('/procedures/', { params });
+    return axiosInstance.get('/procedures', { params });
   },
   
   // 🔎 [GET] `/procedures/search-extended` – Tìm kiếm thủ tục kèm quầy
   searchExtended: (search?: string): Promise<{ data: ProcedureExtended[] }> => {
     const params = search ? { search, tenxa: 'xavixuyen' } : { tenxa: 'xavixuyen' };
-    return api.get('/procedures/search-extended', { params });
+    return axiosInstance.get('/procedures/search-extended', { params });
   },
 };
 
@@ -236,7 +236,7 @@ export const proceduresAPI = {
 export const ticketsAPI = {
   // 📝 [POST] `/tickets/` – Tạo phiếu mới
   createTicket: (data: CreateTicketRequest): Promise<{ data: Ticket }> => {
-    return api.post('/tickets/', data, { params: { tenxa: 'xavixuyen' } });
+    return axiosInstance.post('/tickets/', data, { params: { tenxa: 'xavixuyen' } });
   },
 };
 
@@ -244,17 +244,17 @@ export const ticketsAPI = {
 export const countersAPI = {
   // ⏭️ [POST] `/counters/{counter_id}/call-next` – Gọi lượt tiếp theo
   callNext: (counterId: number): Promise<{ data: CallNextResponse }> => {
-    return api.post(`/counters/${counterId}/call-next`, null, { params: { tenxa: 'xavixuyen' } });
+    return axiosInstance.post(`/counters/${counterId}/call-next`, null, { params: { tenxa: 'xavixuyen' } });
   },
   
   // ⏸️ [POST] `/counters/{counter_id}/pause` – Tạm dừng quầy
   pauseCounter: (counterId: number, reason: string): Promise<{ data: PauseCounterResponse }> => {
-    return api.post(`/counters/${counterId}/pause`, { reason }, { params: { tenxa: 'xavixuyen' } });
+    return axiosInstance.post(`/counters/${counterId}/pause`, { reason }, { params: { tenxa: 'xavixuyen' } });
   },
   
   // ▶️ [PUT] `/counters/{counter_id}/resume` – Tiếp tục quầy
   resumeCounter: (counterId: number): Promise<{ data: ResumeCounterResponse }> => {
-    return api.put(`/counters/${counterId}/resume`, null, { params: { tenxa: 'xavixuyen' } });
+    return axiosInstance.put(`/counters/${counterId}/resume`, null, { params: { tenxa: 'xavixuyen' } });
   },
 };
 

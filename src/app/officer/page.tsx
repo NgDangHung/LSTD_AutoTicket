@@ -135,7 +135,8 @@ function OfficerPage() {
       const response = await rootApi.get('/auths/me', {
         headers: {
           'Authorization': `Bearer ${authToken}`
-        }
+        },
+        params: { tenxa: 'xavixuyen' }
       });
       
       const userData = response.data;
@@ -206,7 +207,9 @@ function OfficerPage() {
       console.log('🔄 Fetching WAITING tickets only from API...');
       
       // 🔥 API /tickets/waiting only returns tickets with status: 'waiting' 
-      const response = await rootApi.get('/tickets/waiting');
+      const response = await rootApi.get('/tickets/waiting', {
+        params: { tenxa: 'xavixuyen' }
+      });
       const waitingTickets: any[] = response.data; // Only status: 'waiting'
       
       console.log('� API Response (waiting tickets only):', waitingTickets);
@@ -465,14 +468,14 @@ function OfficerPage() {
       console.log('📡 Officer assigned counter:', currentUser.counter_id);
       console.log('📡 Requesting for counter:', counterData.counter_id);
       console.log('📡 Counter match validation:', currentUser.counter_id === counterData.counter_id);
-      console.log('📡 Request URL:', `https://detect-seat.onrender.com/app/counters/${currentUser.counter_id}/call-next`);
+      console.log('📡 Request URL:', `https://detect-seat.onrender.com/app/counters/${currentUser.counter_id}/call-next?tenxa=xavixuyen`);
       console.log('🔐 Token preview:', authToken?.substring(0, 20) + '...');
       console.log('🔐 Token full length:', authToken?.length);
       
       // ✅ Test if we can access /auths/me first to verify token is valid
       try {
         console.log('🧪 Testing token validity with /auths/me...');
-        const userTestResponse = await rootApi.get('/auths/me');
+        const userTestResponse = await rootApi.get('/auths/me', { params: { tenxa: 'xavixuyen' } });
         console.log('✅ Token is valid - user info:', userTestResponse.data);
         
         // ✅ Double-check counter_id from fresh user data
