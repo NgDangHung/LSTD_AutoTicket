@@ -400,8 +400,8 @@ export default function KioskMainScreen() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 p-8">
       <div className="max-w-6xl mx-auto">
-        {/* Header */}
-        <div 
+        {/* Header màn dọc */}
+        {/* <div 
           className="flex items-center justify-center mb-12"
           style={{ backgroundColor: '' }}
         >
@@ -425,6 +425,27 @@ export default function KioskMainScreen() {
                 Hành chính phục vụ 
               </p>
             </div>
+          </div>
+        </div> */}
+
+        {/* Header màn ngang */}
+
+        <div className="flex items-center justify-center mb-6" style={{ minHeight: 200 }}>
+          <Image
+            src="/images/logo_vang.png"
+            alt="logo_vang"
+            width={200}
+            height={200}
+            className="object-contain"
+            unoptimized
+          />
+          <div style={{ marginLeft: '12px' }}>
+            <h1 className="text-3xl font-bold text-red-700" style={{ lineHeight: '1.2' }}>
+              TRUNG TÂM PHỤC VỤ HÀNH CHÍNH CÔNG XÃ VỊ XUYÊN
+            </h1>
+            <p className='text-xl font-extrabold text-red-700 mt-3'>
+              Hành chính phục vụ
+            </p>
           </div>
         </div>
 
@@ -564,7 +585,7 @@ export default function KioskMainScreen() {
 
         {/* Counter Grid */}
         {!countersLoading && filteredCounters.length > 0 && (
-          <div className="flex flex-col items-center">
+          <div className="flex flex-col items-center" style={{width: '1600px', position: 'relative', right: '222px'}}>
             {/* Scroll Indicator */}
             {filteredCounters.length > 4 && (
               <div className="mb-4 text-center">
@@ -574,7 +595,8 @@ export default function KioskMainScreen() {
               </div>
             )}
             
-            <div 
+            {/* Grid màn dọc */}
+            {/* <div 
               className="service-grid-container grid grid-cols-2 gap-6 overflow-y-auto p-4 border rounded-lg backdrop-blur-sm"
             >
               {filteredCounters.map((counter, idx) => {
@@ -596,6 +618,40 @@ export default function KioskMainScreen() {
                   </div>
                 );
               })}
+            </div> */}
+
+            {/* Grid màn ngang */}
+            <div
+              className="service-grid-container grid grid-cols-4  p-6 border rounded-lg backdrop-blur-sm"
+              style={{
+                width: '1400px',
+                margin: '0 auto',
+                minHeight: 400,
+                background: 'rgba(255,255,255,0.2)',
+                boxSizing: 'border-box'
+              }}
+            >
+              {filteredCounters.map((counter, idx) => (
+                <div
+                  key={counter.id}
+                  onClick={() => handleCounterSelect(counter)}
+                  className={`flex flex-col items-center justify-center text-center kiosk-card relative transition-all duration-200 cursor-pointer rounded-2xl border-2 border-red-600 shadow-lg hover:scale-105 ${
+                    idx % 2 === 0
+                      ? 'bg-red-600 text-white hover:bg-red-700 hover:border-red-700'
+                      : 'bg-white text-red-700 hover:bg-red-50'
+                  }`}
+                  style={{
+                    minHeight: 180,
+                    minWidth: 320,
+                    margin: '10px',
+                    padding: '24px 0',
+                    boxSizing: 'border-box'
+                  }}
+                >
+                  <span className="text-lg font-bold mb-1">{`QUẦY ${String(idx + 1).padStart(2, '0')}`}</span>
+                  <span className="text-xl font-extrabold mb-1">{counter.name?.toUpperCase()}</span>
+                </div>
+              ))}
             </div>
           </div>
         )}
@@ -609,8 +665,18 @@ export default function KioskMainScreen() {
           </div>
         )}
 
-        {/* Footer Info */}
-        <div className="flex items-center w-full text-gray-600 italic" style={{ position: 'relative', top: '16rem', justifyContent: 'space-around' }}>
+        {/* Footer màn dọc */}
+        {/* <div className="flex items-center w-full text-gray-600 italic" style={{ position: 'relative', top: '16rem', justifyContent: 'space-around' }}>
+          <p className="text-xl font-extrabold text-red-700 ">
+              Giờ làm việc (Thứ 2 - Thứ 6): 07h30 - 17h30
+          </p>
+          <p className="text-xl font-extrabold text-red-700 ">
+             Hotline hỗ trợ: 0219-1022
+          </p>
+        </div> */}
+
+         {/* Footer màn ngang */} 
+        <div className="flex items-center w-full text-gray-600 italic" style={{ position: 'relative', top: '2rem', justifyContent: 'space-around' }}>
           <p className="text-xl font-extrabold text-red-700 ">
               Giờ làm việc (Thứ 2 - Thứ 6): 07h30 - 17h30
           </p>

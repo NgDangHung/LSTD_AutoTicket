@@ -121,6 +121,9 @@ const PrintTicket: React.FC<PrintTicketProps> = ({
           document.body.appendChild(script);
         } else if (id === 'qztray-script') {
           setQzReady(true);
+          if (autoPrint) {
+            setTimeout(() => handlePrint(), 300); // Delay để đảm bảo QZ Tray đã sẵn sàng
+          }
         }
       });
     }
@@ -247,39 +250,36 @@ const PrintTicket: React.FC<PrintTicketProps> = ({
     }
   }, [performQZTrayPrint]);
 
-  // 🔄 Auto-load QZ Tray scripts và connect QZ Tray một lần khi mount
+  // 🔄 Auto-load QZ Tray scripts và auto-print khi mount
   useEffect(() => {
     if (typeof window !== 'undefined') {
       loadQZTrayScripts();
-      // Chỉ connect QZ Tray một lần khi bắt đầu phiên
-      const connectQZTray = async () => {
-        const qz = (window as any).qz;
-        if (qz && qz.websocket && !qz.websocket.isActive()) {
-          setPrintStatus('🖨️ Đang kết nối QZ Tray...');
-          try {
-            await qz.websocket.connect();
-            setPrintStatus('✅ QZ Tray đã kết nối');
-          } catch (err) {
-            setPrintStatus('❌ QZ Tray chưa sẵn sàng hoặc không thể kết nối. Vui lòng kiểm tra lại QZ Tray.');
-          }
-        }
-      };
-      // Đợi scripts load xong mới connect
-      setTimeout(connectQZTray, 1000);
     }
   }, []);
 
-  // Khi autoPrint=true và qzReady=true, chỉ gọi in nếu đã kết nối QZ Tray
-  useEffect(() => {
-    if (autoPrint && qzReady) {
+useEffect(() => {
+  // Chỉ gọi in khi autoPrint=true và qzReady=true
+  if (autoPrint && qzReady) {
+    // Đảm bảo QZ Tray websocket đã kết nối
+    const tryPrint = async () => {
       const qz = (window as any).qz;
       if (qz && qz.websocket && qz.websocket.isActive()) {
-        handlePrint();
+        await handlePrint();
+      } else if (qz && qz.websocket) {
+        // Nếu chưa kết nối, thử kết nối rồi in
+        try {
+          await qz.websocket.connect();
+          await handlePrint();
+        } catch (err) {
+          setPrintStatus('❌ QZ Tray chưa sẵn sàng hoặc không thể kết nối. Vui lòng kiểm tra lại QZ Tray.');
+        }
       } else {
-        setPrintStatus('❌ QZ Tray chưa sẵn sàng hoặc chưa kết nối. Vui lòng kiểm tra lại QZ Tray.');
+        setPrintStatus('❌ QZ Tray chưa sẵn sàng trên kiosk.');
       }
-    }
-  }, [autoPrint, qzReady, number, counterId, counterName, handlePrint]);
+    };
+    tryPrint();
+  }
+}, [autoPrint, qzReady, number, counterId, counterName, handlePrint]);
 
 
   return (
