@@ -24,7 +24,6 @@ interface Ticket {
   created_at: string;
   called_at: string | null;
   finished_at: string | null;
-  // Additional fields for UI compatibility
   procedure_name?: string;
   procedure_id?: number;
   counter_name?: string;
@@ -57,114 +56,110 @@ interface CounterDetail {
 
 function OfficerPage() {
   const router = useRouter();
-  
-  // User states
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
   const [userLoading, setUserLoading] = useState(true);
-  
-  // ✅ Real-time queue data states (WebSocket-based like test-queue)
   const [apiCounters, setApiCounters] = useState<Counter[]>([]);
   const [queueTickets, setQueueTickets] = useState<Ticket[]>([]);
   const [countersLoading, setCountersLoading] = useState(true);
   const [countersError, setCountersError] = useState<string | null>(null);
-  
-  // ✅ Local state to track currently serving tickets (from callNext response)
-  const [localServingTickets, setLocalServingTickets] = useState<Record<number, {
+
+  // ✅ Serving Ticket
+  const [servingTicket, setServingTicket] = useState<{
     number: number;
-    counter_name: string;
     called_at: string;
-  }>>({});
-  
-  // Action states
+    counter_name: string;
+  } | null>(null);
+
+  const fetchServingTicket = useCallback(async (counterId: number) => {
+    try {
+      const response = await rootApi.get('/tickets/called', {
+        params: { counter_id: counterId, tenxa: 'xavixuyen' },
+      });
+      const tickets = response.data;
+      if (tickets && tickets.length > 0) {
+        return {
+          number: tickets[0].number,
+          called_at: tickets[0].called_at || new Date().toISOString(),
+          counter_name: tickets[0].counter_name || `Quầy ${counterId}`,
+        };
+      }
+      return null;
+    } catch (error) {
+      console.error('❌ Failed to fetch serving ticket:', error);
+      return null;
+    }
+  }, []);
+
   const [actionLoading, setActionLoading] = useState(false);
-  
-  // Modal states
-  const [stopServiceModal, setStopServiceModal] = useState<{
-    isOpen: boolean;
-    counterId: string;
-    counterName: string;
-  }>({
+  const [stopServiceModal, setStopServiceModal] = useState({
     isOpen: false,
     counterId: '',
-    counterName: ''
+    counterName: '',
   });
 
-  // ✅ Load current user info
   const loadCurrentUser = useCallback(async () => {
     try {
       setUserLoading(true);
-      
-      // ✅ Sử dụng sessionStorage thay vì localStorage
       const authToken = sessionStorage.getItem('auth_token');
       if (!authToken) {
         router.push('/login');
         return;
       }
 
-      // ✅ Try to get cached user data first
       const cachedUserData = sessionStorage.getItem('user_data');
       if (cachedUserData) {
         try {
           const userData = JSON.parse(cachedUserData);
-          console.log('📋 Using cached user data:', userData);
           setCurrentUser(userData);
-          
-          // Validate officer role and counter assignment
+
           if (userData.role !== 'officer') {
             toast.error('❌ Trang này chỉ dành cho officer!');
             router.push('/login');
             return;
           }
-          
+
           if (!userData.counter_id) {
             toast.error('❌ Tài khoản officer chưa được gán quầy!');
             router.push('/login');
             return;
           }
-          
+
+          const serving = await fetchServingTicket(userData.counter_id);
+          setServingTicket(serving);
           setUserLoading(false);
-          return; // Use cached data, skip API call
-        } catch (parseError) {
-          console.warn('⚠️ Failed to parse cached user data, fetching fresh...');
+          return;
+        } catch {
           sessionStorage.removeItem('user_data');
         }
       }
-      
-      // ✅ Fetch fresh user data if not cached
-      console.log('🔍 Loading current user info...');
+
       const response = await rootApi.get('/auths/me', {
-        headers: {
-          'Authorization': `Bearer ${authToken}`
-        },
-        params: { tenxa: 'xavixuyen' }
+        headers: { Authorization: `Bearer ${authToken}` },
+        params: { tenxa: 'xavixuyen' },
       });
-      
+
       const userData = response.data;
-      console.log('👤 Current user data:', userData);
-      
-      // ✅ Cache user data in sessionStorage
       sessionStorage.setItem('user_data', JSON.stringify(userData));
-      
-      // ✅ Check if user is officer
+
       if (userData.role !== 'officer') {
         toast.error('❌ Chỉ officer mới có thể truy cập trang này!');
         router.push('/login');
         return;
       }
-      
-      // ✅ Check if user has counter_id
+
       if (!userData.counter_id) {
         toast.error('❌ Tài khoản officer chưa được gán quầy!');
         router.push('/login');
         return;
       }
-      
+
       setCurrentUser(userData);
-      console.log(`✅ Officer ${userData.full_name} assigned to counter ${userData.counter_id}`);
-      
+
+      // ✅ Fetch serving ticket here
+      const serving = await fetchServingTicket(userData.counter_id);
+      setServingTicket(serving);
     } catch (error) {
       console.error('❌ Failed to load user info:', error);
-      // ✅ Clear sessionStorage on error
       sessionStorage.removeItem('auth_token');
       sessionStorage.removeItem('user_data');
       toast.error('❌ Không thể tải thông tin người dùng!');
@@ -172,565 +167,213 @@ function OfficerPage() {
     } finally {
       setUserLoading(false);
     }
-  }, [router]);
+  }, [router, fetchServingTicket]);
 
-  // ✅ Load counters with enhanced error handling and debug logging
   const loadCounters = useCallback(async () => {
     try {
       setCountersLoading(true);
       setCountersError(null);
-      
-      console.log('🔄 Loading counters from API...');
       const countersData = await countersAPI.getCounters();
-      
-      console.log('✅ Raw counters API response:', countersData);
-      console.log('📊 Counters data details:', countersData.map(c => ({
-        id: c.id,
-        name: c.name,
-        status: c.status,
-        is_active: c.is_active
-      })));
-      
       setApiCounters(countersData);
-      console.log('✅ Loaded counters from API:', countersData);
     } catch (error) {
-      console.error('❌ Load counters error:', error);
-      setCountersError(`Failed to load counters: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      setCountersError(`❌ Lỗi tải danh sách quầy`);
     } finally {
       setCountersLoading(false);
     }
   }, []);
 
-  // ✅ Load queue tickets data - ONLY waiting tickets from API
   const loadQueueData = useCallback(async () => {
     try {
-      console.log('🔄 Fetching WAITING tickets only from API...');
-      
-      // 🔥 API /tickets/waiting only returns tickets with status: 'waiting' 
       const response = await rootApi.get('/tickets/waiting', {
-        params: { tenxa: 'xavixuyen' }
+        params: { tenxa: 'xavixuyen' },
       });
-      const waitingTickets: any[] = response.data; // Only status: 'waiting'
-      
-      console.log('� API Response (waiting tickets only):', waitingTickets);
-      console.log('📊 Waiting tickets count:', waitingTickets.length);
-      
-      // ✅ Convert to internal format - remove unused fields based on actual BE response
-      const tickets = waitingTickets.map((ticket: any) => ({
+      const waitingTickets: Ticket[] = response.data.map((ticket: any) => ({
         id: ticket.id,
         number: ticket.number,
         counter_id: ticket.counter_id,
-        status: ticket.status, // Always 'waiting' from this API
+        status: ticket.status,
         created_at: ticket.created_at,
-        called_at: ticket.called_at, // Always null for waiting tickets
-        finished_at: ticket.finished_at, // Always null for waiting tickets
-        // ✅ Default values for fields not provided by BE
-        procedure_name: '', // BE doesn't provide this field
+        called_at: null,
+        finished_at: null,
+        procedure_name: '',
         procedure_id: 0,
         counter_name: `Quầy ${ticket.counter_id}`,
         priority: 1,
         updated_at: ticket.created_at,
-        estimated_wait_time: 0
+        estimated_wait_time: 0,
       }));
-      
-      setQueueTickets(tickets);
-      console.log('✅ Loaded waiting tickets only:', tickets);
+      setQueueTickets(waitingTickets);
     } catch (error) {
-      console.error('❌ Failed to load waiting tickets:', error);
+      console.error('❌ Failed to load queue data:', error);
     }
   }, []);
 
-  // ✅ Initial data loading
   useEffect(() => {
     loadCurrentUser();
   }, [loadCurrentUser]);
-  
-  // ✅ WebSocket real-time updates implementation (like test-queue)
+
   useEffect(() => {
     let ws: WebSocket | null = null;
     let reconnectCount = 0;
-    const maxReconnectAttempts = 5;
+    const maxReconnect = 5;
 
-    // Initial data load
     loadCounters();
     loadQueueData();
 
-    // ✅ Connect to production WebSocket endpoint
     const connectWebSocket = () => {
-      try {
-        console.log('🔌 Connecting to production WebSocket for officer page...');
-        
-        ws = new WebSocket('wss://detect-seat.onrender.com/ws/updates');
-        
-        ws.onopen = () => {
-          console.log('✅ WebSocket connected for officer page');
-          reconnectCount = 0;
-        };
-        
-        ws.onmessage = (event) => {
-          try {
-            const eventData = JSON.parse(event.data);
-            console.log('📡 WebSocket event received in officer page:', eventData);
-            
-            if (eventData.event === 'new_ticket') {
-              handleNewTicketEvent(eventData);
-            } else if (eventData.event === 'ticket_called') {
-              handleTicketCalledEvent(eventData);
-            }
-          } catch (error) {
-            console.error('❌ Error parsing WebSocket message:', error);
-          }
-        };
-        
-        ws.onclose = () => {
-          console.log('🔌 WebSocket disconnected');
-          
-          // Auto-reconnect with exponential backoff
-          if (reconnectCount < maxReconnectAttempts) {
-            const delay = Math.min(1000 * Math.pow(2, reconnectCount), 30000);
-            console.log(`🔄 Reconnecting in ${delay}ms (attempt ${reconnectCount + 1}/${maxReconnectAttempts})`);
-            
-            setTimeout(() => {
-              reconnectCount++;
-              connectWebSocket();
-            }, delay);
-          }
-        };
-        
-        ws.onerror = (error) => {
-          console.error('❌ WebSocket error:', error);
-        };
-        
-      } catch (error) {
-        console.error('❌ Failed to connect WebSocket:', error);
-      }
+      ws = new WebSocket('wss://detect-seat.onrender.com/ws/updates');
+
+      ws.onopen = () => {
+        reconnectCount = 0;
+        console.log('✅ WS connected');
+      };
+
+      ws.onmessage = async (e) => {
+        const data = JSON.parse(e.data);
+        if (data.event === 'new_ticket' || data.event === 'ticket_called') {
+          await loadQueueData();
+        }
+      };
+
+      ws.onclose = () => {
+        if (reconnectCount < maxReconnect) {
+          setTimeout(connectWebSocket, 1000 * Math.pow(2, reconnectCount++));
+        }
+      };
     };
 
-    // ✅ Handle WebSocket events
-    const handleNewTicketEvent = async (eventData: { event: string, ticket_number: number, counter_id: number }) => {
-      console.log('🎫 New ticket created via WebSocket:', eventData);
-      // Refresh queue data when new ticket is created
-      await loadQueueData();
-    };
-
-    const handleTicketCalledEvent = async (eventData: { event: string, ticket_number: number, counter_name: string }) => {
-      console.log('📞 Ticket called via WebSocket:', eventData);
-      console.log('🔄 Refreshing queue data after ticket_called event...');
-      
-      // ✅ Extract counter_id from counter_name (e.g., "Quầy 1" → 1)
-      const counterIdMatch = eventData.counter_name.match(/Quầy (\d+)/);
-      const counterId = counterIdMatch ? parseInt(counterIdMatch[1]) : null;
-      
-      if (counterId) {
-        // ✅ Update local serving ticket state
-        setLocalServingTickets(prev => ({
-          ...prev,
-          [counterId]: {
-            number: eventData.ticket_number,
-            counter_name: eventData.counter_name,
-            called_at: new Date().toISOString()
-          }
-        }));
-      }
-      
-      // ✅ Refresh waiting list (called ticket will disappear from waiting list)
-      await loadQueueData();
-      
-      console.log('✅ Queue data refreshed after ticket_called event');
-    };
-
-    // Start WebSocket connection
     connectWebSocket();
-
     return () => {
-      if (ws) {
-        ws.close();
-      }
+      if (ws) ws.close();
     };
   }, [loadCounters, loadQueueData]);
 
-  // ✅ Process real data into UI format for officer's assigned counter only
-  const processCounterData = useCallback((counter: Counter): CounterDetail => {
-    // ✅ Only get waiting tickets from API for this officer's counter
-    const waitingTickets = queueTickets.filter(ticket => 
-      ticket.counter_id === counter.id
-    );
-    
-    // ✅ Get serving ticket from local state (from callNext response)
-    const servingTicket = localServingTickets[counter.id];
-    
-    console.log(`� Counter ${counter.id} (${counter.name}) - Officer processing:`, {
-      waitingFromAPI: waitingTickets.length,
-      servingFromLocal: servingTicket ? 1 : 0,
-      servingTicket,
-      waitingTickets: waitingTickets.map(t => ({ id: t.id, number: t.number, status: t.status }))
-    });
-    
-    // Convert waiting tickets to UI format
-    const waiting_queue = waitingTickets.map(ticket => ({
-      ticket_id: ticket.id,
-      number: ticket.number,
-      procedure_name: '', // API doesn't provide this field
-      wait_time: 0, // API doesn't provide this field
-      priority: 'normal' as const // Default priority
-    }));
-    
-    // ✅ Current serving from local state (from callNext response)
-    const current_serving = servingTicket 
-      ? {
-          ticket_id: 0, // We don't know the ID of serving ticket
-          number: servingTicket.number,
-          called_at: servingTicket.called_at,
-          procedure_name: '' // We don't have procedure info
-        }
-      : undefined;
-    
-    // ✅ Enhanced status determination logic
-    let finalStatus: 'active' | 'paused' = 'active';
-    let pauseReason: string | undefined = undefined;
-    
-    // Check multiple conditions for paused status
-    if (counter.status === 'paused' || counter.status === 'offline') {
-      finalStatus = 'paused';
-      pauseReason = (counter as any).pause_reason || 'Tạm dừng';
-    } else if (counter.is_active === false) {
-      finalStatus = 'paused';
-      pauseReason = 'Không hoạt động';
+  const processCounterData = useCallback(
+    (counter: Counter): CounterDetail => {
+      const waiting = queueTickets.filter((t) => t.counter_id === counter.id);
+      const waiting_queue = waiting.map((t) => ({
+        ticket_id: t.id,
+        number: t.number,
+        procedure_name: '',
+        wait_time: 0,
+        priority: 'normal' as const,
+      }));
+
+      let status: 'active' | 'paused' = 'active';
+      let reason = undefined;
+      if (counter.status === 'paused' || counter.status === 'offline') {
+        status = 'paused';
+        reason = (counter as any).pause_reason || 'Tạm dừng';
+      } else if (counter.is_active === false) {
+        status = 'paused';
+        reason = 'Không hoạt động';
+      }
+
+      const current_serving = servingTicket
+        ? {
+            ticket_id: 0,
+            number: servingTicket.number,
+            called_at: servingTicket.called_at,
+            procedure_name: '',
+          }
+        : undefined;
+
+      return {
+        counter_id: counter.id,
+        counter_name: counter.name,
+        is_active: status === 'active',
+        status,
+        pause_reason: reason,
+        current_serving,
+        waiting_queue,
+        waiting_count: waiting_queue.length,
+      };
+    },
+    [queueTickets, servingTicket]
+  );
+
+  const counterData =
+    currentUser?.counter_id &&
+    apiCounters.find((c) => c.id === currentUser.counter_id)
+      ? processCounterData(
+          apiCounters.find((c) => c.id === currentUser.counter_id)!
+        )
+      : null;
+
+  const handleNextTicket = async () => {
+    if (!currentUser?.counter_id || !counterData) return;
+    try {
+      setActionLoading(true);
+      const response = await countersAPI.callNext(currentUser.counter_id);
+      if (response && response.number) {
+        toast.success(`✅ Gọi vé ${response.number}`);
+        await loadQueueData();
+        const serving = await fetchServingTicket(currentUser.counter_id);
+        setServingTicket(serving);
+      }
+    } catch (error) {
+      toast.error('❌ Lỗi gọi vé');
+    } finally {
+      setActionLoading(false);
     }
-    
-    return {
-      counter_id: counter.id,
-      counter_name: counter.name,
-      is_active: finalStatus === 'active',
-      status: finalStatus,
-      pause_reason: pauseReason,
-      current_serving,
-      waiting_queue,
-      waiting_count: waiting_queue.length
-    };
-  }, [queueTickets, localServingTickets]);
+  };
 
-  // ✅ Get counter data for the current officer's assigned counter
-  const counterData = currentUser?.counter_id 
-    ? (() => {
-        const myCounter = apiCounters.find(c => c.id === currentUser.counter_id);
-        return myCounter ? processCounterData(myCounter) : null;
-      })()
-    : null;
+  const handlePauseConfirm = async (reason: string) => {
+    if (!currentUser?.counter_id) return;
+    try {
+      setActionLoading(true);
+      await countersAPI.pauseCounter(currentUser.counter_id, { reason });
+      await loadCounters();
+    } catch (error) {
+      toast.error('❌ Lỗi tạm dừng');
+    } finally {
+      setActionLoading(false);
+      setStopServiceModal({ isOpen: false, counterId: '', counterName: '' });
+    }
+  };
 
-  // ✅ Handle logout
+  const handleResumeCounter = async () => {
+    if (!currentUser?.counter_id) return;
+    try {
+      setActionLoading(true);
+      await countersAPI.resumeCounter(currentUser.counter_id);
+      await loadCounters();
+      const serving = await fetchServingTicket(currentUser.counter_id);
+      setServingTicket(serving);
+    } catch (error) {
+      toast.error('❌ Lỗi mở lại');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   const handleLogout = () => {
-    // ✅ Clear sessionStorage thay vì localStorage
-    sessionStorage.removeItem('auth_token');
-    sessionStorage.removeItem('user_data');
+    sessionStorage.clear();
     router.push('/login');
   };
 
-  // ✅ Handle call next ticket - Enhanced with counter_id validation
-  const handleNextTicket = async () => {
-    if (!currentUser?.counter_id || !counterData) return;
-    
-    try {
-      setActionLoading(true);
-      
-      console.log(`🔥 Calling next for counter ${currentUser.counter_id}`);
-      
-      // ✅ Validate officer can only call for assigned counter
-      if (currentUser.role === 'officer' && currentUser.counter_id !== counterData.counter_id) {
-        toast.error(`❌ Bạn chỉ có quyền gọi số cho Quầy ${currentUser.counter_id}!`);
-        console.error('🚫 Authorization error: Officer trying to access different counter', {
-          assignedCounter: currentUser.counter_id,
-          requestedCounter: counterData.counter_id,
-          userRole: currentUser.role
-        });
-        return;
-      }
-      
-      // Check if there are waiting tickets
-      if (counterData.waiting_count === 0) {
-        toast.warning(`⚠️ Không có vé nào đang chờ cho ${counterData.counter_name}!`);
-        return;
-      }
-      
-      // ✅ Debug authentication before calling API
-      const authToken = sessionStorage.getItem('auth_token');
-      console.log('🔐 Auth token exists:', !!authToken);
-      console.log('🔐 Auth token length:', authToken?.length || 0);
-      
-      if (!authToken) {
-        toast.error('❌ Không có token xác thực! Vui lòng đăng nhập lại.');
-        router.push('/login');
-        return;
-      }
-      
-      // ✅ Enhanced request logging with counter_id validation
-      console.log('📡 Making call-next request with enhanced validation...');
-      console.log('📡 Officer assigned counter:', currentUser.counter_id);
-      console.log('📡 Requesting for counter:', counterData.counter_id);
-      console.log('📡 Counter match validation:', currentUser.counter_id === counterData.counter_id);
-      console.log('📡 Request URL:', `https://detect-seat.onrender.com/app/counters/${currentUser.counter_id}/call-next?tenxa=xavixuyen`);
-      console.log('🔐 Token preview:', authToken?.substring(0, 20) + '...');
-      console.log('🔐 Token full length:', authToken?.length);
-      
-      // ✅ Test if we can access /auths/me first to verify token is valid
-      try {
-        console.log('🧪 Testing token validity with /auths/me...');
-        const userTestResponse = await rootApi.get('/auths/me', { params: { tenxa: 'xavixuyen' } });
-        console.log('✅ Token is valid - user info:', userTestResponse.data);
-        
-        // ✅ Double-check counter_id from fresh user data
-        if (userTestResponse.data.counter_id !== currentUser.counter_id) {
-          console.warn('⚠️ Counter ID mismatch detected between local and server data');
-          setCurrentUser(userTestResponse.data); // Update local user data
-        }
-      } catch (testError) {
-        console.error('❌ Token test failed:', testError);
-        toast.error('❌ Token không hợp lệ! Vui lòng đăng nhập lại.');
-        router.push('/login');
-        return;
-      }
-      
-      // ✅ Make the actual call-next request using officer's assigned counter_id
-      console.log('🚀 Now making call-next request for assigned counter...');
-      const response = await countersAPI.callNext(currentUser.counter_id);
-      console.log('📡 Call next response:', response);
-      
-      if (response && response.number) {
-        // ✅ Store serving ticket locally (updated state management)
-        setLocalServingTickets(prev => ({
-          ...prev,
-          [currentUser.counter_id]: {
-            number: response.number,
-            counter_name: response.counter_name || counterData.counter_name,
-            called_at: new Date().toISOString()
-          }
-        }));
-        
-        toast.success(
-          <div>
-            <div>✅ Đã gọi vé số {response.number}</div>
-            <div>🏢 Cho {counterData.counter_name}</div>
-            <div className="text-xs text-gray-500 mt-1">
-              Thời gian: {new Date().toLocaleTimeString('vi-VN')}
-            </div>
-          </div>
-        );
-        
-        // ✅ No manual refresh needed - WebSocket will handle updates automatically
-        
-        // Dispatch event for TV displays
-        window.dispatchEvent(new CustomEvent('ticketCalled', {
-          detail: {
-            event: 'ticket_called',
-            ticket_number: response.number,
-            counter_name: counterData.counter_name,
-            counter_id: currentUser.counter_id,
-            timestamp: new Date().toISOString()
-          }
-        }));
-        
-      } else {
-        toast.error(`❌ API response không hợp lệ`);
-      }
-      
-    } catch (error) {
-      console.error('❌ Call next error details:', {
-        error,
-        errorMessage: error instanceof Error ? error.message : 'Unknown error',
-        counterId: currentUser.counter_id,
-        timestamp: new Date().toISOString()
-      });
-      
-      // ✅ Enhanced error analysis for 403 Forbidden
-      if (error && typeof error === 'object' && 'response' in error) {
-        const axiosError = error as any;
-        console.error('📊 Detailed Axios Error Analysis:', {
-          status: axiosError.response?.status,
-          statusText: axiosError.response?.statusText,
-          data: axiosError.response?.data,
-          headers: axiosError.response?.headers,
-          config: {
-            url: axiosError.config?.url,
-            method: axiosError.config?.method,
-            headers: axiosError.config?.headers,
-            baseURL: axiosError.config?.baseURL
-          }
-        });
-        
-        if (axiosError.response?.status === 403) {
-          console.error('🚫 403 Forbidden Analysis:');
-          console.error('   - Counter ID used:', currentUser.counter_id);
-          console.error('   - User role:', currentUser.role);
-          console.error('   - User counter_id:', currentUser.counter_id);
-          console.error('   - API endpoint:', `/counters/${currentUser.counter_id}/call-next`);
-          console.error('   - Possible causes:');
-          console.error('     1. Officer không có quyền với counter này');
-          console.error('     2. Counter không tồn tại hoặc không active');
-          console.error('     3. Backend chưa implement đúng authorization cho officer');
-          console.error('   - Recommended backend fix:');
-          console.error('     - Check if user.counter_id matches path parameter counter_id');
-          console.error('     - Ensure officer role has permission for assigned counter only');
-          
-          toast.error(
-            <div>
-              <div>❌ Không có quyền truy cập!</div>
-              <div className="text-xs mt-1">Officer chỉ có quyền với quầy được gán</div>
-            </div>
-          );
-          return;
-        }
-      }
-      
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      toast.error(`❌ Lỗi gọi khách: ${errorMessage}`);
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
-  // ✅ Handle pause counter
   const handlePauseCounter = () => {
     if (!currentUser?.counter_id || !counterData) return;
-    
     setStopServiceModal({
       isOpen: true,
       counterId: currentUser.counter_id.toString(),
-      counterName: counterData.counter_name
+      counterName: counterData.counter_name,
     });
   };
 
-  // ✅ Handle pause confirmation - Enhanced with counter_id validation
-  const handlePauseConfirm = async (reason: string) => {
-    if (!currentUser?.counter_id) return;
-    
-    try {
-      setActionLoading(true);
-      
-      // ✅ Validate officer can only pause assigned counter
-      if (currentUser.role === 'officer' && counterData && currentUser.counter_id !== counterData.counter_id) {
-        toast.error(`❌ Bạn chỉ có quyền tạm dừng Quầy ${currentUser.counter_id}!`);
-        console.error('🚫 Authorization error: Officer trying to pause different counter', {
-          assignedCounter: currentUser.counter_id,
-          requestedCounter: counterData.counter_id,
-          userRole: currentUser.role
-        });
-        return;
-      }
-      
-      console.log(`⏸️ Pausing counter ${currentUser.counter_id} with reason: ${reason}`);
-      console.log('📡 Pause request - Officer assigned counter:', currentUser.counter_id);
-      console.log('📡 Pause request - API endpoint:', `/counters/${currentUser.counter_id}/pause`);
-      
-      const response = await countersAPI.pauseCounter(currentUser.counter_id, { reason });
-      
-      if (response && (response.success === true || response.success === undefined)) {
-        toast.success(`⏸️ Đã tạm dừng ${counterData?.counter_name}!`);
-        // ✅ FIX: Manual refresh counter data để update UI ngay lập tức (như test-queue)
-        await loadCounters();
-      } else {
-        const errorMsg = response?.message || 'Pause operation failed';
-        toast.error(`❌ Lỗi tạm dừng: ${errorMsg}`);
-      }
-    } catch (error) {
-      console.error('❌ Pause counter error:', error);
-      
-      // ✅ Enhanced error analysis for pause operation
-      if (error && typeof error === 'object' && 'response' in error) {
-        const axiosError = error as any;
-        if (axiosError.response?.status === 403) {
-          console.error('🚫 403 Forbidden on pause - Counter ID validation failed');
-          toast.error('❌ Không có quyền tạm dừng quầy này!');
-          return;
-        }
-      }
-      
-      const errorMsg = error instanceof Error ? error.message : 'Unknown error';
-      toast.error(`❌ Lỗi tạm dừng: ${errorMsg}`);
-    } finally {
-      setActionLoading(false);
-    }
-    
-    setStopServiceModal({
-      isOpen: false,
-      counterId: '',
-      counterName: ''
-    });
-  };
-
-  // ✅ Handle resume counter - Enhanced with counter_id validation
-  const handleResumeCounter = async () => {
-    if (!currentUser?.counter_id) return;
-    
-    try {
-      setActionLoading(true);
-      
-      // ✅ Validate officer can only resume assigned counter
-      if (currentUser.role === 'officer' && counterData && currentUser.counter_id !== counterData.counter_id) {
-        toast.error(`❌ Bạn chỉ có quyền mở lại Quầy ${currentUser.counter_id}!`);
-        console.error('🚫 Authorization error: Officer trying to resume different counter', {
-          assignedCounter: currentUser.counter_id,
-          requestedCounter: counterData.counter_id,
-          userRole: currentUser.role
-        });
-        return;
-      }
-      
-      console.log(`▶️ Resuming counter ${currentUser.counter_id}`);
-      console.log('📡 Resume request - Officer assigned counter:', currentUser.counter_id);
-      console.log('📡 Resume request - API endpoint:', `/counters/${currentUser.counter_id}/resume`);
-      
-      const response = await countersAPI.resumeCounter(currentUser.counter_id);
-      
-      if (response && (response.success === true || response.success === undefined)) {
-        toast.success(`▶️ Đã mở lại ${counterData?.counter_name}!`);
-        // ✅ FIX: Manual refresh counter data để update UI ngay lập tức (như test-queue)
-        await loadCounters();
-      } else {
-        const errorMsg = response?.message || 'Resume operation failed';
-        toast.error(`❌ Lỗi mở lại: ${errorMsg}`);
-      }
-    } catch (error) {
-      console.error('❌ Resume counter error:', error);
-      
-      // ✅ Enhanced error analysis for resume operation
-      if (error && typeof error === 'object' && 'response' in error) {
-        const axiosError = error as any;
-        if (axiosError.response?.status === 403) {
-          console.error('🚫 403 Forbidden on resume - Counter ID validation failed');
-          toast.error('❌ Không có quyền mở lại quầy này!');
-          return;
-        }
-      }
-      
-      const errorMsg = error instanceof Error ? error.message : 'Unknown error';
-      toast.error(`❌ Lỗi mở lại: ${errorMsg}`);
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
-  // Loading state
   if (userLoading) {
     return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Đang tải thông tin người dùng...</p>
-        </div>
+      <div className="min-h-screen flex items-center justify-center">
+        Đang tải thông tin người dùng...
       </div>
     );
   }
 
-  // No user data
   if (!currentUser) {
-    return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-red-600">❌ Không thể tải thông tin người dùng</p>
-        </div>
-      </div>
-    );
+    return <div className="min-h-screen">Không có người dùng</div>;
   }
+
+  // 👉 Render phần giao diện như cũ ở đây...
 
   return (
     <div className="min-h-screen bg-gray-100 p-8">
@@ -778,7 +421,7 @@ function OfficerPage() {
         )}
 
         {/* Counter Dashboard */}
-        {!countersLoading && counterData && (
+        {!countersLoading && counterData && servingTicket !== undefined && (
           <div className="bg-white rounded-lg shadow-md p-6">
             {/* Counter Header */}
             <div className="flex justify-between items-center mb-6">
