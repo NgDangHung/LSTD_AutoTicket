@@ -59,6 +59,9 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  params: {
+    tenxa: 'xavixuyen' // Default parameter for all requests
+  }
 });
 
 /**
