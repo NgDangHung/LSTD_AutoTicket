@@ -624,7 +624,7 @@ export default function KioskMainScreen() {
             <div
               className="service-grid-container grid grid-cols-4  p-6 border rounded-lg backdrop-blur-sm"
               style={{
-                width: '1400px',
+                width: '1600px',
                 margin: '0 auto',
                 minHeight: 400,
                 background: 'rgba(255,255,255,0.2)',
@@ -645,11 +645,20 @@ export default function KioskMainScreen() {
                     minWidth: 320,
                     margin: '10px',
                     padding: '24px 0',
-                    boxSizing: 'border-box'
+                    boxSizing: 'border-box',
+                    lineHeight: '35px',
                   }}
                 >
                   <span className="text-lg font-bold mb-1">{`QUẦY ${String(idx + 1).padStart(2, '0')}`}</span>
-                  <span className="text-xl font-extrabold mb-1">{counter.name?.toUpperCase()}</span>
+                  <span
+                    className="text-xl font-extrabold mb-1  text-center w-full"
+                    style={{
+                      maxWidth: counter.id === 8 ? '100%' : '80%',
+                      lineHeight: '40px',
+                    }}
+                  >
+                    {counter.name?.toUpperCase()}
+                  </span>
                 </div>
               ))}
             </div>

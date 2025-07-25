@@ -126,6 +126,7 @@ export default function VirtualKeyboard({
         className={`bg-white rounded-t-2xl p-6 w-full max-w-5xl keyboard-slide-up shadow-2xl ${
           isVoiceMode ? 'ring-2 ring-red-500' : ''
         }`}
+        style={{position: 'relative', bottom: '-234px'}}
       >
 
         {/* Voice Mode Indicator */}
