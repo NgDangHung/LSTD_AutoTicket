@@ -37,6 +37,17 @@ interface CounterAPI {
 }
 
 export default function QueueDisplay() {
+  // API lấy số đang phục vụ cho từng quầy
+  const fetchServingTicket = async (counterId: number): Promise<RealTicket | null> => {
+    try {
+      const response = await rootApi.get(`/tickets/called`, { params: { counter_id: counterId, tenxa: 'xavixuyen' } });
+      const tickets: RealTicket[] = response.data;
+      return tickets.length > 0 ? tickets[0] : null;
+    } catch (error) {
+      console.error('❌ Failed to fetch serving ticket:', error);
+      return null;
+    }
+  };
     // Lưu các ticket đã phát TTS (counterId-ticketNumber)
   const announcedTicketsRef = useRef<Set<string>>(new Set());
   // ✅ Safe TTS Service initialization
@@ -100,13 +111,37 @@ export default function QueueDisplay() {
         setApiCounters(response.data);
         console.log('✅ Counters from API:', response.data);
       } catch (error) {
-        
         console.error('❌ Failed to fetch counters:', error);
         setApiCounters([]);
       }
     };
     fetchCounters();
   }, []);
+
+  // ✅ Khởi tạo wsServingTickets khi đã có apiCounters (reload trang)
+  useEffect(() => {
+    const initServingTicketsOnLoad = async () => {
+      if (apiCounters.length === 0) return;
+      const servingState: Record<number, { number: number; counter_name: string; called_at: string; source: string }> = {};
+      for (const counter of apiCounters) {
+        try {
+          const ticket = await fetchServingTicket(counter.id);
+          if (ticket) {
+            servingState[counter.id] = {
+              number: ticket.number,
+              counter_name: getCounterName(counter.id),
+              called_at: ticket.called_at || new Date().toISOString(),
+              source: 'init-api'
+            };
+          }
+        } catch (err) {
+          // ignore error for each counter
+        }
+      }
+      setWsServingTickets(servingState);
+    };
+    initServingTicketsOnLoad();
+  }, [apiCounters]);
 
   // ✅ Counter name mapping (API-driven)
   const getCounterName = (counterId: number): string => {
@@ -357,16 +392,19 @@ export default function QueueDisplay() {
       // Đánh dấu đã phát
       announcedTicketsRef.current.add(key);
 
-      // Cập nhật state phục vụ cho quầy
-      setWsServingTickets(prev => ({
-        ...prev,
-        [counterId]: {
-          number: ticket_number,
-          counter_name: counter_name,
-          called_at: new Date().toISOString(),
-          source: 'websocket-production'
-        }
-      }));
+      // Gọi API lấy vé đang phục vụ cho quầy này
+      const servingTicket = await fetchServingTicket(counterId);
+      if (servingTicket) {
+        setWsServingTickets(prev => ({
+          ...prev,
+          [counterId]: {
+            number: servingTicket.number,
+            counter_name: getCounterName(counterId),
+            called_at: servingTicket.called_at || new Date().toISOString(),
+            source: 'api-called'
+          }
+        }));
+      }
 
       // Show announcement cho TV display
       setAnnouncement({
