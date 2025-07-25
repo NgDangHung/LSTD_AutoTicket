@@ -49,7 +49,7 @@ export class TTSService {
   private isPlaying: boolean = false;
   private currentAudio: HTMLAudioElement | null = null;
   private maxRetries: number = 3;
-  private audioGap: number = 2000; // 2 giây giữa các lần phát
+  private audioGap: number = 1000; // 2 giây giữa các lần phát
   private apiBaseUrl: string;
 
   static getInstance(): TTSService {

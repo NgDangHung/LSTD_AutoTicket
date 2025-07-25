@@ -591,13 +591,13 @@ export default function QueueDisplay() {
             return { counterId: Number(counterId), ticketNumber: Number(ticketNumber) };
           });
 
-          // Hàm phát lại lượt 2 tuần tự, mỗi vé cách nhau 2 giây, và timestamp tăng dần
+          // Hàm phát lại lượt 2 tuần tự, mỗi vé cách nhau 1 giây, và timestamp tăng dần
           const replaySecondRound = async () => {
             replayedSecondRoundRef.current = true;
             let now = Date.now();
             for (const { counterId, ticketNumber } of tickets) {
               // Tạo timestamp tăng dần cho từng vé lượt 2
-              now += 2000; // mỗi vé cách nhau 2 giây
+              now += 1000; // mỗi vé cách nhau 1 giây
               await ttsService.queueAnnouncement(
                 counterId,
                 ticketNumber,
@@ -605,7 +605,7 @@ export default function QueueDisplay() {
                 'manual',
                 new Date(now).toISOString()
               );
-              await new Promise(res => setTimeout(res, 2000)); // delay 2s giữa các vé
+              await new Promise(res => setTimeout(res, 1000)); // delay 1s giữa các vé
             }
             console.log('🔁 Đã tự động phát lại lượt 2 cho tất cả vé (có delay và timestamp tăng dần)');
           };
