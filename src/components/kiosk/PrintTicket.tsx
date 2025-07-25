@@ -178,7 +178,7 @@ const PrintTicket: React.FC<PrintTicketProps> = ({
 
       setPrintStatus('🖨️ Đang gửi lệnh in qua QZ Tray...');
       const ticketHTML = generateThermalTicketHTML(timeString, dateString);
-      const config = qz.configs.create('W80', {
+      const config = qz.configs.create('EPSON TM-T81III Receipt', {
         encoding: 'RAW',
         copies: 1,
         rasterize: true
