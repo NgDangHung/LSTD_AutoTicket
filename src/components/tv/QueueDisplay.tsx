@@ -744,7 +744,7 @@ export default function QueueDisplay() {
       <>
         <div className="flex justify-between items-center" style={{flexDirection: 'row-reverse'}}>
           <h2 className="text-2xl text-red-700 font-bold italic" style={{position: 'relative',top: '-50px',left: '-180px', fontSize: '2rem'}}>
-            Hà Giang - Ngày {new Date().toLocaleDateString('vi-VN')}
+            PHƯỜNG HÀ GIANG 1 - Ngày {new Date().toLocaleDateString('vi-VN')}
           </h2>
         </div>
       </>
