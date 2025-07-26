@@ -32,7 +32,7 @@ export class TTSService {
   private async loadCounters() {
     if (this.countersLoaded) return;
     try {
-      const response = await rootApi.get('/counters', { params: { tenxa: 'xavixuyen' } });
+      const response = await rootApi.get('/counters', { params: { tenxa: 'phuonghagiang1' } });
       if (Array.isArray(response.data)) {
         response.data.forEach((c: { id: number, name: string }) => {
           this.counterMapping[c.name.trim()] = c.id;
@@ -139,7 +139,7 @@ export class TTSService {
       callAttempt,
       timestamp: timestamp || new Date().toISOString(),
       source,
-      tenxa: 'xavixuyen' // Default tenxa, có thể thay đổi nếu cần
+      tenxa: 'phuonghagiang1' // Default tenxa, có thể thay đổi nếu cần
     };
 
     // Insert vào queue theo timestamp (FIFO based on called_at time)
@@ -328,7 +328,7 @@ export class TTSService {
   // Helper method để download MP3 file từ TTS API
   async downloadAudio(counterId: number, ticketNumber: number): Promise<void> {
     try {
-      const audioBlob = await ttsAPI.generateAudio(counterId, ticketNumber, 'xavixuyen');
+      const audioBlob = await ttsAPI.generateAudio(counterId, ticketNumber, 'phuonghagiang1');
       
       // Create download link
       const downloadUrl = URL.createObjectURL(audioBlob);
@@ -354,7 +354,7 @@ export class TTSService {
   // Helper method để tạo HTML5 audio element
   async createAudioElement(counterId: number, ticketNumber: number): Promise<HTMLAudioElement> {
     try {
-      const audioBlob = await ttsAPI.generateAudio(counterId, ticketNumber, 'xavixuyen');
+      const audioBlob = await ttsAPI.generateAudio(counterId, ticketNumber, 'phuonghagiang1');
       const audioUrl = URL.createObjectURL(audioBlob);
       
       const audio = new Audio(audioUrl);

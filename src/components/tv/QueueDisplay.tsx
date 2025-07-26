@@ -40,7 +40,7 @@ export default function QueueDisplay() {
   // API lấy số đang phục vụ cho từng quầy
   const fetchServingTicket = async (counterId: number): Promise<RealTicket | null> => {
     try {
-      const response = await rootApi.get(`/tickets/called`, { params: { counter_id: counterId, tenxa: 'xavixuyen' } });
+      const response = await rootApi.get(`/tickets/called`, { params: { counter_id: counterId, tenxa: 'phuonghagiang1' } });
       const tickets: RealTicket[] = response.data;
       return tickets.length > 0 ? tickets[0] : null;
     } catch (error) {
@@ -107,7 +107,7 @@ export default function QueueDisplay() {
   useEffect(() => {
     const fetchCounters = async () => {
       try {
-        const response = await rootApi.get('/counters/', { params: { tenxa: 'xavixuyen' } });
+        const response = await rootApi.get('/counters/', { params: { tenxa: 'phuonghagiang1' } });
         setApiCounters(response.data);
         console.log('✅ Counters from API:', response.data);
       } catch (error) {
@@ -162,7 +162,7 @@ export default function QueueDisplay() {
       console.log('🔄 Fetching all tickets from real API...');
       
       // GET /tickets/waiting - get all tickets (waiting + called + done)
-      const response = await rootApi.get('/tickets/waiting', { params: { tenxa: 'xavixuyen' } });
+      const response = await rootApi.get('/tickets/waiting', { params: { tenxa: 'phuonghagiang1' } });
       const tickets: RealTicket[] = response.data;
       
       console.log('📡 Real API Response:', tickets);
@@ -184,7 +184,7 @@ export default function QueueDisplay() {
       
       for (let counterId = 1; counterId <= 4; counterId++) {
         try {
-          const response = await rootApi.get('/tickets/waiting', { params: { counter_id: counterId, tenxa: 'xavixuyen' } });
+          const response = await rootApi.get('/tickets/waiting', { params: { counter_id: counterId, tenxa: 'phuonghagiang1' } });
           allTickets.push(...response.data);
         } catch (counterError) {
           console.warn(`⚠️ Failed to fetch tickets for counter ${counterId}:`, counterError);
@@ -733,7 +733,7 @@ export default function QueueDisplay() {
               TRUNG TÂM PHỤC VỤ HÀNH CHÍNH CÔNG  
             </h1>
             <h1 className="text-5xl font-bold text-red-700 " style={{ lineHeight: '1.3' }}>
-              XÃ VỊ XUYÊN
+              PHƯỜNG HÀ GIANG 1
             </h1>
             <p className='text-2xl font-extrabold text-red-700 mt-3' style={{fontSize: '2rem'}}>
               Hành chính phục vụ 
@@ -744,7 +744,7 @@ export default function QueueDisplay() {
       <>
         <div className="flex justify-between items-center" style={{flexDirection: 'row-reverse'}}>
           <h2 className="text-2xl text-red-700 font-bold italic" style={{position: 'relative',top: '-50px',left: '-180px', fontSize: '2rem'}}>
-            Vị Xuyên - Ngày {new Date().toLocaleDateString('vi-VN')}
+            Hà Giang - Ngày {new Date().toLocaleDateString('vi-VN')}
           </h2>
         </div>
       </>
@@ -753,7 +753,7 @@ export default function QueueDisplay() {
       <div className="flex-1 p-4 flex flex-col items-center" style={{position: 'relative',top: '-37px'}}>
         <div className="w-full" style={{maxWidth: 1500}}>
           {/* Header table */}
-          <div className="grid" style={{gridTemplateColumns: '1.5fr 1fr 1fr', fontSize: '1.7rem'}}>
+          <div className="grid" style={{gridTemplateColumns: '1.5fr 1fr 1fr', fontSize: '2rem'}}>
             <div className="bg-red-700 text-white text-center py-4  font-bold border border-white border-b-0 rounded-tl-xl uppercase tracking-wide">QUẦY PHỤC VỤ</div>
             <div className="bg-red-700 text-white text-center py-4  font-bold border border-white border-b-0 uppercase tracking-wide">ĐANG PHỤC VỤ</div>
             <div className="bg-red-700 text-white text-center py-4  font-bold border border-white border-b-0 rounded-tr-xl uppercase tracking-wide">ĐANG CHỜ</div>
@@ -762,13 +762,13 @@ export default function QueueDisplay() {
           {processedCounters.map((counter, idx) => {
             const isEven = idx % 2 === 0;
             return (
-              <div key={counter.counter_id} className={`grid border-b border-white last:rounded-b-xl ${isEven ? 'bg-gray-300 bg-opacity-80' : 'bg-pink-100  bg-opacity-80'}`} style={{minHeight: 80, alignItems: 'center', gridTemplateColumns: '1.5fr 1fr 1fr'}}>
+              <div key={counter.counter_id} className={`grid border-b border-white last:rounded-b-xl ${isEven ? 'bg-gray-300 bg-opacity-80' : 'bg-pink-100  bg-opacity-80'}`} style={{minHeight: 120, alignItems: 'center', gridTemplateColumns: '1.5fr 1fr 1fr'}}>
                 {/* Quầy phục vụ */}
-                <div className="text-xl font-extrabold text-red-800 px-4 py-3 border-r border-white uppercase" style={{fontSize: '1.3rem'}}>
+                <div className="text-xl font-extrabold text-red-800 px-4 py-3 border-r border-white uppercase" style={{fontSize: '1.7rem'}}>
                   QUẦY {counter.counter_id} | {counter.counter_name}
                 </div>
                 {/* Đang phục vụ - logic cũ: nếu có số thì hiển thị, không thì hiện 'Chưa có số được phục vụ' */}
-                <div className="text-5xl font-extrabold text-center text-red-800 px-4 py-3 border-r border-white"  >
+                <div className="text-6xl font-extrabold text-center text-red-800 px-4 py-3 border-r border-white"  >
                   {counter.serving_number || wsServingTickets[counter.counter_id] ? (
                     <NumberAnimation number={(counter.serving_number || wsServingTickets[counter.counter_id]?.number)?.toString() || '0'} />
                   ) : (
@@ -776,7 +776,7 @@ export default function QueueDisplay() {
                   )}
                 </div>
                 {/* Đang chờ */}
-                <div className="text-3xl font-extrabold text-center text-red-800 px-4 py-3">
+                <div className="text-5xl font-extrabold text-center text-red-800 px-4 py-3">
                   {counter.waiting_numbers.length > 0 ? (
                     <>
                       {counter.waiting_numbers.slice(0, 6).map((number, index) => (
@@ -810,6 +810,7 @@ export default function QueueDisplay() {
           )}
         </div>
       </footer>
+
     </div>
   );
 }

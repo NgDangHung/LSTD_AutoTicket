@@ -419,7 +419,7 @@ export default function KioskMainScreen() {
                 TRUNG TÂM PHỤC VỤ HÀNH CHÍNH CÔNG 
               </h1>
                <h1 className="text-3xl font-bold text-red-700 " style={{ lineHeight: '1.3' }}>
-                XÃ VỊ XUYÊN 
+                PHƯỜNG HÀ GIANG 1 
               </h1>
               <p className='text-xl font-extrabold text-red-700 mt-3' style={{fontSize: '1.5rem'}}>
                 Hành chính phục vụ 
@@ -441,7 +441,7 @@ export default function KioskMainScreen() {
           />
           <div style={{ marginLeft: '12px' }}>
             <h1 className="text-3xl font-bold text-red-700" style={{ lineHeight: '1.2' }}>
-              TRUNG TÂM PHỤC VỤ HÀNH CHÍNH CÔNG XÃ VỊ XUYÊN
+              TRUNG TÂM PHỤC VỤ HÀNH CHÍNH CÔNG PHƯỜNG HÀ GIANG 1
             </h1>
             <p className='text-xl font-extrabold text-red-700 mt-3'>
               Hành chính phục vụ
@@ -483,17 +483,6 @@ export default function KioskMainScreen() {
         {/* Search Bar */}
         <div className="flex justify-center gap-4 mb-12 mt-12" style={{ marginTop: '2rem'}}>
           <div className="relative flex items-center w-full max-w-5xl" style={{ marginTop: '-28px', maxWidth: '70rem' }}>
-            <button
-              onClick={searchQuery.trim() ? () => setSearchQuery('') : handleVoiceSearch}
-              className="px-5 py-3 bg-red-600 text-white font-extrabold text-base shadow-lg hover:bg-red-700 transition-colors flex items-center justify-center gap-2"
-              style={{ whiteSpace: 'nowrap', minHeight: '70px', minWidth: '140px', borderRadius: '8px', textAlign: 'center' }}
-            >
-              {searchQuery.trim() ? (
-                <span style={{fontSize: '1.2rem', fontWeight: 'bold'}}>🗑️ Xóa tìm kiếm</span>
-              ) : (
-                <span style={{fontSize: '1.2rem', fontWeight: 'bold', width: '100%', display: 'inline-block', textAlign: 'center'}}>Tìm kiếm</span>
-              )}
-            </button>
             <div style={{ width: '20px' }}></div>
             <div className="relative flex-1"> 
               <input 
@@ -519,7 +508,26 @@ export default function KioskMainScreen() {
                   lineHeight: '44px',
                 }}
               />
+              <AudioLines 
+                  size={24} 
+                  className={`absolute right-4 top-1/2 transform -translate-y-1/2 cursor-pointer transition-colors ${
+                    isVoiceActive ? 'text-red-500 animate-pulse' : 'text-blue-500 hover:text-blue-700'
+                  }`}
+                  onClick={handleVoiceSearch}
+                />
             </div>
+            <div style={{ width: '20px' }}></div>
+            <button
+              onClick={searchQuery.trim() ? () => setSearchQuery('') : handleVoiceSearch}
+              className="px-5 py-3 bg-red-600 text-white font-extrabold text-base shadow-lg hover:bg-red-700 transition-colors flex items-center justify-center gap-2"
+              style={{ whiteSpace: 'nowrap', minHeight: '70px', minWidth: '140px', borderRadius: '8px', textAlign: 'center' }}
+            >
+              {searchQuery.trim() ? (
+                <span style={{fontSize: '1.2rem', fontWeight: 'bold'}}>🗑️ Xóa tìm kiếm</span>
+              ) : (
+                <span style={{fontSize: '1.2rem', fontWeight: 'bold', width: '100%', display: 'inline-block', textAlign: 'center'}}>Tìm kiếm bằng giọng nói</span>
+              )}
+            </button>
             {/* Voice Status Indicator */}
             {isVoiceActive && (
               <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-red-500 text-white px-3 py-1 rounded-full text-sm font-medium animate-pulse">
@@ -585,7 +593,7 @@ export default function KioskMainScreen() {
 
         {/* Counter Grid */}
         {!countersLoading && filteredCounters.length > 0 && (
-          <div className="flex flex-col items-center" style={{width: '1600px', position: 'relative', right: '222px'}}>
+          <div className="flex flex-col items-center" >
             {/* Scroll Indicator */}
             {filteredCounters.length > 4 && (
               <div className="mb-4 text-center">
@@ -596,7 +604,7 @@ export default function KioskMainScreen() {
             )}
             
             {/* Grid màn dọc */}
-            {/* <div 
+            <div 
               className="service-grid-container grid grid-cols-2 gap-6 overflow-y-auto p-4 border rounded-lg backdrop-blur-sm"
             >
               {filteredCounters.map((counter, idx) => {
@@ -618,10 +626,10 @@ export default function KioskMainScreen() {
                   </div>
                 );
               })}
-            </div> */}
+            </div>
 
             {/* Grid màn ngang */}
-            <div
+            {/* <div
               className="service-grid-container grid grid-cols-4  p-6 border rounded-lg backdrop-blur-sm"
               style={{
                 width: '1600px',
@@ -661,7 +669,7 @@ export default function KioskMainScreen() {
                   </span>
                 </div>
               ))}
-            </div>
+            </div> */}
           </div>
         )}
 
@@ -675,17 +683,7 @@ export default function KioskMainScreen() {
         )}
 
         {/* Footer màn dọc */}
-        {/* <div className="flex items-center w-full text-gray-600 italic" style={{ position: 'relative', top: '16rem', justifyContent: 'space-around' }}>
-          <p className="text-xl font-extrabold text-red-700 ">
-              Giờ làm việc (Thứ 2 - Thứ 6): 07h30 - 17h30
-          </p>
-          <p className="text-xl font-extrabold text-red-700 ">
-             Hotline hỗ trợ: 0219-1022
-          </p>
-        </div> */}
-
-         {/* Footer màn ngang */} 
-        <div className="flex items-center w-full text-gray-600 italic" style={{ position: 'relative', top: '2rem', justifyContent: 'space-around' }}>
+        <div className="flex items-center w-full text-gray-600 italic" style={{ position: 'relative', top: '16rem', justifyContent: 'space-around' }}>
           <p className="text-xl font-extrabold text-red-700 ">
               Giờ làm việc (Thứ 2 - Thứ 6): 07h30 - 17h30
           </p>
@@ -693,6 +691,16 @@ export default function KioskMainScreen() {
              Hotline hỗ trợ: 0219-1022
           </p>
         </div>
+
+         {/* Footer màn ngang */} 
+        {/* <div className="flex items-center w-full text-gray-600 italic" style={{ position: 'relative', top: '2rem', justifyContent: 'space-around' }}>
+          <p className="text-xl font-extrabold text-red-700 ">
+              Giờ làm việc (Thứ 2 - Thứ 6): 07h30 - 17h30
+          </p>
+          <p className="text-xl font-extrabold text-red-700 ">
+             Hotline hỗ trợ: 0219-1022
+          </p>
+        </div> */}
       </div>
 
       {/* Confirm Counter Modal */}

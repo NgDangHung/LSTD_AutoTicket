@@ -63,7 +63,7 @@ const PrintTicket: React.FC<PrintTicketProps> = ({
         TRUNG TÂM DỊCH VỤ HÀNH CHÍNH CÔNG
       </div>
       <div style="font-weight:bold;font-size:18px;">
-        XÃ VỊ XUYÊN 
+        PHƯỜNG HÀ GIANG 1 
       </div>
       <div style="margin-top:8px;font-weight: bold;">SỐ THỨ TỰ</div>
       <div style="font-size:60px;font-weight:900;margin:8px 0;">
@@ -109,7 +109,7 @@ const PrintTicket: React.FC<PrintTicketProps> = ({
             setQzReady(true);
           }
          },
-        { src: 'sign-message-xavixuyen.js', id: 'signmessage-script' }
+        { src: 'sign-message.js', id: 'signmessage-script' }
       ];
       scripts.forEach(({ src, id, onload}) => {
         if (!document.getElementById(id)) {
@@ -142,28 +142,28 @@ const PrintTicket: React.FC<PrintTicketProps> = ({
       }
       (qz as any).security.setCertificatePromise(function (resolve: any, reject: any) {
   resolve("-----BEGIN CERTIFICATE-----\n" +
-"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
+"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
-"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
+"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
-"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
+"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\n" +
 "-----END CERTIFICATE-----\n"
 );
 });
@@ -178,7 +178,7 @@ const PrintTicket: React.FC<PrintTicketProps> = ({
 
       setPrintStatus('🖨️ Đang gửi lệnh in qua QZ Tray...');
       const ticketHTML = generateThermalTicketHTML(timeString, dateString);
-      const config = qz.configs.create('EPSON TM-T81III Receipt', {
+      const config = qz.configs.create('W80', {
         encoding: 'RAW',
         copies: 1,
         rasterize: true

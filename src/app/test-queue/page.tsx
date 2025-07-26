@@ -70,7 +70,7 @@ function TestQueuePage() {
       console.log('🔄 Fetching WAITING tickets only from API...');
       
       // 🔥 API /tickets/waiting only returns tickets with status: 'waiting' 
-      const response = await rootApi.get('/tickets/waiting', { params: { tenxa: 'xavixuyen' } });
+      const response = await rootApi.get('/tickets/waiting', { params: { tenxa: 'phuonghagiang1' } });
       const waitingTickets: any[] = response.data; // Only status: 'waiting'
       
       console.log('📡 API Response (waiting tickets only):', waitingTickets);
@@ -237,7 +237,7 @@ function TestQueuePage() {
   // ✅ Fetch serving ticket for a counter from API (like QueueDisplay)
   const fetchServingTicket = async (counterId: number) => {
     try {
-      const response = await rootApi.get('/tickets/called', { params: { counter_id: counterId, tenxa: 'xavixuyen' } });
+      const response = await rootApi.get('/tickets/called', { params: { counter_id: counterId, tenxa: 'phuonghagiang1' } });
       const tickets: any[] = response.data;
       return tickets.length > 0 ? tickets[0] : null;
     } catch (error) {
