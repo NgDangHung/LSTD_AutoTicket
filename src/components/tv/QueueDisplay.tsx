@@ -744,7 +744,7 @@ export default function QueueDisplay() {
       <>
         <div className="flex justify-between items-center" style={{flexDirection: 'row-reverse'}}>
           <h2 className="text-2xl text-red-700 font-bold italic" style={{position: 'relative',top: '-50px',left: '-180px', fontSize: '2rem'}}>
-            PHƯỜNG HÀ GIANG 1 - Ngày {new Date().toLocaleDateString('vi-VN')}
+            Phường Hà Giang 1,  Ngày {new Date().toLocaleDateString('vi-VN')}
           </h2>
         </div>
       </>
@@ -776,7 +776,7 @@ export default function QueueDisplay() {
                   )}
                 </div>
                 {/* Đang chờ */}
-                <div className="text-5xl font-extrabold text-center text-red-800 px-4 py-3">
+                <div className="text-4xl font-extrabold text-center text-red-800 px-4 py-3">
                   {counter.waiting_numbers.length > 0 ? (
                     <>
                       {counter.waiting_numbers.slice(0, 6).map((number, index) => (
@@ -801,8 +801,8 @@ export default function QueueDisplay() {
         <div className="flex justify-center items-center gap-8 text-lg italic text-red-700 font-extrabold"
           style={{fontSize: '2rem'}}
         >
-          <span>  Giờ làm việc (Thứ 2 - Thứ 6): 07h30 - 17h30</span>
-          <span> Hotline: 0219-1022 </span>
+          <span>  Giờ làm việc (Thứ 2 - Thứ 6): 7h30 - 17h00</span>
+          <span> Hotline: 0916670793 </span>
           {lastUpdated && (
             <span className="text-lg text-red-700 font-extrabold" style={{fontSize: '2rem'}}>
               Thời gian: {new Date().toLocaleTimeString('vi-VN')}

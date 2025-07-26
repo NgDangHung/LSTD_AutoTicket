@@ -232,6 +232,11 @@ function OfficerPage() {
         const data = JSON.parse(e.data);
         if (data.event === 'new_ticket' || data.event === 'ticket_called') {
           await loadQueueData();
+          // Tự động cập nhật số đang phục vụ khi có event ticket_called
+          if (data.event === 'ticket_called' && currentUser?.counter_id) {
+            const serving = await fetchServingTicket(currentUser.counter_id);
+            setServingTicket(serving);
+          }
         }
       };
 
@@ -246,7 +251,7 @@ function OfficerPage() {
     return () => {
       if (ws) ws.close();
     };
-  }, [loadCounters, loadQueueData]);
+  }, [loadCounters, loadQueueData, currentUser, fetchServingTicket]);
 
   const processCounterData = useCallback(
     (counter: Counter): CounterDetail => {
