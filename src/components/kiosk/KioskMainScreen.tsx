@@ -440,7 +440,7 @@ export default function KioskMainScreen() {
           />
           <div style={{ marginLeft: '12px' }}>
             <h1 className="text-3xl font-bold text-red-700" style={{ lineHeight: '1.2' }}>
-              TRUNG TÂM PHỤC VỤ HÀNH CHÍNH CÔNG PHƯỜNG HÀ GIANG 1
+              TRUNG TÂM PHỤC VỤ HÀNH CHÍNH CÔNG
             </h1>
             <h1 className="text-3xl font-bold text-red-700" style={{ lineHeight: '1.2' }}>
               PHƯỜNG HÀ GIANG 1
