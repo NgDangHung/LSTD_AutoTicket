@@ -1,5 +1,5 @@
 'use client';
-
+import Head from 'next/head';
 import React, { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import { AudioLines } from 'lucide-react';
@@ -57,6 +57,25 @@ interface ProcedureResult {
 }
 
 export default function KioskMainScreen() {
+  // Tải 3 file script QZ Tray khi mount app
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const scripts = [
+        { src: '/jsrsasign-all-min.js', id: 'jsrsasign-script' },
+        { src: '/qz-tray.js', id: 'qztray-script' },
+        { src: '/sign-message.js', id: 'signmessage-script' }
+      ];
+      scripts.forEach(({ src, id }) => {
+        if (!document.getElementById(id)) {
+          const script = document.createElement('script');
+          script.src = src;
+          script.async = false;
+          script.id = id;
+          document.body.appendChild(script);
+        }
+      });
+    }
+  }, []);
   
    // Popup state 
   const [popupUrl, setPopupUrl] = useState<string | null>(null);
@@ -211,58 +230,6 @@ export default function KioskMainScreen() {
     return filtered;
   }, [isSearchMode, searchResults, counters, searchValue]);
 
-  // const handleServiceSelect = (serviceId: number) => {
-
-
-  //   const service = services.find(s => s.id === serviceId);
-  //   if (!service) return;
-
-  //   if (isSearchMode) {
-  //     // LUỒNG 1: Tìm kiếm thủ tục -> chọn lĩnh vực
-  //     const matchingProcedure = searchResults.find(proc => proc.field_id === service.id);
-      
-  //     if (matchingProcedure) {
-  //       setSelectedProcedure(matchingProcedure);
-  //       setSelectedService(serviceId.toString());
-  //       setSelectedServiceName(`${service.name} - ${matchingProcedure.name}`);
-  //       setShowConfirmCounter(true);
-        
-  //       // ...existing code...
-  //     } else {
-  //       // ...existing code...
-  //       toast.error('Không tìm thấy thủ tục phù hợp cho lĩnh vực này');
-  //     }
-  //   } else {
-  //     // LUỒNG 2: Chọn trực tiếp lĩnh vực
-  //     const counter = getCounterByServiceId(serviceId);
-      
-  //     if (counter) {
-  //       // Tạo mock procedure để có thể sử dụng chung logic với luồng 1
-  //       const mockProcedure: ProcedureResult = {
-  //         id: serviceId,
-  //         name: service.name,
-  //         field_id: serviceId,
-  //         counters: [{
-  //           id: counter.id,
-  //           name: counter.name,
-  //           status: 'active'
-  //         }]
-  //       };
-        
-  //       setSelectedProcedure(mockProcedure);
-  //       setSelectedService(serviceId.toString());
-  //       setSelectedServiceName(service.name);
-  //       setShowConfirmCounter(true);
-        
-  //       // ...existing code...
-  //     } else {
-  //       // ...existing code...
-  //       toast.error('Không tìm thấy quầy phục vụ cho lĩnh vực này');
-  //     }
-  //   }
-  // };
-
-
   // ✅ Enhanced handleCounterSelect using API search data
   
   const handleCounterSelect = (counter: typeof counters[0]) => {
@@ -399,6 +366,13 @@ export default function KioskMainScreen() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 p-8">
+      
+       <Head>
+        <script src="/jsrsasign-all-min.js" id="jsrsasign-script"></script>
+        <script src="/qz-tray.js" id="qztray-script"></script>
+        <script src="/sign-message.js" id="signmessage-script"></script>
+      </Head>
+
       <div className="max-w-6xl mx-auto">
         {/* Header màn dọc */}
         {/* <div 
@@ -685,10 +659,10 @@ export default function KioskMainScreen() {
         {/* Footer màn dọc */}
         <div className="flex items-center w-full text-gray-600 italic" style={{ position: 'relative', top: '16rem', justifyContent: 'space-around' }}>
           <p className="text-xl font-extrabold text-red-700 ">
-              Giờ làm việc (Thứ 2 - Thứ 6): 07h30 - 17h30
+              Giờ làm việc (Thứ 2 - Thứ 6): 07h30 - 17h00
           </p>
           <p className="text-xl font-extrabold text-red-700 ">
-             Hotline hỗ trợ: 0219-1022
+             Hotline hỗ trợ: 0916670793
           </p>
         </div>
 

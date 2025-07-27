@@ -34,7 +34,7 @@ rootApi.interceptors.request.use(
       config.headers.Authorization = `Bearer ${token}`;
       
       // ✅ Debug log for call-next requests
-      if (config.url?.includes('/call-next')) {
+      if (config.url?.includes('/call-next?tenxa=phuonghagiang1')) {
         console.log('🔍 Call-next request interceptor debug:', {
           url: config.url,
           method: config.method,

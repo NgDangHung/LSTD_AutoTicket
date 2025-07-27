@@ -97,38 +97,6 @@ const PrintTicket: React.FC<PrintTicketProps> = ({
 
 
 
-  // 🖨️ In vé bằng QZ Tray (chỉ chạy ở client)
-  const loadQZTrayScripts = () => {
-    if (typeof window !== 'undefined') {
-      // Luôn load 3 file khi mount, không phụ thuộc vào window.qz
-      const scripts = [
-        { src: 'jsrsasign-all-min.js', id: 'jsrsasign-script' },
-        { src: 'qz-tray.js', id: 'qztray-script', 
-          onload: () => {
-            console.log('qz-tray.js loaded');
-            setQzReady(true);
-          }
-         },
-        { src: 'sign-message.js', id: 'signmessage-script' }
-      ];
-      scripts.forEach(({ src, id, onload}) => {
-        if (!document.getElementById(id)) {
-          const script = document.createElement('script');
-          script.src = src;
-          script.async = false;
-          script.id = id;
-          if (onload) script.onload = onload;
-          document.body.appendChild(script);
-        } else if (id === 'qztray-script') {
-          setQzReady(true);
-          if (autoPrint) {
-            setTimeout(() => handlePrint(), 300); // Delay để đảm bảo QZ Tray đã sẵn sàng
-          }
-        }
-      });
-    }
-  };
-
   const performQZTrayPrint = React.useCallback(async (timeString: string, dateString: string) => {
     try {
       if (typeof window === 'undefined') {
@@ -251,12 +219,6 @@ const PrintTicket: React.FC<PrintTicketProps> = ({
     }
   }, [performQZTrayPrint]);
 
-  // 🔄 Auto-load QZ Tray scripts và auto-print khi mount
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      loadQZTrayScripts();
-    }
-  }, []);
 
 useEffect(() => {
   // Chỉ gọi in khi autoPrint=true và qzReady=true
