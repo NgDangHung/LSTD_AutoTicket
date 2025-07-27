@@ -11,10 +11,9 @@ import { useCreateTicket } from '@/hooks/useApi';
 import { useOptimizedSearch } from '@/hooks/useOptimizedSearch';
 import { countersAPI, Counter } from '@/libs/rootApi';
 import '@/app/index.css';
-import PrintTicket from '@/components/kiosk/PrintTicket';
 import PopUp from './PopUp';
 import DateTimeVN from '../shared/DateTimeVN';
-
+import PrintTicket from '@/components/kiosk/PrintTicket';
 
 
 const services = [
@@ -57,52 +56,8 @@ interface ProcedureResult {
 }
 
 export default function KioskMainScreen() {
-  // Tải 3 file script QZ Tray khi mount app và kết nối websocket QZ Tray
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const scripts = [
-        { src: '/jsrsasign-all-min.js', id: 'jsrsasign-script' },
-        { src: '/qz-tray.js', id: 'qztray-script' },
-        { src: '/sign-message.js', id: 'signmessage-script' }
-      ];
-      let loadedCount = 0;
-      const onScriptLoad = () => {
-        loadedCount++;
-        if (loadedCount === scripts.length) {
-          // Tất cả script đã load, tiến hành kết nối websocket QZ Tray
-          const qz = (window as any).qz;
-          if (qz && qz.websocket && !qz.websocket.isActive()) {
-            qz.websocket.connect().catch(() => {
-              // Có thể log hoặc toast nếu cần
-            });
-          }
-        }
-      };
-      scripts.forEach(({ src, id }) => {
-        if (!document.getElementById(id)) {
-          const script = document.createElement('script');
-          script.src = src;
-          script.defer = true;
-          script.id = id;
-          script.onload = onScriptLoad;
-          document.body.appendChild(script);
-        } else {
-          loadedCount++;
-        }
-      });
-      // Nếu script đã có sẵn, vẫn cần kiểm tra kết nối QZ Tray
-      if (loadedCount === scripts.length) {
-        const qz = (window as any).qz;
-        if (qz && qz.websocket && !qz.websocket.isActive()) {
-          qz.websocket.connect().catch(() => {
-            // Có thể log hoặc toast nếu cần
-          });
-        }
-      }
-    }
-  }, []);
-  
-   // Popup state 
+
+   // Popup state
   const [popupUrl, setPopupUrl] = useState<string | null>(null);
   const [popupOpen, setPopupOpen] = useState(false);
 

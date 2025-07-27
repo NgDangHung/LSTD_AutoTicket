@@ -1,11 +1,5 @@
 'use client';
 
-// declare global {
-//   interface Window {
-//     qz: any;
-//   }
-// }
-
 import React, { useState, useEffect } from 'react';
 
 interface PrintTicketProps {
@@ -16,7 +10,7 @@ interface PrintTicketProps {
   onPrintComplete?: () => void;
 }
 
-const PrintTicket: React.FC<PrintTicketProps> = ({
+const  PrintTicket: React.FC<PrintTicketProps> = ({
   number,
   counterId,
   counterName,
@@ -24,7 +18,7 @@ const PrintTicket: React.FC<PrintTicketProps> = ({
   onPrintComplete
 }) => {
   const [printStatus, setPrintStatus] = useState<string>('');
-  
+  const [qzReady, setQzReady] = useState(false);
 
   // ...removed kiosk detection logic...
 
@@ -96,6 +90,38 @@ const PrintTicket: React.FC<PrintTicketProps> = ({
 }, [number, counterId, counterName]);
 
 
+
+  // 🖨️ In vé bằng QZ Tray (chỉ chạy ở client)
+  const loadQZTrayScripts = () => {
+    if (typeof window !== 'undefined') {
+      // Luôn load 3 file khi mount, không phụ thuộc vào window.qz
+      const scripts = [
+        { src: 'jsrsasign-all-min.js', id: 'jsrsasign-script' },
+        { src: 'qz-tray.js', id: 'qztray-script', 
+          onload: () => {
+            console.log('qz-tray.js loaded');
+            setQzReady(true);
+          }
+         },
+        { src: 'sign-message.js', id: 'signmessage-script' }
+      ];
+      scripts.forEach(({ src, id, onload}) => {
+        if (!document.getElementById(id)) {
+          const script = document.createElement('script');
+          script.src = src;
+          script.async = false;
+          script.id = id;
+          if (onload) script.onload = onload;
+          document.body.appendChild(script);
+        } else if (id === 'qztray-script') {
+          setQzReady(true);
+          if (autoPrint) {
+            setTimeout(() => handlePrint(), 300); // Delay để đảm bảo QZ Tray đã sẵn sàng
+          }
+        }
+      });
+    }
+  };
 
   const performQZTrayPrint = React.useCallback(async (timeString: string, dateString: string) => {
     try {
@@ -171,21 +197,21 @@ const PrintTicket: React.FC<PrintTicketProps> = ({
       console.log('🖨️ Opening browser print dialog...');
 
       const thermalHTML = generateThermalTicketHTML(timeString, dateString);
-      
+
       const originalContent = document.body.innerHTML;
       const originalTitle = document.title;
-      
+
       document.title = `Vé ${number} - ${counterName}`;
       document.body.innerHTML = thermalHTML;
 
       window.print();
-      
+
       setTimeout(() => {
         document.body.innerHTML = originalContent;
         document.title = originalTitle;
         setPrintStatus('✅ Hộp thoại in đã mở');
         onPrintComplete?.();
-        
+
         setTimeout(() => setPrintStatus(''), 3000);
       }, 1000);
 
@@ -219,10 +245,16 @@ const PrintTicket: React.FC<PrintTicketProps> = ({
     }
   }, [performQZTrayPrint]);
 
+  // 🔄 Auto-load QZ Tray scripts và auto-print khi mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      loadQZTrayScripts();
+    }
+  }, []);
 
 useEffect(() => {
-  // Chỉ gọi in khi autoPrint=true 
-  if (autoPrint) {
+  // Chỉ gọi in khi autoPrint=true và qzReady=true
+  if (autoPrint && qzReady) {
     // Đảm bảo QZ Tray websocket đã kết nối
     const tryPrint = async () => {
       const qz = (window as any).qz;
@@ -242,7 +274,7 @@ useEffect(() => {
     };
     tryPrint();
   }
-}, [autoPrint, number, counterId, counterName, handlePrint]);
+}, [autoPrint, qzReady, number, counterId, counterName, handlePrint]);
 
 
   return (
