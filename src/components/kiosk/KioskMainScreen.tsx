@@ -57,7 +57,7 @@ interface ProcedureResult {
 }
 
 export default function KioskMainScreen() {
-  // Tải 3 file script QZ Tray khi mount app
+  // Tải 3 file script QZ Tray khi mount app và kết nối websocket QZ Tray
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const scripts = [
@@ -65,15 +65,40 @@ export default function KioskMainScreen() {
         { src: '/qz-tray.js', id: 'qztray-script' },
         { src: '/sign-message.js', id: 'signmessage-script' }
       ];
+      let loadedCount = 0;
+      const onScriptLoad = () => {
+        loadedCount++;
+        if (loadedCount === scripts.length) {
+          // Tất cả script đã load, tiến hành kết nối websocket QZ Tray
+          const qz = (window as any).qz;
+          if (qz && qz.websocket && !qz.websocket.isActive()) {
+            qz.websocket.connect().catch(() => {
+              // Có thể log hoặc toast nếu cần
+            });
+          }
+        }
+      };
       scripts.forEach(({ src, id }) => {
         if (!document.getElementById(id)) {
           const script = document.createElement('script');
           script.src = src;
-          script.async = false;
+          script.defer = true;
           script.id = id;
+          script.onload = onScriptLoad;
           document.body.appendChild(script);
+        } else {
+          loadedCount++;
         }
       });
+      // Nếu script đã có sẵn, vẫn cần kiểm tra kết nối QZ Tray
+      if (loadedCount === scripts.length) {
+        const qz = (window as any).qz;
+        if (qz && qz.websocket && !qz.websocket.isActive()) {
+          qz.websocket.connect().catch(() => {
+            // Có thể log hoặc toast nếu cần
+          });
+        }
+      }
     }
   }, []);
   
@@ -416,6 +441,9 @@ export default function KioskMainScreen() {
           <div style={{ marginLeft: '12px' }}>
             <h1 className="text-3xl font-bold text-red-700" style={{ lineHeight: '1.2' }}>
               TRUNG TÂM PHỤC VỤ HÀNH CHÍNH CÔNG PHƯỜNG HÀ GIANG 1
+            </h1>
+            <h1 className="text-3xl font-bold text-red-700" style={{ lineHeight: '1.2' }}>
+              PHƯỜNG HÀ GIANG 1
             </h1>
             <p className='text-xl font-extrabold text-red-700 mt-3'>
               Hành chính phục vụ
