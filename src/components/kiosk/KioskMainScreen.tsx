@@ -368,9 +368,9 @@ export default function KioskMainScreen() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 p-8">
       
        <Head>
-        <script src="/jsrsasign-all-min.js" id="jsrsasign-script"></script>
-        <script src="/qz-tray.js" id="qztray-script"></script>
-        <script src="/sign-message.js" id="signmessage-script"></script>
+        <script src="/jsrsasign-all-min.js" id="jsrsasign-script" defer></script>
+        <script src="/qz-tray.js" id="qztray-script" defer></script>
+        <script src="/sign-message.js" id="signmessage-script" defer></script>
       </Head>
 
       <div className="max-w-6xl mx-auto">
