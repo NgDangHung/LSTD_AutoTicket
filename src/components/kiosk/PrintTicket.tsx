@@ -24,7 +24,7 @@ const PrintTicket: React.FC<PrintTicketProps> = ({
   onPrintComplete
 }) => {
   const [printStatus, setPrintStatus] = useState<string>('');
-  const [qzReady, setQzReady] = useState(false);
+  
 
   // ...removed kiosk detection logic...
 
@@ -221,8 +221,8 @@ const PrintTicket: React.FC<PrintTicketProps> = ({
 
 
 useEffect(() => {
-  // Chỉ gọi in khi autoPrint=true và qzReady=true
-  if (autoPrint && qzReady) {
+  // Chỉ gọi in khi autoPrint=true 
+  if (autoPrint) {
     // Đảm bảo QZ Tray websocket đã kết nối
     const tryPrint = async () => {
       const qz = (window as any).qz;
@@ -242,7 +242,7 @@ useEffect(() => {
     };
     tryPrint();
   }
-}, [autoPrint, qzReady, number, counterId, counterName, handlePrint]);
+}, [autoPrint, number, counterId, counterName, handlePrint]);
 
 
   return (
