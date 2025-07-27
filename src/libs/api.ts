@@ -30,13 +30,13 @@ axiosInstance.interceptors.request.use(
     }
     
     // Debug logging for requests
-    console.log('🌐 API Request Details:');
-    console.log('📡 Method:', config.method?.toUpperCase());
-    console.log('🔗 Endpoint:', config.url);
-    console.log('🌍 Full URL:', `${config.baseURL}${config.url}`);
-    console.log('📤 Request Payload:', JSON.stringify(config.data, null, 2));
-    console.log('📋 Headers:', config.headers);
-    console.log('────────────────────────────────────────');
+    // console.log('🌐 API Request Details:');
+    // console.log('📡 Method:', config.method?.toUpperCase());
+    // console.log('🔗 Endpoint:', config.url);
+    // console.log('🌍 Full URL:', `${config.baseURL}${config.url}`);
+    // console.log('📤 Request Payload:', JSON.stringify(config.data, null, 2));
+    // console.log('📋 Headers:', config.headers);
+    // console.log('────────────────────────────────────────');
     
     return config;
   },
@@ -50,21 +50,21 @@ axiosInstance.interceptors.request.use(
 axiosInstance.interceptors.response.use(
   (response) => {
     // Debug logging for successful responses
-    console.log('✅ API Response Success:');
-    console.log('📊 Status:', response.status, response.statusText);
-    console.log('🔗 URL:', response.config.url);
-    console.log('📥 Response Data:', JSON.stringify(response.data, null, 2));
-    console.log('────────────────────────────────────────');
+    // console.log('✅ API Response Success:');
+    // console.log('📊 Status:', response.status, response.statusText);
+    // console.log('🔗 URL:', response.config.url);
+    // console.log('📥 Response Data:', JSON.stringify(response.data, null, 2));
+    // console.log('────────────────────────────────────────');
     return response;
   },
   (error) => {
     // Debug logging for error responses
-    console.log('❌ API Response Error:');
-    console.log('📊 Status:', error.response?.status, error.response?.statusText);
-    console.log('🔗 URL:', error.config?.url);
-    console.log('📥 Error Data:', JSON.stringify(error.response?.data, null, 2));
-    console.log('💬 Error Message:', error.message);
-    console.log('────────────────────────────────────────');
+    // console.log('❌ API Response Error:');
+    // console.log('📊 Status:', error.response?.status, error.response?.statusText);
+    // console.log('🔗 URL:', error.config?.url);
+    // console.log('📥 Error Data:', JSON.stringify(error.response?.data, null, 2));
+    // console.log('💬 Error Message:', error.message);
+    // console.log('────────────────────────────────────────');
     
     if (error.response?.status === 401) {
       // ✅ Clear sessionStorage thay vì localStorage
