@@ -594,7 +594,7 @@ export default function KioskMainScreen() {
                     style={{minHeight: 215}}
                   >
                     <div className="flex flex-col items-center justify-center w-full h-full">
-                      <span className="text-xl font-bold mb-2">{`QUẦY ${String(idx + 1).padStart(2, '0')}`}</span>
+                      <span className="text-xl font-bold mb-2">{`QUẦY ${String(counter.id).padStart(2, '0')}`}</span>
                       <span className="text-2xl font-extrabold mb-2">{counter.name?.toUpperCase()}</span>
                     </div>
                   </div>
