@@ -649,7 +649,7 @@ export default function KioskMainScreen() {
                     lineHeight: '35px',
                   }}
                 >
-                  <span className="text-lg font-bold mb-1">{`QUẦY ${String(idx + 1).padStart(2, '0')}`}</span>
+                  <span className="text-lg font-bold mb-1">{`QUẦY ${String(counter.id).padStart(2, '0')}`}</span>
                   <span
                     className="text-xl font-extrabold mb-1  text-center w-full"
                     style={{
