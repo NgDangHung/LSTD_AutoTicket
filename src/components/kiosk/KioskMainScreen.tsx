@@ -322,13 +322,13 @@ export default function KioskMainScreen() {
     setVoiceStopTrigger('outside-click');
   };
 
-  const handleSearchClick = () => {
-    setShowVirtualKeyboard(true);
-  };
+  // const handleSearchClick = () => {
+  //   setShowVirtualKeyboard(true);
+  // };
 
-  const handleKeyboardClose = () => {
-    setShowVirtualKeyboard(false);
-  };
+  // const handleKeyboardClose = () => {
+  //   setShowVirtualKeyboard(false);
+  // };
 
   const handleSearchChange = (value: string) => {
     setSearchQuery(value);
@@ -445,7 +445,7 @@ export default function KioskMainScreen() {
               <input 
                 name='voice-search'
                 value={searchQuery}
-                onClick={handleSearchClick}
+                // onClick={handleSearchClick}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className={`flex items-center gap-2 px-6 py-3 text-lg pr-12 Shadow cursor-pointer transition-all duration-300 w-full ${
                   showVirtualKeyboard ? 'ring-2 ring-blue-500 border-blue-500' : ''
@@ -672,7 +672,7 @@ export default function KioskMainScreen() {
       )}
 
       {/* Virtual Keyboard */}
-      {showVirtualKeyboard && (
+      {/* {showVirtualKeyboard && (
         <VirtualKeyboard
           value={searchQuery}
           onChange={handleSearchChange}
@@ -686,7 +686,7 @@ export default function KioskMainScreen() {
             setVoiceStopTrigger('enter-key');
           }}
         />
-      )}
+      )} */}
 
       {/* Speech to Text */}
       <SpeechToText
