@@ -28,17 +28,18 @@ interface SeatInfo {
 export class TTSService {
   // ...existing properties...
 
-  // Gọi API /counters và cache mapping name->id
-  private async loadCounters() {
-    if (this.countersLoaded) return;
+  // Gọi API /counters và cache mapping name->id theo từng xã
+  private async loadCounters(tenxa: string) {
+    if (this.countersLoaded[tenxa]) return;
     try {
-      const response = await rootApi.get('/counters', { params: { tenxa: 'xavixuyen' } });
+      const response = await rootApi.get('/counters', { params: { tenxa } });
       if (Array.isArray(response.data)) {
+        this.counterMapping[tenxa] = {};
         response.data.forEach((c: { id: number, name: string }) => {
-          this.counterMapping[c.name.trim()] = c.id;
+          this.counterMapping[tenxa][c.name.trim()] = c.id;
         });
-        this.countersLoaded = true;
-        console.log('✅ [TTSService] Loaded counter mapping:', this.counterMapping);
+        this.countersLoaded[tenxa] = true;
+        console.log('✅ [TTSService] Loaded counter mapping:', tenxa, this.counterMapping[tenxa]);
       }
     } catch (error) {
       console.warn('⚠️ [TTSService] Failed to load counters:', error);
@@ -51,6 +52,9 @@ export class TTSService {
   private maxRetries: number = 3;
   private audioGap: number = 1000; // 2 giây giữa các lần phát
   private apiBaseUrl: string;
+  // Mapping cache: { [tenxa]: { [counterName]: counterId } }
+  private counterMapping: { [tenxa: string]: { [counterName: string]: number } } = {};
+  private countersLoaded: { [tenxa: string]: boolean } = {};
 
   static getInstance(): TTSService {
     if (!this.instance) {
@@ -63,7 +67,8 @@ export class TTSService {
     this.apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || '';
     // ✅ Only setup WebSocket on client-side to prevent SSR error
     if (typeof window !== 'undefined') {
-      this.loadCounters();
+      // Mặc định load xã hiện tại, có thể thay đổi nếu cần
+      this.loadCounters('phuonghagiang1');
       this.setupWebSocketListener();
     }
   }
@@ -74,41 +79,35 @@ export class TTSService {
       console.warn('🔇 WebSocket setup skipped on server-side');
       return;
     }
-    
     try {
       // Listen for ticket_called events từ WebSocket với timestamp
       const handleTicketCalled = (event: Event) => {
         const customEvent = event as CustomEvent;
-        const { ticket_number, counter_name, timestamp } = customEvent.detail;
-
-        // Extract counter_id từ counter_name hoặc mapping logic
-        const counterId = this.extractCounterIdFromName(counter_name);
+        const { ticket_number, counter_name, timestamp, tenxa } = customEvent.detail;
+        // Chỉ xử lý nếu tenxa === xã hiện tại
+        if (tenxa !== 'phuonghagiang1') return;
+        // Truyền tenxa vào extractCounterIdFromName
+        const counterId = this.extractCounterIdFromName(counter_name, tenxa);
         if (counterId == null) {
-          console.warn('❌ Không xác định được counterId từ counter_name:', counter_name);
+          console.warn('❌ Không xác định được counterId từ counter_name:', counter_name, tenxa);
           return;
         }
         this.queueAnnouncement(counterId, ticket_number, 1, 'ai', timestamp);
       };
-
       window.addEventListener('ticketCalledWithTimestamp', handleTicketCalled);
     } catch (error) {
       console.warn('⚠️ WebSocket setup failed:', error);
     }
   }
 
-  // Mapping cache: name -> id
-  private counterMapping: { [key: string]: number } = {};
-  private countersLoaded: boolean = false;
-
   /**
-   * Trả về counterId nếu tên quầy match tuyệt đối, ngược lại trả về null (không phát TTS nếu không xác định được)
+   * Trả về counterId nếu tên quầy match tuyệt đối trong từng xã, ngược lại trả về null (không phát TTS nếu không xác định được)
    */
-  private extractCounterIdFromName(counterName: string): number | null {
-    if (!counterName) return null;
+  private extractCounterIdFromName(counterName: string, tenxa: string): number | null {
+    if (!counterName || !tenxa) return null;
     const normalized = counterName.trim();
-    // Nếu mapping chưa load, thử load lại (async không block)
-    if (!this.countersLoaded) this.loadCounters();
-    return this.counterMapping[normalized] ?? null;
+    if (!this.countersLoaded[tenxa]) this.loadCounters(tenxa);
+    return this.counterMapping[tenxa]?.[normalized] ?? null;
   }
 
   async queueAnnouncement(
@@ -139,7 +138,7 @@ export class TTSService {
       callAttempt,
       timestamp: timestamp || new Date().toISOString(),
       source,
-      tenxa: 'xavixuyen' // Default tenxa, có thể thay đổi nếu cần
+      tenxa: 'phuonghagiang1' // Default tenxa, có thể thay đổi nếu cần
     };
 
     // Insert vào queue theo timestamp (FIFO based on called_at time)
@@ -328,7 +327,7 @@ export class TTSService {
   // Helper method để download MP3 file từ TTS API
   async downloadAudio(counterId: number, ticketNumber: number): Promise<void> {
     try {
-      const audioBlob = await ttsAPI.generateAudio(counterId, ticketNumber, 'xavixuyen');
+      const audioBlob = await ttsAPI.generateAudio(counterId, ticketNumber, 'phuonghagiang1');
       
       // Create download link
       const downloadUrl = URL.createObjectURL(audioBlob);
@@ -354,7 +353,7 @@ export class TTSService {
   // Helper method để tạo HTML5 audio element
   async createAudioElement(counterId: number, ticketNumber: number): Promise<HTMLAudioElement> {
     try {
-      const audioBlob = await ttsAPI.generateAudio(counterId, ticketNumber, 'xavixuyen');
+      const audioBlob = await ttsAPI.generateAudio(counterId, ticketNumber, 'phuonghagiang1');
       const audioUrl = URL.createObjectURL(audioBlob);
       
       const audio = new Audio(audioUrl);
