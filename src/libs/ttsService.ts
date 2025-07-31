@@ -92,7 +92,7 @@ export class TTSService {
           console.warn('❌ Không xác định được counterId từ counter_name:', counter_name, tenxa);
           return;
         }
-        this.queueAnnouncement(counterId, ticket_number, 1, 'ai', timestamp);
+        this.queueAnnouncement(counterId, ticket_number, 1, 'ai', timestamp, tenxa);
       };
       window.addEventListener('ticketCalledWithTimestamp', handleTicketCalled);
     } catch (error) {
@@ -115,7 +115,8 @@ export class TTSService {
     ticketNumber: number, 
     callAttempt: number = 1,
     source: 'manual' | 'ai' = 'manual',
-    timestamp?: string
+    timestamp?: string,
+    tenxa?: string
   ): Promise<void> {
     // Check call limit
     if (callAttempt > this.maxRetries) {
@@ -124,13 +125,13 @@ export class TTSService {
     }
 
     // Check seat status từ lần gọi thứ 2
-    if (callAttempt >= 2) {
-      const seatStatus = await this.checkSeatStatus(counterId);
-      if (!seatStatus.hasEmptySeats) {
-        console.log(`🔊 No empty seats for counter ${counterId}, skipping call ${callAttempt}`);
-        return;
-      }
-    }
+    // if (callAttempt >= 2) {
+    //   const seatStatus = await this.checkSeatStatus(counterId);
+    //   if (!seatStatus.hasEmptySeats) {
+    //     console.log(`🔊 No empty seats for counter ${counterId}, skipping call ${callAttempt}`);
+    //     return;
+    //   }
+    // }
 
     const request: TTSRequest = {
       counterId,
@@ -138,7 +139,7 @@ export class TTSService {
       callAttempt,
       timestamp: timestamp || new Date().toISOString(),
       source,
-      tenxa: 'phuonghagiang1' // Default tenxa, có thể thay đổi nếu cần
+      tenxa: tenxa || 'phuonghagiang1'
     };
 
     // Insert vào queue theo timestamp (FIFO based on called_at time)
