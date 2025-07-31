@@ -203,7 +203,8 @@ export const useWebSocketQueue = (): UseWebSocketQueueReturn => {
       detail: {
         ticket_number: event.ticket_number,
         counter_name: event.counter_name,
-        timestamp: event.timestamp
+        timestamp: event.timestamp,
+        tenxa: event.tenxa
       }
     }));
     
