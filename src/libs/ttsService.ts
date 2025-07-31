@@ -162,38 +162,50 @@ export class TTSService {
   }
 
   private async processQueue(): Promise<void> {
-    if (this.audioQueue.length === 0 || this.isPlaying) {
-      return;
-    }
-
-    this.isPlaying = true;
-    const request = this.audioQueue.shift()!;
-
-    try {
-      console.log(`🔊 Processing TTS: Counter ${request.counterId}, Ticket ${request.ticketNumber}, Source: ${request.source}`);
-      
-      // Call TTS API
-      const response = await this.callTTSAPI(request.counterId, request.ticketNumber, request.tenxa);
-      
-      if (response.success) {
-        // Play audio
-        await this.playAudio(response.audioUrl, request);
-        
-        // Update UI với announcement info
-        this.updateAnnouncementUI(request);
-      } else {
-        console.error('🔊 TTS API failed:', response.error);
-      }
-
-    } catch (error) {
-      console.error('🔊 TTS processing error:', error);
-    } finally {
-      this.isPlaying = false;
-      
-      // 2 giây gap giữa các announcement
-      setTimeout(() => this.processQueue(), this.audioGap);
-    }
+  if (this.audioQueue.length === 0 || this.isPlaying) {
+    return;
   }
+
+  this.isPlaying = true;
+  const request = this.audioQueue.shift()!;
+
+  try {
+    console.log(`🔊 Processing TTS: Counter ${request.counterId}, Ticket ${request.ticketNumber}, Source: ${request.source}`);
+    
+    // Call TTS API
+    const response = await this.callTTSAPI(request.counterId, request.ticketNumber, request.tenxa);
+    
+    if (response.success) {
+      // Play audio
+      await this.playAudio(response.audioUrl, request);
+      
+      // Update UI với announcement info
+      this.updateAnnouncementUI(request);
+
+      // Nếu là lần phát đầu (callAttempt === 1), tự động phát lại lần 2 sau 2 giây
+      if (request.callAttempt === 1) {
+        setTimeout(() => {
+          this.queueAnnouncement(
+            request.counterId,
+            request.ticketNumber,
+            2, // callAttempt = 2
+            request.source,
+            request.timestamp // Giữ nguyên timestamp gốc
+          );
+        }, this.audioGap);
+      }
+    } else {
+      console.error('🔊 TTS API failed:', response.error);
+    }
+
+  } catch (error) {
+    console.error('🔊 TTS processing error:', error);
+  } finally {
+    this.isPlaying = false;
+    // 2 giây gap giữa các announcement (giữa các ticket khác nhau)
+    setTimeout(() => this.processQueue(), this.audioGap);
+  }
+}
 
   private async callTTSAPI(counterId: number, ticketNumber: number, tenxa: string): Promise<TTSResponse> {
     try {
