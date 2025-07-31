@@ -50,7 +50,7 @@ export interface CreateTicketResponse {
 }
 
 // Base API URL - match với api.ts configuration
-const API_BASE_URL = 'http://192.168.92.143:8000';
+const API_BASE_URL = 'https://detect-seat-we21.onrender.com';
 
 // Create axios instance with base config
 const api = axios.create({
