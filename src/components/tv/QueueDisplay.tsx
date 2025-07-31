@@ -291,10 +291,10 @@ export default function QueueDisplay() {
     const connectWebSocket = () => {
       try {
         console.log('🔌 Connecting to production WebSocket endpoint...');
-        console.log('🌐 WebSocket URL: ws://192.168.92.143:8000/ws/updates');
+        console.log('🌐 WebSocket URL: wss://detect-seat-we21.onrender.com/ws/updates');
         
-        // ✅ REAL endpoint từ BE: ws://192.168.92.143:8000/ws/updates
-        ws = new WebSocket('ws://192.168.92.143:8000/ws/updates');
+        // ✅ REAL endpoint từ BE: wss://detect-seat-we21.onrender.com/ws/updates
+        ws = new WebSocket('wss://detect-seat-we21.onrender.com/ws/updates');
         
         ws.onopen = () => {
           console.log('✅ WebSocket connected to production endpoint');
