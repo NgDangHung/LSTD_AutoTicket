@@ -41,7 +41,7 @@
  *     5. IMPORTANT: Before deploying to production, copy "jsrsasign-all-min.js"
  *        to the web server.  Don't trust the CDN above to be available.
  */
-var privateKey = "-----BEGIN PRIVATE KEY-----"
+var privateKey = "-----BEGIN PRIVATE KEY-----"+
 "MIIEvwIBADANBgkqhkiG9w0BAQEFAASCBKkwggSlAgEAAoIBAQC0U8rTSAjRZK/o\n" +
 "eZgkS0CLQQDUfUEO4+Dq00ziuG/bEPytJdATsC4BI5CjTfFlvRisFHu78jbgwsWg\n" +
 "HBs3jBLnU7n40AL6sEbWbAhyEyD0w2KhLOfWd4Up9+2MF9AXUaWhlM7pGjtyxPMj\n" +
