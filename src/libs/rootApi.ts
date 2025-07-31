@@ -2,7 +2,7 @@
  * 🏛️ Official Backend API Endpoints
  * Consolidated from official BE documentation
  * 
- * Base URL: https://detect-seat.onrender.com/app
+ * Base URL: http://192.168.92.143:8000
  * 
  * This file contains ALL official API endpoints provided by the backend
  * organized by category as documented in the official API specification.
@@ -14,7 +14,7 @@ import axios from 'axios';
 // 🔧 Base Configuration
 // ===================================
 
-const BASE_URL = 'https://detect-seat.onrender.com/app';
+const BASE_URL = 'http://192.168.92.143:8000';
 
 // Create axios instance with base configuration
 const rootApi = axios.create({

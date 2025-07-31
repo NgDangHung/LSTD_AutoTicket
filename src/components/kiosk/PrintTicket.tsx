@@ -136,28 +136,28 @@ const  PrintTicket: React.FC<PrintTicketProps> = ({
       }
       (qz as any).security.setCertificatePromise(function (resolve: any, reject: any) {
   resolve("-----BEGIN CERTIFICATE-----\n" +
-"MIIECzCCAvOgAwIBAgIGAZgiMjgYMA0GCSqGSIb3DQEBCwUAMIGiMQswCQYDVQQG\n" +
+"MIIECzCCAvOgAwIBAgIGAZhavHBmMA0GCSqGSIb3DQEBCwUAMIGiMQswCQYDVQQG\n" +
 "EwJVUzELMAkGA1UECAwCTlkxEjAQBgNVBAcMCUNhbmFzdG90YTEbMBkGA1UECgwS\n" +
 "UVogSW5kdXN0cmllcywgTExDMRswGQYDVQQLDBJRWiBJbmR1c3RyaWVzLCBMTEMx\n" +
 "HDAaBgkqhkiG9w0BCQEWDXN1cHBvcnRAcXouaW8xGjAYBgNVBAMMEVFaIFRyYXkg\n" +
-"RGVtbyBDZXJ0MB4XDTI1MDcxODEwMTkzM1oXDTQ1MDcxODEwMTkzM1owgaIxCzAJ\n" +
+"RGVtbyBDZXJ0MB4XDTI1MDcyOTA5NDkxNVoXDTQ1MDcyOTA5NDkxNVowgaIxCzAJ\n" +
 "BgNVBAYTAlVTMQswCQYDVQQIDAJOWTESMBAGA1UEBwwJQ2FuYXN0b3RhMRswGQYD\n" +
 "VQQKDBJRWiBJbmR1c3RyaWVzLCBMTEMxGzAZBgNVBAsMElFaIEluZHVzdHJpZXMs\n" +
 "IExMQzEcMBoGCSqGSIb3DQEJARYNc3VwcG9ydEBxei5pbzEaMBgGA1UEAwwRUVog\n" +
-"VHJheSBEZW1vIENlcnQwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQC1\n" +
-"MEQ/om1+pNmADxwE+3O1V3rcnQzj5eJIiEzDW+CgzGniiA8LVo0BanWhxe6ogiq7\n" +
-"zPgV4S40/ki2sWXTi+GCowWoLsgIfJGYnhfDPXIqr0fXvE5t19BauSVpYihrBgRQ\n" +
-"QCrjOWVP9szlz8A1WM/y4ODYPn/Z1feoDU4to1crine/0L2Wdx/x45FMpAAwHaMI\n" +
-"Ai+he1QCnaXa2yFxipqz4yoXHdVaqQ3JL0OrGpHCqCocX6+AA3Aw7Dt6BhiFVYY8\n" +
-"4hXsW+vAR/RdYhJdeqmaCXY/liD6dinZqpGfJVuUjj8+askgONGDI7+XMSj1nXV8\n" +
-"snLQuUSQEZS65S8f4s9dAgMBAAGjRTBDMBIGA1UdEwEB/wQIMAYBAf8CAQEwDgYD\n" +
-"VR0PAQH/BAQDAgEGMB0GA1UdDgQWBBRqzIkMSmXBOmkNPR7y4Xd6J6cA/jANBgkq\n" +
-"hkiG9w0BAQsFAAOCAQEAnqV/YNqOarU+/El3/yfourqsp+ffvyf/DP91CKely7O2\n" +
-"9mh59ZkTnLauq1Msr7LrBYGHHfzjhLSzdIjDD/8v1V0Xxw4AMSssUz4kVxeKRmmY\n" +
-"vQ6KJmVNgfxZ76FhxP21FKlrzR+Zrl/UDm/dnF/wk86l7iTe0Wg6gUkujnRumzIC\n" +
-"A8nuduTNRRz5Tfl6l2sqc63Ccb1n5QPqUJfVYKMshvcDgkhJoZYbROYeQw6j8uHZ\n" +
-"njUM6b9HVvkoHBWmQzMMkM7ZMJ35GHLj/liYqknKru4I6z9vn8M1l1sUzqarKb5i\n" +
-"SRLSS+E3O/v6LjLzWQSvEUkkXl76UfB/o6cz2d8Grw==\n" +
+"VHJheSBEZW1vIENlcnQwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQCV\n" +
+"yIt4VXx5avFW5+piwsLxCMtSd0YR5mgRye171pcqndtmhnktvZY2cOzV4aUoaqdA\n" +
+"S3whNo1jYiPcUeXt6uEjXcfgv67b6I/Q07MDXy+/xeFfxkAjk/elotTNrZFVSlwW\n" +
+"oKTRdmPJjK2C3bsY+j+IYjLajfONSfR9auk7T//1SAsLaObSsY9pkFCduMT8235m\n" +
+"G6R8EXSY6aL9pNfj1xCwSVqFdKEPXWzyH6UACaHMKReHnCyXLgDfQi/G0jZXM6U4\n" +
+"gOdzbW6RvfgC+ZDpUo/HZrOb34GeYik2YfR2X2A+k+Xn0aF7oYoWydOCl6mVbxtB\n" +
+"2jLLaKmmgiYHLLzDQHVVAgMBAAGjRTBDMBIGA1UdEwEB/wQIMAYBAf8CAQEwDgYD\n" +
+"VR0PAQH/BAQDAgEGMB0GA1UdDgQWBBRJ7eI18bXO1dXj/ey8sJy+bary/TANBgkq\n" +
+"hkiG9w0BAQsFAAOCAQEAI1V7yLETCwJbfsW2UPU/2lnkeHFXyyJWJl0NfpDM/i83\n" +
+"sBw1d0xUKSPOWFX2snzltjF4PrDkVBEHDqKhMIHxC6JWhQagVpqmO0aWRz3U/63y\n" +
+"O/piJCutj8gTjCsmzutrPMtrOK/uBJaI2G3tQ9CHh12qFcZnDNp2/dTRYOJhYUZV\n" +
+"eP6PpNxWog4YFeHY94R+yDDIDajxsMZH75rnUGzwufHrnel2OZOu8W867LBqApx3\n" +
+"G5+0/XRdqwc6Jwll6nMp3jLIHRDcoNtJ32HCNmXvanzi/JaYeQONsBnfU94nKpBh\n" +
+"sqSKZ0FqxSSN13VcF6NRSjUTL/M/VHZDBCPfeApwdQ==\n" +
 "-----END CERTIFICATE-----\n"
 );
 });
@@ -172,7 +172,7 @@ const  PrintTicket: React.FC<PrintTicketProps> = ({
 
       setPrintStatus('🖨️ Đang gửi lệnh in qua QZ Tray...');
       const ticketHTML = generateThermalTicketHTML(timeString, dateString);
-      const config = qz.configs.create('W80', {
+      const config = qz.configs.create('POS-80C', {
         encoding: 'RAW',
         copies: 1,
         rasterize: true

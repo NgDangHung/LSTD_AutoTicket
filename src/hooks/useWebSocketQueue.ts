@@ -42,7 +42,7 @@ const createGlobalWebSocket = () => {
     globalWebSocket.close();
   }
 
-  const wsUrl = 'wss://detect-seat.onrender.com/ws/updates';
+  const wsUrl = 'ws://192.168.92.143:8000/ws/updates';
   console.log('🔌 Creating new global WebSocket connection:', wsUrl);
   
   globalWebSocket = new WebSocket(wsUrl);
