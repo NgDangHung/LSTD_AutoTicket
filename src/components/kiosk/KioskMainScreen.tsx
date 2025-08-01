@@ -347,11 +347,11 @@ export default function KioskMainScreen() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 p-8">
       
-       <Head>
+       {/* <Head>
         <script src="/jsrsasign-all-min.js" id="jsrsasign-script" defer></script>
         <script src="/qz-tray.js" id="qztray-script" defer></script>
-        {/* <script src="/sign-message.js" id="signmessage-script" defer></script> */}
-      </Head>
+        <script src="/sign-message.js" id="signmessage-script" defer></script>
+      </Head> */}
 
       <div className="max-w-6xl mx-auto">
         {/* Header màn dọc */}
