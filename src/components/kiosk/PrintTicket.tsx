@@ -100,10 +100,9 @@ const  PrintTicket: React.FC<PrintTicketProps> = ({
         { src: 'qz-tray.js', id: 'qztray-script', 
           onload: () => {
             console.log('qz-tray.js loaded');
-            setQzReady(true);
             const qz = (window as any).qz;
-            (qz as any).security.setCertificatePromise(() => {
-            return Promise.resolve("-----BEGIN CERTIFICATE-----\n" +
+            (qz as any).security.setCertificatePromise(function (resolve: any, reject: any) {
+  resolve("-----BEGIN CERTIFICATE-----\n" +
               "MIIDKzCCAhOgAwIBAgIUQRI+2zYB8bOEL8g8Flf6SMqW1jkwDQYJKoZIhvcNAQEL\n" +
               "BQAwJTEjMCEGA1UEAwwabHN0ZC1sb2NhbHRlc3QubmV0bGlmeS5hcHAwHhcNMjUw\n" +
               "NzMxMDk1NzA0WhcNMzUwNzI5MDk1NzA0WjAlMSMwIQYDVQQDDBpsc3RkLWxvY2Fs\n" +
@@ -122,8 +121,9 @@ const  PrintTicket: React.FC<PrintTicketProps> = ({
               "vN9nJX89S1wCPwbEpCCiICCV7T8bd90mEL2Y+fBvjqVW70wfHLpF23dyoJV6bxUu\n" +
               "vsgjTiKWlMHftL6+88zpxg8bI478CBqoS6HI+tsTb/kCcqlBUEsHkGorfWwzBuA=\n" +
               "-----END CERTIFICATE-----\n"
-            );
-          });
+);
+});
+            setQzReady(true);
           }
          },
         { src: 'sign-message.js', id: 'signmessage-script' }
@@ -157,9 +157,8 @@ const  PrintTicket: React.FC<PrintTicketProps> = ({
         setPrintStatus('❌ QZ Tray chưa sẵn sàng hoặc không hỗ trợ trên client');
         return;
       }
-      
-      (qz as any).security.setCertificatePromise(() => {
-            return Promise.resolve("-----BEGIN CERTIFICATE-----\n" +
+      (qz as any).security.setCertificatePromise(function (resolve: any, reject: any) {
+  resolve("-----BEGIN CERTIFICATE-----\n" +
               "MIIDKzCCAhOgAwIBAgIUQRI+2zYB8bOEL8g8Flf6SMqW1jkwDQYJKoZIhvcNAQEL\n" +
               "BQAwJTEjMCEGA1UEAwwabHN0ZC1sb2NhbHRlc3QubmV0bGlmeS5hcHAwHhcNMjUw\n" +
               "NzMxMDk1NzA0WhcNMzUwNzI5MDk1NzA0WjAlMSMwIQYDVQQDDBpsc3RkLWxvY2Fs\n" +
@@ -178,8 +177,16 @@ const  PrintTicket: React.FC<PrintTicketProps> = ({
               "vN9nJX89S1wCPwbEpCCiICCV7T8bd90mEL2Y+fBvjqVW70wfHLpF23dyoJV6bxUu\n" +
               "vsgjTiKWlMHftL6+88zpxg8bI478CBqoS6HI+tsTb/kCcqlBUEsHkGorfWwzBuA=\n" +
               "-----END CERTIFICATE-----\n"
-            );
-          });
+);
+});
+
+(qz as any).security.setSignatureAlgorithm("SHA512");
+
+
+function stob64(str: string): string {
+  return btoa(str); // trong trình duyệt
+}
+
 
       setPrintStatus('🖨️ Đang kết nối QZ Tray...');
       if (!qz.websocket.isActive()) {
@@ -188,7 +195,7 @@ const  PrintTicket: React.FC<PrintTicketProps> = ({
 
       setPrintStatus('🖨️ Đang gửi lệnh in qua QZ Tray...');
       const ticketHTML = generateThermalTicketHTML(timeString, dateString);
-      const config = qz.configs.create('Microsoft Print to PDF', {
+      const config = qz.configs.create('POS-80C', {
         encoding: 'RAW',
         copies: 1,
         rasterize: true

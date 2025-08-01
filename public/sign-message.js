@@ -41,7 +41,7 @@
  *     5. IMPORTANT: Before deploying to production, copy "jsrsasign-all-min.js"
  *        to the web server.  Don't trust the CDN above to be available.
  */
-var privateKey = "-----BEGIN PRIVATE KEY-----"+
+var privateKey =  "-----BEGIN PRIVATE KEY-----"+
 "MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQCxGcO5RUHRSLj8\n" +
 "30ysDqtl720sCWix+XCz3iUFLRTK0JQGWxhrdfd1IVNRfeccRucgZkPGVTTIUJZ6\n" +
 "sJADBcGSRJFN62Gs/u6TwT+0lB9c/pW/pXzLFJ/UjcRAlw5jnv0M+gHHTTMqjDs5\n" +
@@ -68,9 +68,7 @@ var privateKey = "-----BEGIN PRIVATE KEY-----"+
 "NsESazu6GLx0iDrks2NLEEuZf/rOEN8t9x9WGpRwzzAvFNyQv2zXioCt9yAsuINX\n" +
 "CETNtXPxX+ymjT5z+PLrMTi65tNPuRJAPVnLi8AZl3L/mNGtZMTnsLlpXCHOeWen\n" +
 "wcWNMXw3mqtRVb4aZbK6benT\n" +
-"-----END PRIVATE KEY-----\n"
-
-
+"-----END PRIVATE KEY-----\n";
 
 qz.security.setSignatureAlgorithm("SHA512"); // Since 2.1
 qz.security.setSignaturePromise(function(toSign) {
