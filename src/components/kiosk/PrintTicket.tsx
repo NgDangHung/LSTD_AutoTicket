@@ -161,34 +161,34 @@ const  PrintTicket: React.FC<PrintTicketProps> = ({
       qz.security.setSignaturePromise(function(toSign: string) {
           return function(resolve: (sig: string) => void, reject: (err: any) => void) {
               try {
-                  var pk = KEYUTIL.getKey("-----BEGIN PRIVATE KEY-----\n" +
-      "MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC1MEQ/om1+pNmA\n" +
-      "DxwE+3O1V3rcnQzj5eJIiEzDW+CgzGniiA8LVo0BanWhxe6ogiq7zPgV4S40/ki2\n" +
-      "sWXTi+GCowWoLsgIfJGYnhfDPXIqr0fXvE5t19BauSVpYihrBgRQQCrjOWVP9szl\n" +
-      "z8A1WM/y4ODYPn/Z1feoDU4to1crine/0L2Wdx/x45FMpAAwHaMIAi+he1QCnaXa\n" +
-      "2yFxipqz4yoXHdVaqQ3JL0OrGpHCqCocX6+AA3Aw7Dt6BhiFVYY84hXsW+vAR/Rd\n" +
-      "YhJdeqmaCXY/liD6dinZqpGfJVuUjj8+askgONGDI7+XMSj1nXV8snLQuUSQEZS6\n" +
-      "5S8f4s9dAgMBAAECggEARTEIbxCVJc7ILGoYtiJcPn0IsyTaXlFUh4RdZCE698z4\n" +
-      "BoUU0aycrlS8VSnkCL+kmBEfECPs5FnS5Ml77Dw3ww6EQ4SR6QPBCfodcvaNGZXU\n" +
-      "JqOHg9TtgSfBDKxqaOxkS00l054AfXfvKTeb3ANtbf/IfWvooQRfzfI+z5jX2g0i\n" +
-      "0GBiSJQMyNh5R6Nc73rvU7lBfbYRbl53yVDGdNjL/C7+/9kFFILmEURiZu75hgwp\n" +
-      "cuUP4H+CKHC5mp5k8KFde0rCEMbRog3LsIMgp7bInp0Wtpq0Hg9SDJmT4om+rU0U\n" +
-      "dzA8cN/AUhN+rPOreqEpd48xBNkPvRamo5wgZuDdVQKBgQDopqbkZkbJGgABT7CB\n" +
-      "OZVt4+hk3FXmlk8Mjm6jIfFiD0SmTfdIkQc64fXsaYAcDOefl2WY39LRi7W+5l5V\n" +
-      "ZTFeI6vU79qzCwarY4Nt1+8QpPWXJTDewowCw49wko5mGLjgiY5fuajHH+3JRJFN\n" +
-      "IbXTso5PecxvG/1o54NoFgKHCwKBgQDHX2yTSLGpANptPTvJz1NoXwDaCDOVNZAN\n" +
-      "Y54I2HL3eX5/DSRpr8ilo26d2m4nTgij0KfcM9Snm0BD2o1dpNP9vnAQccqHOg2Z\n" +
-      "zVWvfRy2VLDM/aM/vDYh2ZXHjg0Upp+o/ISRu3YEIRKAPtFSToCiu8iATMRXc5/u\n" +
-      "oimhcnbkNwKBgG08CjJFP0ke9w+mjfYuxlWBY9Uvivmoa1c27QWVY1OqXY5EHy4o\n" +
-      "Qh/IhoJJCsig2oQZPq+nr8GJen02huZLjAFqeDyTnbjhHXGNWOFTOME04sbjxG1j\n" +
-      "JQALOCcf+NJBG1T54Spa7r8H48rTcfGoOUo7lQwF4RHuL254/T76zpb/AoGALNpy\n" +
-      "+s+n6HWgrmLQSJ60DQ8Sifq+YBskxV5b93F6q+JRaxPx1TUO1vTlte2mSoFrwC75\n" +
-      "FLk0ZmCvHJTWqPKkHrnxTEHNZo7Q8IEZfdmP1BVJkVSenYAiTYs9/x8eIj86PDJT\n" +
-      "QNYDvvoRx3hab0Hp/rJwcSzUHziMCovBAelWhhECgYEA4ccyXi02oJD/LDdYdgqr\n" +
-      "n8/g1uojfuzbbseEC5MXYzmVg4aWvcmUrXkUs0IPMQYBqCDxaRlcMw0+4+qy3YIb\n" +
-      "JXlaIvHXhGyw9WJdLp9Rrtg3rV4X1MH05jm4rqwVMPxW1XAePca1LtV/nQ21vo7J\n" +
-      "EQKS00I3z8+xdRVtkdblt+w=\n" +
-      "-----END PRIVATE KEY-----\n");
+                  var pk = KEYUTIL.getKey("-----BEGIN PRIVATE KEY-----"+
+                  "MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQCxGcO5RUHRSLj8\n" +
+                  "30ysDqtl720sCWix+XCz3iUFLRTK0JQGWxhrdfd1IVNRfeccRucgZkPGVTTIUJZ6\n" +
+                  "sJADBcGSRJFN62Gs/u6TwT+0lB9c/pW/pXzLFJ/UjcRAlw5jnv0M+gHHTTMqjDs5\n" +
+                  "MmLGNBc7dBYpxgZ5dnbYHL9zeQ6gCpjYQGFm2NsHJ9GOlbIGYNLJDY5O/LWV+Ekd\n" +
+                  "tq1JZmunksuJeDll2cX+Qb7roITrRlbSllVU2TQmLsy8/N6RVlpf61Oy8wyqk+Iw\n" +
+                  "aflWtF/ik2k8fo/nU121+Xj8HSyjz8nj1I2GSAxsZvmy+XDTBbx0PHu0pDuZ4T9y\n" +
+                  "gum8D/sNAgMBAAECggEAVymmEcZLWXSgTxybwMbLhrTrF1ReKdHprSz1LXH9nMBB\n" +
+                  "SkuFXkZGD2jid+YuW9VtpZ2PV8rR2pEHLsU9a69mkNWcaiwh+6HQy/m9n+OS+BL4\n" +
+                  "osURAWZaL6PCZkOyOkeipcNaIrwVJai08TaiNIiosoM08URcJWWvojer5mo7T3p2\n" +
+                  "EETOC/99IQYd8nqG8UVesdNnf3/jBLmhudfvKGKCQ78iU7crT7Stc0n/861CoFBh\n" +
+                  "1tS2UqQr7g5QnFEszp9KHb42rxMQTABxjMKSlovsDKQ59hBSPxjTajfRhxIGs2k6\n" +
+                  "wEfUqFYwaWieVjseRi42nYkDI1Ei1CV9SHdG1I7TBQKBgQDZtk4SyTSS4E4OiZ/A\n" +
+                  "Em48TDfFZWf+KFXZ8IJFNhemPflLeesciFUic1f7D106ZQbwMTFMgma9rYiowGv5\n" +
+                  "aznKxEHMpKSVFcZk3xbqs2ATI4weE+LdnEZ3PH/oi/oU2NXSAFbr1UoVfW6Jcjqx\n" +
+                  "0lozBpKsc+SkVDtPlsLIKPCIdwKBgQDQPxNQRKiVIltCEvswH4SVrzmKD+Fx58an\n" +
+                  "b7u4Yoj3WTkRbniKXJwE7088DJqb3x+Uy/6qPKkoidqa6/jRZ2H2RxPeZceMGu2O\n" +
+                  "vLtHpZJD5nK6iGUGj/LjMj+ix9+d0T89MDXyhJhWIU4cHdf1CJ5rQ0SkcoiSedyP\n" +
+                  "7V2cIJ89mwKBgBvgxE6ThS/pmRUzeklWEteVyu5z9cUN1TB7I7NJIe4fsXSAwCJ/\n" +
+                  "MqeerX1wkjeQCDtpkS6C5DUVq5IwUaM2n8ffKa3Sx2Bv0V/JUV3sajkJLEANu9c0\n" +
+                  "07EhBh/5DKTuvzKM6JR6U2o9DZJ8Fhf/H525Eb8TeAuy3YVrgLWwyFwxAoGBAMK1\n" +
+                  "xzwtBidzGTq9fqmvPouqa7VgRd335bGWckHjt8b2YLqgvQo5rxOaIk62RjVpuSCq\n" +
+                  "YDISR+QEiSaDboF1FY5tRPGT3rFsWCQ26TEDabAdH7azYypwm5y81e1Azx/Dj0qJ\n" +
+                  "8lcQjVMzDtKRQOP2LBGEswDDqliyonzcZsNdaSbzAoGBANff4Q4wXOvmYsorVd65\n" +
+                  "NsESazu6GLx0iDrks2NLEEuZf/rOEN8t9x9WGpRwzzAvFNyQv2zXioCt9yAsuINX\n" +
+                  "CETNtXPxX+ymjT5z+PLrMTi65tNPuRJAPVnLi8AZl3L/mNGtZMTnsLlpXCHOeWen\n" +
+                  "wcWNMXw3mqtRVb4aZbK6benT\n" +
+                  "-----END PRIVATE KEY-----\n");
                   var sig = new KJUR.crypto.Signature({"alg": "SHA512withRSA"});  // Use "SHA1withRSA" for QZ Tray 2.0 and older
                   sig.init(pk); 
                   sig.updateString(toSign);
