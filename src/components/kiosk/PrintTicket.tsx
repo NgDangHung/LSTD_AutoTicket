@@ -107,6 +107,34 @@ const PrintTicket: React.FC<PrintTicketProps> = ({
           onload: () => {
             console.log('qz-tray.js loaded');
             setQzReady(true);
+            const qz = (window as any).qz;
+            (qz as any).security.setCertificatePromise(function (resolve: any, reject: any) {
+              resolve("-----BEGIN CERTIFICATE-----\n" +
+            "MIIECzCCAvOgAwIBAgIGAZg/4qd3MA0GCSqGSIb3DQEBCwUAMIGiMQswCQYDVQQG\n" +
+            "EwJVUzELMAkGA1UECAwCTlkxEjAQBgNVBAcMCUNhbmFzdG90YTEbMBkGA1UECgwS\n" +
+            "UVogSW5kdXN0cmllcywgTExDMRswGQYDVQQLDBJRWiBJbmR1c3RyaWVzLCBMTEMx\n" +
+            "HDAaBgkqhkiG9w0BCQEWDXN1cHBvcnRAcXouaW8xGjAYBgNVBAMMEVFaIFRyYXkg\n" +
+            "RGVtbyBDZXJ0MB4XDTI1MDcyNDA0NDExNVoXDTQ1MDcyNDA0NDExNVowgaIxCzAJ\n" +
+            "BgNVBAYTAlVTMQswCQYDVQQIDAJOWTESMBAGA1UEBwwJQ2FuYXN0b3RhMRswGQYD\n" +
+            "VQQKDBJRWiBJbmR1c3RyaWVzLCBMTEMxGzAZBgNVBAsMElFaIEluZHVzdHJpZXMs\n" +
+            "IExMQzEcMBoGCSqGSIb3DQEJARYNc3VwcG9ydEBxei5pbzEaMBgGA1UEAwwRUVog\n" +
+            "VHJheSBEZW1vIENlcnQwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDF\n" +
+            "Jrz71Nj2KVmR8LBj7ovgC049m8Bya5AerOA/98zizcVTnGQKZczw8ccTzELupxjE\n" +
+            "mxaM/jTPVgDEzLhjJFSIYzEgDXLyQD/8SABAjbGI2wRajYyD9TnT8UBOVmLepEV7\n" +
+            "d8LRh6IfUiQavFE6VpXI1+slN5TjCOOoK62/KY+ReLmngIRncuvD3NRwBhjtwDv+\n" +
+            "hknY+TtPNxM2/cSDhfwBNZaf0UQKnpvK/xRL4OoKYUH/6Wjxt24+2isCGBxWS5Th\n" +
+            "i6dayPT36jFqq4gPmY4GNO00g0A4hZMSWA8sK+3q0o72/pg8BuJoL4vYMW9q0eYJ\n" +
+            "W1eyNtxAj9GjWLKqs9W/AgMBAAGjRTBDMBIGA1UdEwEB/wQIMAYBAf8CAQEwDgYD\n" +
+            "VR0PAQH/BAQDAgEGMB0GA1UdDgQWBBTYRD3jUy8D4V3rdE8/7bqsLyZFoTANBgkq\n" +
+            "hkiG9w0BAQsFAAOCAQEAI18C7NlJoGvg2M/SjzMMzFyCLVDitg8IGGI2Q8OJZLyF\n" +
+            "8/Jy0UYey9ecoD4q8l47U8359xs9JsRlewTwfmyMpqhw7Tnz2nOvtwvXTd/XLXil\n" +
+            "To34Gt0P9TkeAhxNPVH4whK6muIbqRtlg+1WO1H5Z9Xv/mAEM+NlhP5d5VHLlV8X\n" +
+            "4pGUXhLTnsbjeDEZKsSizlQ8Zbu8H27Ja42MHvCYyOKeXxHI3DziO/U1w/J5xLEn\n" +
+            "ZKkKI1Pk48D1NTyj6KeVxlERs0xCn4a/oJ0xBV9cb9shD7FDCkAz9Bj7ip2qMwzk\n" +
+            "VwXT8sfr5n+phIDdQlHhrZSm9ssj2DgrJD9hHbhAWg==\n" +
+            "-----END CERTIFICATE-----\n"
+            );
+            });
           }
          },
         { src: 'sign-message-xavixuyen.js', id: 'signmessage-script' }
@@ -141,32 +169,32 @@ const PrintTicket: React.FC<PrintTicketProps> = ({
         return;
       }
       (qz as any).security.setCertificatePromise(function (resolve: any, reject: any) {
-  resolve("-----BEGIN CERTIFICATE-----\n" +
-"MIIECzCCAvOgAwIBAgIGAZg/4qd3MA0GCSqGSIb3DQEBCwUAMIGiMQswCQYDVQQG\n" +
-"EwJVUzELMAkGA1UECAwCTlkxEjAQBgNVBAcMCUNhbmFzdG90YTEbMBkGA1UECgwS\n" +
-"UVogSW5kdXN0cmllcywgTExDMRswGQYDVQQLDBJRWiBJbmR1c3RyaWVzLCBMTEMx\n" +
-"HDAaBgkqhkiG9w0BCQEWDXN1cHBvcnRAcXouaW8xGjAYBgNVBAMMEVFaIFRyYXkg\n" +
-"RGVtbyBDZXJ0MB4XDTI1MDcyNDA0NDExNVoXDTQ1MDcyNDA0NDExNVowgaIxCzAJ\n" +
-"BgNVBAYTAlVTMQswCQYDVQQIDAJOWTESMBAGA1UEBwwJQ2FuYXN0b3RhMRswGQYD\n" +
-"VQQKDBJRWiBJbmR1c3RyaWVzLCBMTEMxGzAZBgNVBAsMElFaIEluZHVzdHJpZXMs\n" +
-"IExMQzEcMBoGCSqGSIb3DQEJARYNc3VwcG9ydEBxei5pbzEaMBgGA1UEAwwRUVog\n" +
-"VHJheSBEZW1vIENlcnQwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDF\n" +
-"Jrz71Nj2KVmR8LBj7ovgC049m8Bya5AerOA/98zizcVTnGQKZczw8ccTzELupxjE\n" +
-"mxaM/jTPVgDEzLhjJFSIYzEgDXLyQD/8SABAjbGI2wRajYyD9TnT8UBOVmLepEV7\n" +
-"d8LRh6IfUiQavFE6VpXI1+slN5TjCOOoK62/KY+ReLmngIRncuvD3NRwBhjtwDv+\n" +
-"hknY+TtPNxM2/cSDhfwBNZaf0UQKnpvK/xRL4OoKYUH/6Wjxt24+2isCGBxWS5Th\n" +
-"i6dayPT36jFqq4gPmY4GNO00g0A4hZMSWA8sK+3q0o72/pg8BuJoL4vYMW9q0eYJ\n" +
-"W1eyNtxAj9GjWLKqs9W/AgMBAAGjRTBDMBIGA1UdEwEB/wQIMAYBAf8CAQEwDgYD\n" +
-"VR0PAQH/BAQDAgEGMB0GA1UdDgQWBBTYRD3jUy8D4V3rdE8/7bqsLyZFoTANBgkq\n" +
-"hkiG9w0BAQsFAAOCAQEAI18C7NlJoGvg2M/SjzMMzFyCLVDitg8IGGI2Q8OJZLyF\n" +
-"8/Jy0UYey9ecoD4q8l47U8359xs9JsRlewTwfmyMpqhw7Tnz2nOvtwvXTd/XLXil\n" +
-"To34Gt0P9TkeAhxNPVH4whK6muIbqRtlg+1WO1H5Z9Xv/mAEM+NlhP5d5VHLlV8X\n" +
-"4pGUXhLTnsbjeDEZKsSizlQ8Zbu8H27Ja42MHvCYyOKeXxHI3DziO/U1w/J5xLEn\n" +
-"ZKkKI1Pk48D1NTyj6KeVxlERs0xCn4a/oJ0xBV9cb9shD7FDCkAz9Bj7ip2qMwzk\n" +
-"VwXT8sfr5n+phIDdQlHhrZSm9ssj2DgrJD9hHbhAWg==\n" +
-"-----END CERTIFICATE-----\n"
-);
-});
+        resolve("-----BEGIN CERTIFICATE-----\n" +
+      "MIIECzCCAvOgAwIBAgIGAZg/4qd3MA0GCSqGSIb3DQEBCwUAMIGiMQswCQYDVQQG\n" +
+      "EwJVUzELMAkGA1UECAwCTlkxEjAQBgNVBAcMCUNhbmFzdG90YTEbMBkGA1UECgwS\n" +
+      "UVogSW5kdXN0cmllcywgTExDMRswGQYDVQQLDBJRWiBJbmR1c3RyaWVzLCBMTEMx\n" +
+      "HDAaBgkqhkiG9w0BCQEWDXN1cHBvcnRAcXouaW8xGjAYBgNVBAMMEVFaIFRyYXkg\n" +
+      "RGVtbyBDZXJ0MB4XDTI1MDcyNDA0NDExNVoXDTQ1MDcyNDA0NDExNVowgaIxCzAJ\n" +
+      "BgNVBAYTAlVTMQswCQYDVQQIDAJOWTESMBAGA1UEBwwJQ2FuYXN0b3RhMRswGQYD\n" +
+      "VQQKDBJRWiBJbmR1c3RyaWVzLCBMTEMxGzAZBgNVBAsMElFaIEluZHVzdHJpZXMs\n" +
+      "IExMQzEcMBoGCSqGSIb3DQEJARYNc3VwcG9ydEBxei5pbzEaMBgGA1UEAwwRUVog\n" +
+      "VHJheSBEZW1vIENlcnQwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDF\n" +
+      "Jrz71Nj2KVmR8LBj7ovgC049m8Bya5AerOA/98zizcVTnGQKZczw8ccTzELupxjE\n" +
+      "mxaM/jTPVgDEzLhjJFSIYzEgDXLyQD/8SABAjbGI2wRajYyD9TnT8UBOVmLepEV7\n" +
+      "d8LRh6IfUiQavFE6VpXI1+slN5TjCOOoK62/KY+ReLmngIRncuvD3NRwBhjtwDv+\n" +
+      "hknY+TtPNxM2/cSDhfwBNZaf0UQKnpvK/xRL4OoKYUH/6Wjxt24+2isCGBxWS5Th\n" +
+      "i6dayPT36jFqq4gPmY4GNO00g0A4hZMSWA8sK+3q0o72/pg8BuJoL4vYMW9q0eYJ\n" +
+      "W1eyNtxAj9GjWLKqs9W/AgMBAAGjRTBDMBIGA1UdEwEB/wQIMAYBAf8CAQEwDgYD\n" +
+      "VR0PAQH/BAQDAgEGMB0GA1UdDgQWBBTYRD3jUy8D4V3rdE8/7bqsLyZFoTANBgkq\n" +
+      "hkiG9w0BAQsFAAOCAQEAI18C7NlJoGvg2M/SjzMMzFyCLVDitg8IGGI2Q8OJZLyF\n" +
+      "8/Jy0UYey9ecoD4q8l47U8359xs9JsRlewTwfmyMpqhw7Tnz2nOvtwvXTd/XLXil\n" +
+      "To34Gt0P9TkeAhxNPVH4whK6muIbqRtlg+1WO1H5Z9Xv/mAEM+NlhP5d5VHLlV8X\n" +
+      "4pGUXhLTnsbjeDEZKsSizlQ8Zbu8H27Ja42MHvCYyOKeXxHI3DziO/U1w/J5xLEn\n" +
+      "ZKkKI1Pk48D1NTyj6KeVxlERs0xCn4a/oJ0xBV9cb9shD7FDCkAz9Bj7ip2qMwzk\n" +
+      "VwXT8sfr5n+phIDdQlHhrZSm9ssj2DgrJD9hHbhAWg==\n" +
+      "-----END CERTIFICATE-----\n"
+      );
+      });
 
 (qz as any).security.setSignatureAlgorithm("SHA512");
 
