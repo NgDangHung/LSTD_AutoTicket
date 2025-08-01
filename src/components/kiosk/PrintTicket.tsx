@@ -188,7 +188,7 @@ const  PrintTicket: React.FC<PrintTicketProps> = ({
 
       setPrintStatus('🖨️ Đang gửi lệnh in qua QZ Tray...');
       const ticketHTML = generateThermalTicketHTML(timeString, dateString);
-      const config = qz.configs.create('Microsoft Print to PDF', {
+      const config = qz.configs.create('Microsoft Print to PDF', {
         encoding: 'RAW',
         copies: 1,
         rasterize: true
