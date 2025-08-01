@@ -158,7 +158,28 @@ const  PrintTicket: React.FC<PrintTicketProps> = ({
         return;
       }
       
-
+      (qz as any).security.setCertificatePromise(() => {
+            return Promise.resolve("-----BEGIN CERTIFICATE-----\n" +
+              "MIIDKzCCAhOgAwIBAgIUQRI+2zYB8bOEL8g8Flf6SMqW1jkwDQYJKoZIhvcNAQEL\n" +
+              "BQAwJTEjMCEGA1UEAwwabHN0ZC1sb2NhbHRlc3QubmV0bGlmeS5hcHAwHhcNMjUw\n" +
+              "NzMxMDk1NzA0WhcNMzUwNzI5MDk1NzA0WjAlMSMwIQYDVQQDDBpsc3RkLWxvY2Fs\n" +
+              "dGVzdC5uZXRsaWZ5LmFwcDCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEB\n" +
+              "ALEZw7lFQdFIuPzfTKwOq2XvbSwJaLH5cLPeJQUtFMrQlAZbGGt193UhU1F95xxG\n" +
+              "5yBmQ8ZVNMhQlnqwkAMFwZJEkU3rYaz+7pPBP7SUH1z+lb+lfMsUn9SNxECXDmOe\n" +
+              "/Qz6AcdNMyqMOzkyYsY0Fzt0FinGBnl2dtgcv3N5DqAKmNhAYWbY2wcn0Y6VsgZg\n" +
+              "0skNjk78tZX4SR22rUlma6eSy4l4OWXZxf5BvuughOtGVtKWVVTZNCYuzLz83pFW\n" +
+              "Wl/rU7LzDKqT4jBp+Va0X+KTaTx+j+dTXbX5ePwdLKPPyePUjYZIDGxm+bL5cNMF\n" +
+              "vHQ8e7SkO5nhP3KC6bwP+w0CAwEAAaNTMFEwHQYDVR0OBBYEFNbj44q6SjARmGt/\n" +
+              "3OOWjjOQTZ3zMB8GA1UdIwQYMBaAFNbj44q6SjARmGt/3OOWjjOQTZ3zMA8GA1Ud\n" +
+              "EwEB/wQFMAMBAf8wDQYJKoZIhvcNAQELBQADggEBAA5e8J/Z7++VmSoApkOB3xmH\n" +
+              "M4SlhiVwUB6kUoSzRWvFGEtikFrD0OM7BgEuB+7AkFi8EtJs2dp2PhUmlZVVND6t\n" +
+              "4fVrPbOanmwoURTWPiapIRbzn6lU52R6WrN+oFojiudi7gGGj8k4NWWYkfSc5cjr\n" +
+              "dEX4D+krFF5n16hyBODqznKUxMb2EMJGV7VT2n4U9o5K71nm6I+G1ts9Eh7OUC64\n" +
+              "vN9nJX89S1wCPwbEpCCiICCV7T8bd90mEL2Y+fBvjqVW70wfHLpF23dyoJV6bxUu\n" +
+              "vsgjTiKWlMHftL6+88zpxg8bI478CBqoS6HI+tsTb/kCcqlBUEsHkGorfWwzBuA=\n" +
+              "-----END CERTIFICATE-----\n"
+            );
+          });
 
       setPrintStatus('🖨️ Đang kết nối QZ Tray...');
       if (!qz.websocket.isActive()) {
