@@ -24,11 +24,11 @@ export default function Dashboard() {
         const authToken = sessionStorage.getItem('auth_token');
         const headers = authToken ? { Authorization: `Bearer ${authToken}` } : {};
         const [tickets, attended, avgTime, waitTime, absentTime] = await Promise.all([
-          rootApi.get('/stats/tickets-per-counter', { params: { start_date: startDate, end_date: endDate, tenxa: 'phuonghagiang1' }, headers }),
-          rootApi.get('/stats/attended-tickets', { params: { start_date: startDate, end_date: endDate, tenxa: 'phuonghagiang1' }, headers }),
-          rootApi.get('/stats/average-handling-time', { params: { start_date: startDate, end_date: endDate, tenxa: 'phuonghagiang1' }, headers }),
-          rootApi.get('/stats/average-waiting-time', { params: { start_date: startDate, end_date: endDate, tenxa: 'phuonghagiang1' }, headers }),
-          rootApi.get('/stats/afk-duration', { params: { start_date: startDate, end_date: endDate, tenxa: 'phuonghagiang1' }, headers }),
+          rootApi.get('/stats/tickets-per-counter', { params: { start_date: startDate, end_date: endDate, tenxa: 'phuonghagiang2' }, headers }),
+          rootApi.get('/stats/attended-tickets', { params: { start_date: startDate, end_date: endDate, tenxa: 'phuonghagiang2' }, headers }),
+          rootApi.get('/stats/average-handling-time', { params: { start_date: startDate, end_date: endDate, tenxa: 'phuonghagiang2' }, headers }),
+          rootApi.get('/stats/average-waiting-time', { params: { start_date: startDate, end_date: endDate, tenxa: 'phuonghagiang2' }, headers }),
+          rootApi.get('/stats/afk-duration', { params: { start_date: startDate, end_date: endDate, tenxa: 'phuonghagiang2' }, headers }),
         ]);
 
         setData({

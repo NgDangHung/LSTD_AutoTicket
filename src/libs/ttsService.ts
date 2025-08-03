@@ -68,7 +68,7 @@ export class TTSService {
     // ✅ Only setup WebSocket on client-side to prevent SSR error
     if (typeof window !== 'undefined') {
       // Mặc định load xã hiện tại, có thể thay đổi nếu cần
-      this.loadCounters('phuonghagiang1');
+      this.loadCounters('phuonghagiang2');
       this.setupWebSocketListener();
     }
   }
@@ -85,7 +85,7 @@ export class TTSService {
         const customEvent = event as CustomEvent;
         const { ticket_number, counter_name, timestamp, tenxa } = customEvent.detail;
         // Chỉ xử lý nếu tenxa === xã hiện tại
-        if (tenxa !== 'phuonghagiang1') return;
+        if (tenxa !== 'phuonghagiang2') return;
         // Truyền tenxa vào extractCounterIdFromName
         const counterId = this.extractCounterIdFromName(counter_name, tenxa);
         if (counterId == null) {
@@ -139,7 +139,7 @@ export class TTSService {
       callAttempt,
       timestamp: timestamp || new Date().toISOString(),
       source,
-      tenxa: tenxa || 'phuonghagiang1'
+      tenxa: tenxa || 'phuonghagiang2'
     };
 
     // Insert vào queue theo timestamp (FIFO based on called_at time)
@@ -340,7 +340,7 @@ export class TTSService {
   // Helper method để download MP3 file từ TTS API
   async downloadAudio(counterId: number, ticketNumber: number): Promise<void> {
     try {
-      const audioBlob = await ttsAPI.generateAudio(counterId, ticketNumber, 'phuonghagiang1');
+      const audioBlob = await ttsAPI.generateAudio(counterId, ticketNumber, 'phuonghagiang2');
       
       // Create download link
       const downloadUrl = URL.createObjectURL(audioBlob);
@@ -366,7 +366,7 @@ export class TTSService {
   // Helper method để tạo HTML5 audio element
   async createAudioElement(counterId: number, ticketNumber: number): Promise<HTMLAudioElement> {
     try {
-      const audioBlob = await ttsAPI.generateAudio(counterId, ticketNumber, 'phuonghagiang1');
+      const audioBlob = await ttsAPI.generateAudio(counterId, ticketNumber, 'phuonghagiang2');
       const audioUrl = URL.createObjectURL(audioBlob);
       
       const audio = new Audio(audioUrl);

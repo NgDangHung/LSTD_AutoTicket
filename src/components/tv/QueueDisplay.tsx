@@ -40,7 +40,7 @@ export default function QueueDisplay() {
   // API lấy số đang phục vụ cho từng quầy
   const fetchServingTicket = async (counterId: number): Promise<RealTicket | null> => {
     try {
-      const response = await rootApi.get(`/tickets/called`, { params: { counter_id: counterId, tenxa: 'phuonghagiang1' } });
+      const response = await rootApi.get(`/tickets/called`, { params: { counter_id: counterId, tenxa: 'phuonghagiang2' } });
       const tickets: RealTicket[] = response.data;
       return tickets.length > 0 ? tickets[0] : null;
     } catch (error) {
@@ -107,7 +107,7 @@ export default function QueueDisplay() {
   useEffect(() => {
     const fetchCounters = async () => {
       try {
-        const response = await rootApi.get('/counters/', { params: { tenxa: 'phuonghagiang1' } });
+        const response = await rootApi.get('/counters/', { params: { tenxa: 'phuonghagiang2' } });
         setApiCounters(response.data);
         console.log('✅ Counters from API:', response.data);
       } catch (error) {
@@ -162,7 +162,7 @@ export default function QueueDisplay() {
       console.log('🔄 Fetching all tickets from real API...');
       
       // GET /tickets/waiting - get all tickets (waiting + called + done)
-      const response = await rootApi.get('/tickets/waiting', { params: { tenxa: 'phuonghagiang1' } });
+      const response = await rootApi.get('/tickets/waiting', { params: { tenxa: 'phuonghagiang2' } });
       const tickets: RealTicket[] = response.data;
       
       console.log('📡 Real API Response:', tickets);
@@ -184,7 +184,7 @@ export default function QueueDisplay() {
       
       for (let counterId = 1; counterId <= 4; counterId++) {
         try {
-          const response = await rootApi.get('/tickets/waiting', { params: { counter_id: counterId, tenxa: 'phuonghagiang1' } });
+          const response = await rootApi.get('/tickets/waiting', { params: { counter_id: counterId, tenxa: 'phuonghagiang2' } });
           allTickets.push(...response.data);
         } catch (counterError) {
           console.warn(`⚠️ Failed to fetch tickets for counter ${counterId}:`, counterError);
@@ -308,7 +308,7 @@ export default function QueueDisplay() {
           try {
             const eventData = JSON.parse(event.data);
             console.log('📡 WebSocket event received:', eventData);
-            if (eventData.tenxa !== 'phuonghagiang1') return;
+            if (eventData.tenxa !== 'phuonghagiang2') return;
             // ✅ Handle real events từ BE documentation
             switch (eventData.event) {
               case 'new_ticket':
@@ -691,7 +691,7 @@ export default function QueueDisplay() {
               TRUNG TÂM PHỤC VỤ HÀNH CHÍNH CÔNG  
             </h1>
             <h1 className="text-5xl font-bold text-red-700 " style={{ lineHeight: '1.3' }}>
-              PHƯỜNG HÀ GIANG 1
+              PHƯỜNG HÀ GIANG 2
             </h1>
             <p className='text-2xl font-extrabold text-red-700 mt-3' style={{fontSize: '2rem'}}>
               Hành chính phục vụ 
@@ -702,7 +702,7 @@ export default function QueueDisplay() {
       <>
         <div className="flex justify-between items-center" style={{flexDirection: 'row-reverse'}}>
           <h2 className="text-2xl text-red-700 font-bold italic" style={{position: 'relative',top: '-50px',left: '-180px', fontSize: '2rem'}}>
-            Phường Hà Giang 1,  Ngày {new Date().toLocaleDateString('vi-VN')}
+            Phường HÀ GIANG 2,  Ngày {new Date().toLocaleDateString('vi-VN')}
           </h2>
         </div>
       </>
