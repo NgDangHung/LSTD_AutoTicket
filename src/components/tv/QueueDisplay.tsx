@@ -760,7 +760,7 @@ export default function QueueDisplay() {
           style={{fontSize: '2rem'}}
         >
           <span>  Giờ làm việc (Thứ 2 - Thứ 6): 7h30 - 17h00</span>
-          <span> Hotline: 0916670793 </span>
+          <span> Hotline: 0219-1022 </span>
           {lastUpdated && (
             <span className="text-lg text-red-700 font-extrabold" style={{fontSize: '2rem'}}>
               Thời gian: {new Date().toLocaleTimeString('vi-VN')}

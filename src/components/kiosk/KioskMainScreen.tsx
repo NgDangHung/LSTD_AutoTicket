@@ -645,7 +645,7 @@ export default function KioskMainScreen() {
               Giờ làm việc (Thứ 2 - Thứ 6): 07h30 - 17h00
           </p>
           <p className="text-xl font-extrabold text-red-700 ">
-             Hotline hỗ trợ: 0916670793
+             Hotline hỗ trợ: 0219-1022
           </p>
         </div>
 
