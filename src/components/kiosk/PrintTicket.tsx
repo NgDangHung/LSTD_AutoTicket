@@ -319,7 +319,7 @@ useEffect(() => {
             <div className="text-2xl font-bold text-center">In số thứ tự</div>
             <div className="text-lg mt-2 opacity-90">Vé #{number}</div>
             <div className="text-sm opacity-75 mt-2">
-              {counterName} - Quầy {counterId}
+              {counterName} - Quầy: {counterId}
             </div>
           </div>
         </button>
