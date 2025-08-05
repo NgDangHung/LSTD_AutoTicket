@@ -16,30 +16,13 @@ import DateTimeVN from '../shared/DateTimeVN';
 import PrintTicket from '@/components/kiosk/PrintTicket';
 
 
-const services = [
-  { id: 1, name: 'Tư pháp' },
-  { id: 2, name: 'Thanh tra' },
-  { id: 3, name: 'Văn hóa TT - DL' },
-  { id: 4, name: 'Giáo dục Đào tạo' },
-  { id: 5, name: 'Y tế' },
-  { id: 6, name: 'Nông nghiệp và Môi trường' },
-  { id: 7, name: 'Xây dựng' },
-  { id: 8, name: 'Tài chính' },
-  { id: 9, name: 'Công thương' },
-  { id: 10, name: 'Nội vụ' },
-  { id: 11, name: 'Dân tộc - Tôn giáo' },
-];
-
 // Mapping lĩnh vực với quầy phục vụ - DEPRECATED: Use API data instead
 const legacyCounters = [
-  { id: 1, name: 'Thuế', serviceNames: 'Thuế', serviceIds: [] },
-  { id: 2, name: 'Văn phòng đăng kí đất đai khu vực 9', serviceNames: 'Văn phòng đăng kí đất đai khu vực 9', serviceIds: [] },
-  { id: 3, name: 'Lĩnh vực Kinh tế', serviceNames: 'Lĩnh vực Kinh tế', serviceIds: [] },
-  { id: 4, name: 'Tư pháp - Hộ tịch (Chứng thực điện tử)', serviceNames: 'Tư pháp - Hộ tịch (Chứng thực điện tử)', serviceIds: [] },
-  { id: 5, name: 'Tư pháp - Hộ tịch', serviceNames: 'Tư pháp - Hộ tịch', serviceIds: [] },
-  { id: 6, name: 'Điện lực', serviceNames: 'Điện lực', serviceIds: [] },
-  { id: 7, name: 'Bảo hiểm xã hội', serviceNames: 'Bảo hiểm xã hội', serviceIds: [] },
-  { id: 8, name: 'Lĩnh vực Văn hoá - Xã hội', serviceNames: 'Lĩnh vực Văn hoá - Xã hội', serviceIds: [] },
+  { id: 2, name: 'Tư pháp - Hộ tịch', serviceNames: 'Tư pháp - Hộ tịch', serviceIds: [] },
+  { id: 3, name: 'Đô thị - Công thương', serviceNames: 'Đô thị - Công thương', serviceIds: [] },
+  { id: 4, name: 'Văn hóa', serviceNames: 'Văn hóa', serviceIds: [] },
+  { id: 5, name: 'Nông nghiệp - Môi trường', serviceNames: 'Nông nghiệp - Môi trường', serviceIds: [] },
+  { id: 6, name: 'Văn phòng', serviceNames: 'Văn phòng', serviceIds: [] },
 ];
 
 
@@ -118,7 +101,7 @@ export default function KioskMainScreen() {
         setApiCounters(fallbackCounters);
         setHasLoadedCounters(true); // Mark as loaded even on error
         
-        toast.warn('Using offline counter data');
+        toast.warn('Sử dụng dữ liệu quầy offline. Vui lòng kiểm tra kết nối mạng.');
       } finally {
         setCountersLoading(false);
       }
