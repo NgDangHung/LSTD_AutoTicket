@@ -759,8 +759,9 @@ export default function QueueDisplay() {
         <div className="flex justify-center items-center gap-8 text-lg italic text-red-700 font-extrabold"
           style={{fontSize: '2rem'}}
         >
-          <span>  Giờ làm việc (Thứ 2 - Thứ 6): 7h30 - 17h00</span>
-          <span> Hotline: 0916670793 </span>
+          <span> Buổi sáng: Từ 7h30 đến 11h00
+          </span>
+          <span> Buổi chiều: từ 13h30 đến 17h00</span>
           {lastUpdated && (
             <span className="text-lg text-red-700 font-extrabold" style={{fontSize: '2rem'}}>
               Thời gian: {new Date().toLocaleTimeString('vi-VN')}

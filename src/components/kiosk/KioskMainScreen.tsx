@@ -625,10 +625,10 @@ export default function KioskMainScreen() {
         {/* Footer màn dọc */}
         <div className="flex items-center w-full text-gray-600 italic" style={{ position: 'relative', top: '16rem', justifyContent: 'space-around' }}>
           <p className="text-xl font-extrabold text-red-700 ">
-              Giờ làm việc (Thứ 2 - Thứ 6): 07h30 - 17h00
+            Buổi sáng: Từ 7h30 đến 11h00
           </p>
           <p className="text-xl font-extrabold text-red-700 ">
-             Hotline hỗ trợ: 0916670793
+            Buổi chiều: từ 13h30 đến 17h00
           </p>
         </div>
 
