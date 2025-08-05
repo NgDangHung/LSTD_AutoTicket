@@ -58,10 +58,11 @@ interface ProcedureResult {
 
 export default function KioskMainScreen() {
   // Footer config state
-  const [footerConfig, setFooterConfig] = useState<{ workingHours: string; hotline: string }>({
+  const DEFAULT_FOOTER = {
     workingHours: 'Giờ làm việc (Thứ 2 - Thứ 6): 07h30 - 17h00',
     hotline: 'Hotline hỗ trợ: 0916670793',
-  });
+  };
+  const [footerConfig, setFooterConfig] = useState<{ workingHours: string; hotline: string }>(DEFAULT_FOOTER);
 
   // Fetch footer config on mount and listen for updates
   useEffect(() => {
@@ -69,30 +70,43 @@ export default function KioskMainScreen() {
     async function fetchFooter() {
       try {
         const data = await footersAPI.getFooter('phuonghagiang1');
-        if (!ignore && data && (data.work_time || data.hotline)) {
+        if (!ignore && data) {
           setFooterConfig({
-            workingHours: data.work_time || footerConfig.workingHours,
-            hotline: data.hotline || footerConfig.hotline,
+            workingHours: data.work_time || DEFAULT_FOOTER.workingHours,
+            hotline: data.hotline || DEFAULT_FOOTER.hotline,
           });
         }
-      } catch {}
+      } catch {
+        setFooterConfig(DEFAULT_FOOTER);
+      }
     }
     fetchFooter();
+    // BroadcastChannel for cross-tab footer config sync
+    let bc: BroadcastChannel | null = null;
     const handler = async () => {
       try {
         const data = await footersAPI.getFooter('phuonghagiang1');
-        if (!ignore && data && (data.work_time || data.hotline)) {
+        if (!ignore && data) {
           setFooterConfig({
-            workingHours: data.work_time || footerConfig.workingHours,
-            hotline: data.hotline || footerConfig.hotline,
+            workingHours: data.work_time || DEFAULT_FOOTER.workingHours,
+            hotline: data.hotline || DEFAULT_FOOTER.hotline,
           });
         }
-      } catch {}
+      } catch {
+        setFooterConfig(DEFAULT_FOOTER);
+      }
     };
     window.addEventListener('footerConfigUpdated', handler);
+    if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+      bc = new BroadcastChannel('footerConfig');
+      bc.onmessage = (event) => {
+        if (event?.data === 'updated') handler();
+      };
+    }
     return () => {
       ignore = true;
       window.removeEventListener('footerConfigUpdated', handler);
+      if (bc) bc.close();
     };
   }, []);
 

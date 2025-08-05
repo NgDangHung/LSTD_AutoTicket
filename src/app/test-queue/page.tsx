@@ -1,5 +1,6 @@
 'use client';
 
+import Button from '@/components/shared/Button';
 import React, { useState, useEffect, useCallback } from 'react';
 import StopServiceModal from '@/components/shared/StopServiceModal';
 import FooterConfigModal from '@/components/shared/ChangeFooterModal';
@@ -65,6 +66,12 @@ function TestQueuePage() {
       toast.success('Đã lưu cấu hình footer!');
       // Broadcast event for all tabs
       window.dispatchEvent(new CustomEvent('footerConfigUpdated', { detail: config }));
+      // BroadcastChannel for cross-tab sync
+      if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+        const bc = new BroadcastChannel('footerConfig');
+        bc.postMessage('updated');
+        bc.close();
+      }
     } catch (err) {
       toast.error('Lỗi khi lưu cấu hình footer!');
     }
@@ -490,24 +497,24 @@ function TestQueuePage() {
         <div className="bg-white rounded-lg shadow-md p-6 mb-8">
           <h2 className="text-xl font-semibold mb-4 text-gray-800">🎛️ Điều khiển toàn cục</h2>
           <div className="flex gap-4 flex-wrap">
-            <button
+            <Button
               onClick={() => router.push('/admin')}
               className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
             >
               👑 Trang quản trị
-            </button>
+            </Button>
             <button
               onClick={async () => { await loadCounters(); await loadQueueData(); await loadAllServingTickets(); }}
               className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
             >
               🔄 Làm mới dữ liệu
             </button>
-            <button
+            <Button
               onClick={() => setShowFooterModal(true)}
               className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
             >
-              ⚙️ Chỉnh sửa footer
-            </button>
+              ⚙️ Chỉnh sửa chân trang
+            </Button>
           </div>
         </div>
 

@@ -91,10 +91,11 @@ export default function QueueDisplay() {
   const { isConnected, lastEvent } = useWebSocketQueue();
 
   // Footer config state
-  const [footerConfig, setFooterConfig] = React.useState<FooterConfig>({
+  const DEFAULT_FOOTER = {
     workingHours: 'Giờ làm việc (Thứ 2 - Thứ 6): 07h30 - 17h00',
-    hotline: 'Hotline: 0916670793',
-  });
+    hotline: 'Hotline hỗ trợ: 0916670793',
+  };
+  const [footerConfig, setFooterConfig] = React.useState<FooterConfig>(DEFAULT_FOOTER);
 
   // Fetch footer config on mount and listen for updates
   useEffect(() => {
@@ -104,13 +105,17 @@ export default function QueueDisplay() {
         const data = await footersAPI.getFooter('phuonghagiang1');
         if (!ignore && data && (data.work_time || data.hotline)) {
           setFooterConfig({
-            workingHours: data.work_time || footerConfig.workingHours,
-            hotline: data.hotline || footerConfig.hotline,
+            workingHours: data.work_time || DEFAULT_FOOTER.workingHours,
+            hotline: data.hotline || DEFAULT_FOOTER.hotline,
           });
         }
-      } catch {}
+      } catch {
+        setFooterConfig(DEFAULT_FOOTER);
+      }
     }
     fetchFooter();
+    // BroadcastChannel for cross-tab footer config sync
+    let bc: BroadcastChannel | null = null;
     const handler = async () => {
       try {
         const data = await footersAPI.getFooter('phuonghagiang1');
@@ -123,9 +128,16 @@ export default function QueueDisplay() {
       } catch {}
     };
     window.addEventListener('footerConfigUpdated', handler);
+    if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+      bc = new BroadcastChannel('footerConfig');
+      bc.onmessage = (event) => {
+        if (event?.data === 'updated') handler();
+      };
+    }
     return () => {
       ignore = true;
       window.removeEventListener('footerConfigUpdated', handler);
+      if (bc) bc.close();
     };
   }, []);
 
