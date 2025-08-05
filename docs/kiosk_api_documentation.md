@@ -482,3 +482,46 @@ ________________________________________
 •	Tất cả các thời gian được tính bằng giây.
 •	Các endpoint có thể dùng kết hợp start_date và end_date để lọc dữ liệu theo khoảng thời gian cụ thể.
 •	Nếu không truyền start_date và end_date, hệ thống sẽ lấy dữ liệu theo mặc định (có thể là ngày hiện tại hoặc toàn bộ).
+
+
+Footers API — Quản lý thông tin giờ làm việc & hotline từng xã
+Base URL:
+/footers
+________________________________________
+🔹 1. GET /footers
+✅ Mục đích:
+Lấy thông tin work_time và hotline của một xã (tenxa)
+📥 Query Params:
+Tên	Kiểu	Bắt buộc	Mô tả
+tenxa	string	✅	Slug/xã cần lấy dữ liệu (ví dụ: phuonghagiang1)
+📤 Response: 200 OK
+json
+{
+  "work_time": "7h30 - 11h30 và 13h30 - 17h",
+  "hotline": "1900 1234"
+}
+⚠️ Lỗi:
+•	404 Not Found – Không tìm thấy dữ liệu tương ứng
+________________________________________
+🔹 2. POST /footers
+✅ Mục đích:
+Tạo hoặc cập nhật thông tin work_time và hotline cho một xã.
+📥 Query Params:
+Tên	Kiểu	Bắt buộc	Mô tả
+tenxa	string	✅	Slug/xã cần cập nhật dữ liệu
+📥 Request Body (JSON):
+json
+{
+  "work_time": "7h30 - 11h30 và 13h30 - 17h",
+  "hotline": "1900 1234"
+}
+📤 Response: 200 OK
+json
+{
+  "work_time": "7h30 - 11h30 và 13h30 - 17h",
+  "hotline": "1900 1234"
+}
+⚠️ Ghi chú:
+•	Nếu xã đã có bản ghi, hệ thống sẽ cập nhật.
+•	Nếu chưa có, hệ thống sẽ tạo mới.
+

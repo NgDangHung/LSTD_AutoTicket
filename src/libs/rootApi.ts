@@ -409,6 +409,33 @@ export const countersAPI = {
 };
 
 // ===================================
+// 🦶 Footers APIs (/footers/)
+// ===================================
+
+export interface FooterConfig {
+  work_time: string;
+  hotline: string;
+}
+
+export const footersAPI = {
+  /**
+   * 🦶 [GET] /footers
+   * Lấy thông tin work_time và hotline của một xã
+   */
+  getFooter: (tenxa: string): Promise<FooterConfig> => {
+    return rootApi.get('/footers', { params: { tenxa } }).then(res => res.data);
+  },
+
+  /**
+   * 🦶 [POST] /footers
+   * Tạo hoặc cập nhật thông tin work_time và hotline cho một xã
+   */
+  setFooter: (tenxa: string, config: FooterConfig): Promise<FooterConfig> => {
+    return rootApi.post('/footers', config, { params: { tenxa } }).then(res => res.data);
+  },
+};
+
+// ===================================
 // 📊 Stats Dashboard APIs (/stats/)
 // ===================================
 
@@ -505,6 +532,7 @@ export const officialAPI = {
   seats: seatsAPI,
   counters: countersAPI,
   stats: statsDashboardAPI,
+  footers: footersAPI,
 };
 
 // Default export for convenience

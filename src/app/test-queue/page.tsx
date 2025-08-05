@@ -2,17 +2,73 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import StopServiceModal from '@/components/shared/StopServiceModal';
-import { useCounterOperations } from '@/hooks/useApi';
+import FooterConfigModal from '@/components/shared/ChangeFooterModal';
 import AuthGuard from '@/components/shared/AuthGuard';
 import { useRouter } from 'next/navigation';
 import { TTSService } from '@/libs/ttsService';
 import { toast } from 'react-toastify';
 import { type CounterDetail, type CurrentServing, type WaitingTicket } from '@/libs/queueApi';
-import { countersAPI, type Counter, type CallNextResponse, ticketsAPI, type Ticket, rootApi } from '@/libs/rootApi';
+import { footersAPI, countersAPI, type Counter, type CallNextResponse, ticketsAPI, type Ticket, rootApi } from '@/libs/rootApi';
 
 
 
 function TestQueuePage() {
+  // Footer config state
+  const [footerConfig, setFooterConfig] = useState<{ workingHours: string; hotline: string }>({
+    workingHours: 'Giờ làm việc (Thứ 2 - Thứ 6): 07h30 - 17h00',
+    hotline: 'Hotline hỗ trợ: 0916670793',
+  });
+  const [showFooterModal, setShowFooterModal] = useState(false);
+
+  // Footer config API helpers
+  const TEN_XA = 'phuonghagiang1';
+  async function fetchFooterConfig() {
+    // API trả về { work_time, hotline }
+    const data = await footersAPI.getFooter(TEN_XA);
+    return {
+      workingHours: data.work_time,
+      hotline: data.hotline,
+    };
+  }
+  async function saveFooterConfig(config: { workingHours: string; hotline: string }) {
+    // API nhận { work_time, hotline }
+    const data = await footersAPI.setFooter(TEN_XA, {
+      work_time: config.workingHours,
+      hotline: config.hotline,
+    });
+    return {
+      workingHours: data.work_time,
+      hotline: data.hotline,
+    };
+  }
+
+  // Load footer config from API on mount
+  useEffect(() => {
+    fetchFooterConfig()
+      .then(data => {
+        if (data && (data.workingHours || data.hotline)) {
+          setFooterConfig({
+            workingHours: data.workingHours || footerConfig.workingHours,
+            hotline: data.hotline || footerConfig.hotline,
+          });
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  // Save footer config to API and broadcast event
+  const handleSaveFooterConfig = async (config: { workingHours: string; hotline: string }) => {
+    try {
+      await saveFooterConfig(config);
+      setFooterConfig(config);
+      setShowFooterModal(false);
+      toast.success('Đã lưu cấu hình footer!');
+      // Broadcast event for all tabs
+      window.dispatchEvent(new CustomEvent('footerConfigUpdated', { detail: config }));
+    } catch (err) {
+      toast.error('Lỗi khi lưu cấu hình footer!');
+    }
+  };
   const router = useRouter();
   // TTS Service instance
   const ttsService = TTSService.getInstance();
@@ -411,6 +467,9 @@ function TestQueuePage() {
     router.push('/login');
   };
 
+  // Modal component for editing footer (đặt ngoài cùng file)
+  
+
   return (
     <div className="min-h-screen bg-gray-100 p-8">
       <div className="max-w-6xl mx-auto">
@@ -443,9 +502,15 @@ function TestQueuePage() {
             >
               🔄 Làm mới dữ liệu
             </button>
+            <button
+              onClick={() => setShowFooterModal(true)}
+              className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              ⚙️ Chỉnh sửa footer
+            </button>
           </div>
         </div>
-        
+
         {/* Counter Controls Grid - Only show when data is loaded */}
         {!countersLoading && apiCounters.length > 0 && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -595,8 +660,6 @@ function TestQueuePage() {
             </div>
           </div>
         )}
-        
-        
       </div>
 
       {/* Stop Service Modal */}
@@ -606,6 +669,17 @@ function TestQueuePage() {
         onConfirm={handleStopServiceConfirm}
         counterName={stopServiceModal.counterName}
       />
+
+      {/* Footer Config Modal */}
+      {showFooterModal && (
+        <FooterConfigModal
+          isOpen={showFooterModal}
+          onClose={() => setShowFooterModal(false)}
+          onSave={handleSaveFooterConfig}
+          initialConfig={footerConfig}
+        />
+      )}
+
     </div>
   );
 }

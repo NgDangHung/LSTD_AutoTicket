@@ -3,6 +3,7 @@ import Image from 'next/image';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import NumberAnimation from './NumberAnimation';
 import { useWebSocketQueue } from '@/hooks/useWebSocketQueue';
+import { footersAPI } from '@/libs/rootApi';
 import { TTSService, type TTSService as TTSServiceType } from '@/libs/ttsService';
 import { rootApi } from '@/libs/rootApi';
 
@@ -35,6 +36,12 @@ interface CounterAPI {
   is_active: boolean;
   status: string;
 }
+
+type FooterConfig = {
+  workingHours: string;
+  hotline: string;
+};
+
 
 export default function QueueDisplay() {
   // API lấy số đang phục vụ cho từng quầy
@@ -82,6 +89,45 @@ export default function QueueDisplay() {
 
   // WebSocket hook for real-time updates
   const { isConnected, lastEvent } = useWebSocketQueue();
+
+  // Footer config state
+  const [footerConfig, setFooterConfig] = React.useState<FooterConfig>({
+    workingHours: 'Giờ làm việc (Thứ 2 - Thứ 6): 07h30 - 17h00',
+    hotline: 'Hotline: 0916670793',
+  });
+
+  // Fetch footer config on mount and listen for updates
+  useEffect(() => {
+    let ignore = false;
+    async function fetchFooter() {
+      try {
+        const data = await footersAPI.getFooter('phuonghagiang1');
+        if (!ignore && data && (data.work_time || data.hotline)) {
+          setFooterConfig({
+            workingHours: data.work_time || footerConfig.workingHours,
+            hotline: data.hotline || footerConfig.hotline,
+          });
+        }
+      } catch {}
+    }
+    fetchFooter();
+    const handler = async () => {
+      try {
+        const data = await footersAPI.getFooter('phuonghagiang1');
+        if (!ignore && data && (data.work_time || data.hotline)) {
+          setFooterConfig({
+            workingHours: data.work_time || footerConfig.workingHours,
+            hotline: data.hotline || footerConfig.hotline,
+          });
+        }
+      } catch {}
+    };
+    window.addEventListener('footerConfigUpdated', handler);
+    return () => {
+      ignore = true;
+      window.removeEventListener('footerConfigUpdated', handler);
+    };
+  }, []);
 
   // ✅ Initialize TTS Service on client-side only
   useEffect(() => {
@@ -801,8 +847,8 @@ export default function QueueDisplay() {
         <div className="flex justify-center items-center gap-8 text-lg italic text-red-700 font-extrabold"
           style={{fontSize: '2rem'}}
         >
-          <span>  Giờ làm việc (Thứ 2 - Thứ 6): 7h30 - 17h00</span>
-          <span> Hotline: 0916670793 </span>
+          <span> {footerConfig.workingHours}</span>
+          <span> Hotline: {footerConfig.hotline} </span>
           {lastUpdated && (
             <span className="text-lg text-red-700 font-extrabold" style={{fontSize: '2rem'}}>
               Thời gian: {new Date().toLocaleTimeString('vi-VN')}

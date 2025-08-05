@@ -1,6 +1,7 @@
 'use client';
 import Head from 'next/head';
 import React, { useState, useEffect, useMemo } from 'react';
+import { footersAPI } from '@/libs/rootApi';
 import Image from 'next/image';
 import { AudioLines } from 'lucide-react';
 import { toast } from 'react-toastify';
@@ -56,6 +57,44 @@ interface ProcedureResult {
 }
 
 export default function KioskMainScreen() {
+  // Footer config state
+  const [footerConfig, setFooterConfig] = useState<{ workingHours: string; hotline: string }>({
+    workingHours: 'Giờ làm việc (Thứ 2 - Thứ 6): 07h30 - 17h00',
+    hotline: 'Hotline hỗ trợ: 0916670793',
+  });
+
+  // Fetch footer config on mount and listen for updates
+  useEffect(() => {
+    let ignore = false;
+    async function fetchFooter() {
+      try {
+        const data = await footersAPI.getFooter('phuonghagiang1');
+        if (!ignore && data && (data.work_time || data.hotline)) {
+          setFooterConfig({
+            workingHours: data.work_time || footerConfig.workingHours,
+            hotline: data.hotline || footerConfig.hotline,
+          });
+        }
+      } catch {}
+    }
+    fetchFooter();
+    const handler = async () => {
+      try {
+        const data = await footersAPI.getFooter('phuonghagiang1');
+        if (!ignore && data && (data.work_time || data.hotline)) {
+          setFooterConfig({
+            workingHours: data.work_time || footerConfig.workingHours,
+            hotline: data.hotline || footerConfig.hotline,
+          });
+        }
+      } catch {}
+    };
+    window.addEventListener('footerConfigUpdated', handler);
+    return () => {
+      ignore = true;
+      window.removeEventListener('footerConfigUpdated', handler);
+    };
+  }, []);
 
    // Popup state
   const [popupUrl, setPopupUrl] = useState<string | null>(null);
@@ -641,12 +680,8 @@ export default function KioskMainScreen() {
 
         {/* Footer màn dọc */}
         <div className="flex items-center w-full text-gray-600 italic" style={{ position: 'relative', top: '16rem', justifyContent: 'space-around' }}>
-          <p className="text-xl font-extrabold text-red-700 ">
-              Giờ làm việc (Thứ 2 - Thứ 6): 07h30 - 17h00
-          </p>
-          <p className="text-xl font-extrabold text-red-700 ">
-             Hotline hỗ trợ: 0916670793
-          </p>
+          <p className="text-xl font-extrabold text-red-700 ">{footerConfig.workingHours}</p>
+          <p className="text-xl font-extrabold text-red-700 ">{footerConfig.hotline}</p>
         </div>
 
          {/* Footer màn ngang */} 
