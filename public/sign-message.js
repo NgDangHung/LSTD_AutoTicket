@@ -41,34 +41,35 @@
  *     5. IMPORTANT: Before deploying to production, copy "jsrsasign-all-min.js"
  *        to the web server.  Don't trust the CDN above to be available.
  */
-var privateKey = "-----BEGIN PRIVATE KEY-----\n" +
-"MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC1MEQ/om1+pNmA\n" +
-"DxwE+3O1V3rcnQzj5eJIiEzDW+CgzGniiA8LVo0BanWhxe6ogiq7zPgV4S40/ki2\n" +
-"sWXTi+GCowWoLsgIfJGYnhfDPXIqr0fXvE5t19BauSVpYihrBgRQQCrjOWVP9szl\n" +
-"z8A1WM/y4ODYPn/Z1feoDU4to1crine/0L2Wdx/x45FMpAAwHaMIAi+he1QCnaXa\n" +
-"2yFxipqz4yoXHdVaqQ3JL0OrGpHCqCocX6+AA3Aw7Dt6BhiFVYY84hXsW+vAR/Rd\n" +
-"YhJdeqmaCXY/liD6dinZqpGfJVuUjj8+askgONGDI7+XMSj1nXV8snLQuUSQEZS6\n" +
-"5S8f4s9dAgMBAAECggEARTEIbxCVJc7ILGoYtiJcPn0IsyTaXlFUh4RdZCE698z4\n" +
-"BoUU0aycrlS8VSnkCL+kmBEfECPs5FnS5Ml77Dw3ww6EQ4SR6QPBCfodcvaNGZXU\n" +
-"JqOHg9TtgSfBDKxqaOxkS00l054AfXfvKTeb3ANtbf/IfWvooQRfzfI+z5jX2g0i\n" +
-"0GBiSJQMyNh5R6Nc73rvU7lBfbYRbl53yVDGdNjL/C7+/9kFFILmEURiZu75hgwp\n" +
-"cuUP4H+CKHC5mp5k8KFde0rCEMbRog3LsIMgp7bInp0Wtpq0Hg9SDJmT4om+rU0U\n" +
-"dzA8cN/AUhN+rPOreqEpd48xBNkPvRamo5wgZuDdVQKBgQDopqbkZkbJGgABT7CB\n" +
-"OZVt4+hk3FXmlk8Mjm6jIfFiD0SmTfdIkQc64fXsaYAcDOefl2WY39LRi7W+5l5V\n" +
-"ZTFeI6vU79qzCwarY4Nt1+8QpPWXJTDewowCw49wko5mGLjgiY5fuajHH+3JRJFN\n" +
-"IbXTso5PecxvG/1o54NoFgKHCwKBgQDHX2yTSLGpANptPTvJz1NoXwDaCDOVNZAN\n" +
-"Y54I2HL3eX5/DSRpr8ilo26d2m4nTgij0KfcM9Snm0BD2o1dpNP9vnAQccqHOg2Z\n" +
-"zVWvfRy2VLDM/aM/vDYh2ZXHjg0Upp+o/ISRu3YEIRKAPtFSToCiu8iATMRXc5/u\n" +
-"oimhcnbkNwKBgG08CjJFP0ke9w+mjfYuxlWBY9Uvivmoa1c27QWVY1OqXY5EHy4o\n" +
-"Qh/IhoJJCsig2oQZPq+nr8GJen02huZLjAFqeDyTnbjhHXGNWOFTOME04sbjxG1j\n" +
-"JQALOCcf+NJBG1T54Spa7r8H48rTcfGoOUo7lQwF4RHuL254/T76zpb/AoGALNpy\n" +
-"+s+n6HWgrmLQSJ60DQ8Sifq+YBskxV5b93F6q+JRaxPx1TUO1vTlte2mSoFrwC75\n" +
-"FLk0ZmCvHJTWqPKkHrnxTEHNZo7Q8IEZfdmP1BVJkVSenYAiTYs9/x8eIj86PDJT\n" +
-"QNYDvvoRx3hab0Hp/rJwcSzUHziMCovBAelWhhECgYEA4ccyXi02oJD/LDdYdgqr\n" +
-"n8/g1uojfuzbbseEC5MXYzmVg4aWvcmUrXkUs0IPMQYBqCDxaRlcMw0+4+qy3YIb\n" +
-"JXlaIvHXhGyw9WJdLp9Rrtg3rV4X1MH05jm4rqwVMPxW1XAePca1LtV/nQ21vo7J\n" +
-"EQKS00I3z8+xdRVtkdblt+w=\n" +
-"-----END PRIVATE KEY-----\n";
+var privateKey = 
+"-----BEGIN PRIVATE KEY-----\n" +
+"MIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQDFOKq6WqdxDb5O\n" +
+"S1YDeNl/zW5zL0aTO+/0GYpGwpGOKfQwyEeY3zl8zf8izcp9MmBlluAZo8w/U9VS\n" +
+"GoTEs68rl1G5wJ5LHI7b6K6UfqG1GVLPUFLIsxrIw0xlU80yMVbQXJsqOmyi8ESf\n" +
+"xaETgEgi3bCRKMqdXOs4kPd6NZtQMQADhBYXJkDEoz0kuIP6FydWlaJNkK25fVox\n" +
+"Vx0QzL3NOEhNgbKoTwTgQU6X9adeRXoFS/5RmSSAk6jd5JVKn9wSKm12Qy3+W+cS\n" +
+"9SwVR6cBTTTVAXF6fcyb9z9U34FtWw2MjMeCP3dCKYw8n7ERrYUooXVDnh3CX8t9\n" +
+"nRmvCiKNAgMBAAECggEAAb1INDCMfYDDhuk/LvSn5mqnaLioBLBoo1x+TbV1ly1j\n" +
+"i/KYPw7o8OLYNzRdbtE87GhyPYemS4CvxvOY7Csxhk7lV6ANRVhRIjthHsonHvPE\n" +
+"OTPaJw79U3v1dodQrfqla10FuU+emalI0afqjcN532TZI86aSt0A7hTJOfizD/f6\n" +
+"suBeS/KKtSrwYmqz5aazSiZuYQrXWicO6PPPkq7Ze4FRyUkaXmeQaF7OYW81J2jH\n" +
+"1jZ9RoKakTIeF1Msw394QGrhb2xPd6XBgPoetGiTpe0G9SDBYmA3GXn7DoysH2Nu\n" +
+"XtnuXrSZwvt4lmr+aVbQWVXCOtLDKAqgD0OfszLQwQKBgQDoEXEktcmXGxpv/7fS\n" +
+"ccFBobXZitu1sW6i0QhDbTbzxeSmEkRqyfhtMFPNgTu3mdAdI+vgHP/IRaO7rUBE\n" +
+"C8yfqDzoJ/XnAtIPKahPgFBdPvZ6SoyftZZTmiqostbWhEsWTGuWM+YEaBdtDXwN\n" +
+"sEXj4QzfM6RQ27RZ/4XAjFqseQKBgQDZj0avsLa5vEr+Jkr2eCBU8TuspdIGpm+v\n" +
+"ZjB/9AHI/Fd9pSShjcJNTtYj+MqBp0FvCt0+ibDM0TjhCRr6I0L1mUKfvumr++Hq\n" +
+"MFT5lGX9W0kM2k6AqLxM2lhPiHcYuW0VPjl0WIyecP+10lByg2inahRWBq2hI+M0\n" +
+"a6EbpnF5tQKBgApfJTBf04emVXMl+aA1J074nDkBxLoFGQ27y+O/kNIqSQLHFDm1\n" +
+"lx3CKCyqFvIotK1oupUElsXrntq3boTcBiQoj7hMeOf/L0YwNW6ALJdORhPHGyvU\n" +
+"IMjRvhBWFdX2iaiQd8p5vVD7GfjsvluaQjViDII5O6HFf/T5v4+Qdkj5AoGAGS30\n" +
+"72aTb2G0iD+kU2xJyar1ziCO80gWCwXXvSdfgYR7F8aiO7RtdYcXT6h+v4y9DP4D\n" +
+"5zYGaV4ZqCnmnmawXD51sIlnAAmx9unLG+up9i23ga5OgaOFz5tBt0rDBfCICHpg\n" +
+"KfAJrljDr6Z8uxQsa5viaKZzOAAwTqPaTJnx7jUCgYBVRvVH/os7d9JzeAgyyyKd\n" +
+"WgDBzDmk5NrEizklWm+dPomVZU2n1MTO4P6ePQ7Ihpa6n6LQZ4K08UCvd49dgkVE\n" +
+"1pd7a34VVl1pG/f1l1rz3RRRoL4VYTlAKza2rAst0o3Ejb5NRbBAQfhN7ewdUgHv\n" +
+"vBhkReHLxIfbXDLob6BUcg==\n" +
+"-----END PRIVATE KEY-----"
 
 qz.security.setSignatureAlgorithm("SHA512"); // Since 2.1
 qz.security.setSignaturePromise(function(toSign) {
