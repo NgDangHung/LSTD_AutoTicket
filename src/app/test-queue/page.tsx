@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import StopServiceModal from '@/components/shared/StopServiceModal';
-import { useCounterOperations } from '@/hooks/useApi';
 import AuthGuard from '@/components/shared/AuthGuard';
 import { useRouter } from 'next/navigation';
 import { TTSService } from '@/libs/ttsService';
@@ -405,6 +404,8 @@ function TestQueuePage() {
       counterName: ''
     });
   };
+
+  // ✅ Test API connectivity
 
   const handleLogout = () => {
     sessionStorage.clear();
