@@ -1,17 +1,80 @@
 'use client';
 
+import Button from '@/components/shared/Button';
 import React, { useState, useEffect, useCallback } from 'react';
 import StopServiceModal from '@/components/shared/StopServiceModal';
+import FooterConfigModal from '@/components/shared/ChangeFooterModal';
 import AuthGuard from '@/components/shared/AuthGuard';
 import { useRouter } from 'next/navigation';
 import { TTSService } from '@/libs/ttsService';
 import { toast } from 'react-toastify';
 import { type CounterDetail, type CurrentServing, type WaitingTicket } from '@/libs/queueApi';
-import { countersAPI, type Counter, type CallNextResponse, ticketsAPI, type Ticket, rootApi } from '@/libs/rootApi';
-
+import { footersAPI, countersAPI, type Counter, type CallNextResponse, ticketsAPI, type Ticket, rootApi } from '@/libs/rootApi';
 
 
 function TestQueuePage() {
+  // Footer config state
+  const [footerConfig, setFooterConfig] = useState<{ workingHours: string; hotline: string }>({
+    workingHours: 'Giờ làm việc (Thứ 2 - Thứ 6): 07h30 - 17h00',
+    hotline: 'Hotline hỗ trợ: 0916670793',
+  });
+  const [showFooterModal, setShowFooterModal] = useState(false);
+
+  // Footer config API helpers
+  const TEN_XA = 'xavixuyen';
+  async function fetchFooterConfig() {
+    // API trả về { work_time, hotline }
+    const data = await footersAPI.getFooter(TEN_XA);
+    return {
+      workingHours: data.work_time,
+      hotline: data.hotline,
+    };
+  }
+  async function saveFooterConfig(config: { workingHours: string; hotline: string }) {
+    // API nhận { work_time, hotline }
+    const data = await footersAPI.setFooter(TEN_XA, {
+      work_time: config.workingHours,
+      hotline: config.hotline,
+    });
+    return {
+      workingHours: data.work_time,
+      hotline: data.hotline,
+    };
+  }
+
+  // Load footer config from API on mount
+  useEffect(() => {
+    fetchFooterConfig()
+      .then(data => {
+        if (data && (data.workingHours || data.hotline)) {
+          setFooterConfig({
+            workingHours: data.workingHours || footerConfig.workingHours,
+            hotline: data.hotline || footerConfig.hotline,
+          });
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  // Save footer config to API and broadcast event
+  const handleSaveFooterConfig = async (config: { workingHours: string; hotline: string }) => {
+    try {
+      await saveFooterConfig(config);
+      setFooterConfig(config);
+      setShowFooterModal(false);
+      toast.success('Đã lưu cấu hình footer!');
+      // Broadcast event for all tabs
+      window.dispatchEvent(new CustomEvent('footerConfigUpdated', { detail: config }));
+      // BroadcastChannel for cross-tab sync
+      if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+        const bc = new BroadcastChannel('footerConfig');
+        bc.postMessage('updated');
+        bc.close();
+      }
+    } catch (err) {
+      toast.error('Lỗi khi lưu cấu hình footer!');
+    }
+  };
   const router = useRouter();
   // TTS Service instance
   const ttsService = TTSService.getInstance();
@@ -115,7 +178,7 @@ function TestQueuePage() {
       try {
         console.log('🔌 Connecting to production WebSocket for test-queue...');
         
-        ws = new WebSocket('wss://detect-seat.onrender.com/ws/updates');
+         ws = new WebSocket('wss://detect-seat.onrender.com/ws/updates');
         
         ws.onopen = () => {
           console.log('✅ WebSocket connected for test-queue page');
@@ -405,24 +468,23 @@ function TestQueuePage() {
     });
   };
 
-  // ✅ Test API connectivity
-
   const handleLogout = () => {
     sessionStorage.clear();
     router.push('/login');
   };
+
+  // Modal component for editing footer (đặt ngoài cùng file)
+  
 
   return (
     <div className="min-h-screen bg-gray-100 p-8">
       <div className="max-w-6xl mx-auto">
         {/* Header with WebSocket status and logout button */}
         <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-600">
-              🧪 Bảng Điều Khiển
-            </h1>
-          </div>
-           <button
+          <h1 className="text-3xl font-bold text-gray-600">
+            🧪 Bảng Điều Khiển
+          </h1>
+          <button
             onClick={handleLogout}
             className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
           >
@@ -430,26 +492,31 @@ function TestQueuePage() {
           </button>
         </div>
         
-
         {/* Global Controls */}
         <div className="bg-white rounded-lg shadow-md p-6 mb-8">
           <h2 className="text-xl font-semibold mb-4 text-gray-800">🎛️ Điều khiển toàn cục</h2>
           <div className="flex gap-4 flex-wrap">
-            <button
+            <Button
               onClick={() => router.push('/admin')}
               className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
             >
               👑 Trang quản trị
-            </button>
+            </Button>
             <button
               onClick={async () => { await loadCounters(); await loadQueueData(); await loadAllServingTickets(); }}
               className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
             >
               🔄 Làm mới dữ liệu
             </button>
+            <Button
+              onClick={() => setShowFooterModal(true)}
+              className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              ⚙️ Chỉnh sửa chân trang
+            </Button>
           </div>
         </div>
-        
+
         {/* Counter Controls Grid - Only show when data is loaded */}
         {!countersLoading && apiCounters.length > 0 && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -504,11 +571,11 @@ function TestQueuePage() {
                     <button
                       onClick={() => handleNextTicket(counterId)}
                       className={`px-4 py-2 rounded transition-colors text-sm ${
-                        counterDetail.waiting_count === 0 || actionLoading[counter.id]
+                        actionLoading[counter.id]
                           ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
                           : 'bg-green-600 text-white hover:bg-green-700'
                       }`}
-                      disabled={counterDetail.waiting_count === 0 || actionLoading[counter.id]}
+                      disabled={actionLoading[counter.id]}
                     >
                       {actionLoading[counter.id] ? (
                         <span className="flex items-center gap-2">
@@ -599,8 +666,6 @@ function TestQueuePage() {
             </div>
           </div>
         )}
-        
-        
       </div>
 
       {/* Stop Service Modal */}
@@ -610,6 +675,17 @@ function TestQueuePage() {
         onConfirm={handleStopServiceConfirm}
         counterName={stopServiceModal.counterName}
       />
+
+      {/* Footer Config Modal */}
+      {showFooterModal && (
+        <FooterConfigModal
+          isOpen={showFooterModal}
+          onClose={() => setShowFooterModal(false)}
+          onSave={handleSaveFooterConfig}
+          initialConfig={footerConfig}
+        />
+      )}
+
     </div>
   );
 }

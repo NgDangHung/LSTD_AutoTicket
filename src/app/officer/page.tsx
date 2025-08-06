@@ -312,7 +312,8 @@ function OfficerPage() {
         setServingTicket(serving);
       }
     } catch (error) {
-      toast.error('❌ Lỗi gọi vé');
+      const serving = await fetchServingTicket(currentUser.counter_id);
+      setServingTicket(serving);
     } finally {
       setActionLoading(false);
     }
@@ -448,15 +449,12 @@ function OfficerPage() {
               
               {/* Counter Controls - Clean interface */}
               <div className="flex gap-3">
-                <button className="px-6 py-3 rounded-lg bg-green-600 hover:bg-green-700 text-white focus:ring-green-500">
-                  Hoàn thành
-                </button>
-
+                
                 <button
                   onClick={handleNextTicket}
-                  disabled={actionLoading || counterData.status !== 'active' || counterData.waiting_count === 0}
+                  disabled={actionLoading || counterData.status !== 'active'}
                   className={`px-6 py-3 rounded-lg font-medium transition-colors ${
-                    counterData.status === 'active' && counterData.waiting_count > 0
+                    counterData.status === 'active'
                       ? 'bg-blue-600 hover:bg-blue-700 text-white'
                       : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                   }`}

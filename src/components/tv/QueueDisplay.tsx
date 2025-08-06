@@ -3,6 +3,7 @@ import Image from 'next/image';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import NumberAnimation from './NumberAnimation';
 import { useWebSocketQueue } from '@/hooks/useWebSocketQueue';
+import { footersAPI } from '@/libs/rootApi';
 import { TTSService, type TTSService as TTSServiceType } from '@/libs/ttsService';
 import { rootApi } from '@/libs/rootApi';
 
@@ -35,6 +36,12 @@ interface CounterAPI {
   is_active: boolean;
   status: string;
 }
+
+type FooterConfig = {
+  workingHours: string;
+  hotline: string;
+};
+
 
 export default function QueueDisplay() {
   // API lấy số đang phục vụ cho từng quầy
@@ -82,6 +89,58 @@ export default function QueueDisplay() {
 
   // WebSocket hook for real-time updates
   const { isConnected, lastEvent } = useWebSocketQueue();
+
+  // Footer config state
+  const DEFAULT_FOOTER = {
+    workingHours: 'Giờ làm việc (Thứ 2 - Thứ 6): 07h30 - 17h00',
+    hotline: 'Hotline hỗ trợ: 0916670793',
+  };
+  const [footerConfig, setFooterConfig] = React.useState<FooterConfig>(DEFAULT_FOOTER);
+
+
+  // Fetch footer config on mount and listen for updates
+  useEffect(() => {
+    let ignore = false;
+    async function fetchFooter() {
+      try {
+        const data = await footersAPI.getFooter('xavixuyen');
+        if (!ignore && data && (data.work_time || data.hotline)) {
+          setFooterConfig({
+            workingHours: data.work_time || DEFAULT_FOOTER.workingHours,
+            hotline: data.hotline || DEFAULT_FOOTER.hotline,
+          });
+        }
+      } catch {
+        setFooterConfig(DEFAULT_FOOTER);
+      }
+    }
+    fetchFooter();
+    // BroadcastChannel for cross-tab footer config sync
+    let bc: BroadcastChannel | null = null;
+    const handler = async () => {
+      try {
+        const data = await footersAPI.getFooter('xavixuyen');
+        if (!ignore && data && (data.work_time || data.hotline)) {
+          setFooterConfig({
+            workingHours: data.work_time || footerConfig.workingHours,
+            hotline: data.hotline || footerConfig.hotline,
+          });
+        }
+      } catch {}
+    };
+    window.addEventListener('footerConfigUpdated', handler);
+    if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+      bc = new BroadcastChannel('footerConfig');
+      bc.onmessage = (event) => {
+        if (event?.data === 'updated') handler();
+      };
+    }
+    return () => {
+      ignore = true;
+      window.removeEventListener('footerConfigUpdated', handler);
+      if (bc) bc.close();
+    };
+  }, []);
 
   // ✅ Initialize TTS Service on client-side only
   useEffect(() => {
@@ -801,8 +860,8 @@ export default function QueueDisplay() {
         <div className="flex justify-center items-center gap-8 text-lg italic text-red-700 font-extrabold"
           style={{fontSize: '2rem'}}
         >
-          <span>  Giờ làm việc (Thứ 2 - Thứ 6): 07h30 - 17h30</span>
-          <span> Hotline: 0219-1022 </span>
+          <span> {footerConfig.workingHours}</span>
+          <span> {footerConfig.hotline} </span>
           {lastUpdated && (
             <span className="text-lg text-red-700 font-extrabold" style={{fontSize: '2rem'}}>
               Thời gian: {new Date().toLocaleTimeString('vi-VN')}
