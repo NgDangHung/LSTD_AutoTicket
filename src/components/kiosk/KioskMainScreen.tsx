@@ -1,6 +1,6 @@
 'use client';
 import Head from 'next/head';
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import Image from 'next/image';
 import { AudioLines } from 'lucide-react';
 import { toast } from 'react-toastify';
@@ -9,37 +9,23 @@ import VirtualKeyboard from './VirtualKeyboard';
 import SpeechToText from './SpeechToText';
 import { useCreateTicket } from '@/hooks/useApi';
 import { useOptimizedSearch } from '@/hooks/useOptimizedSearch';
-import { countersAPI, Counter } from '@/libs/rootApi';
+import { countersAPI, footersAPI, Counter } from '@/libs/rootApi';
 import '@/app/index.css';
 import PopUp from './PopUp';
 import DateTimeVN from '../shared/DateTimeVN';
 import PrintTicket from '@/components/kiosk/PrintTicket';
 
 
-const services = [
-  { id: 1, name: 'Tư pháp' },
-  { id: 2, name: 'Thanh tra' },
-  { id: 3, name: 'Văn hóa TT - DL' },
-  { id: 4, name: 'Giáo dục Đào tạo' },
-  { id: 5, name: 'Y tế' },
-  { id: 6, name: 'Nông nghiệp và Môi trường' },
-  { id: 7, name: 'Xây dựng' },
-  { id: 8, name: 'Tài chính' },
-  { id: 9, name: 'Công thương' },
-  { id: 10, name: 'Nội vụ' },
-  { id: 11, name: 'Dân tộc - Tôn giáo' },
-];
 
 // Mapping lĩnh vực với quầy phục vụ - DEPRECATED: Use API data instead
 const legacyCounters = [
-  { id: 1, name: 'Thuế', serviceNames: 'Thuế', serviceIds: [] },
-  { id: 2, name: 'Văn phòng đăng kí đất đai khu vực 9', serviceNames: 'Văn phòng đăng kí đất đai khu vực 9', serviceIds: [] },
-  { id: 3, name: 'Lĩnh vực Kinh tế', serviceNames: 'Lĩnh vực Kinh tế', serviceIds: [] },
-  { id: 4, name: 'Tư pháp - Hộ tịch (Chứng thực điện tử)', serviceNames: 'Tư pháp - Hộ tịch (Chứng thực điện tử)', serviceIds: [] },
-  { id: 5, name: 'Tư pháp - Hộ tịch', serviceNames: 'Tư pháp - Hộ tịch', serviceIds: [] },
-  { id: 6, name: 'Điện lực', serviceNames: 'Điện lực', serviceIds: [] },
-  { id: 7, name: 'Bảo hiểm xã hội', serviceNames: 'Bảo hiểm xã hội', serviceIds: [] },
-  { id: 8, name: 'Lĩnh vực Văn hoá - Xã hội', serviceNames: 'Lĩnh vực Văn hoá - Xã hội', serviceIds: [] },
+  { id: 1, name: 'Văn hóa - Xã hội', serviceNames: 'Văn hóa - Xã hội', serviceIds: [] },
+  { id: 2, name: 'Tư pháp', serviceNames: 'Tư pháp', serviceIds: [] },
+  { id: 3, name: 'Đất đai tài Nguyên', serviceNames: 'Đất đai tài Nguyên', serviceIds: [] },
+  { id: 4, name: 'Giao thông xây dựng', serviceNames: 'Giao thông xây dựng', serviceIds: [] },
+  { id: 5, name: 'Tài chính', serviceNames: 'Tài chính', serviceIds: [] },
+  { id: 6, name: 'Thuế', serviceNames: 'Thuế', serviceIds: [] },
+  { id: 7, name: 'Văn phòng', serviceNames: 'Văn phòng', serviceIds: [] },
 ];
 
 
@@ -56,6 +42,60 @@ interface ProcedureResult {
 }
 
 export default function KioskMainScreen() {
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Footer config state
+  const DEFAULT_FOOTER = {
+    workingHours: 'Giờ làm việc (Thứ 2 - Thứ 6): 07h30 - 17h00',
+    hotline: 'Hotline hỗ trợ: 0916670793',
+  };
+  const [footerConfig, setFooterConfig] = useState<{ workingHours: string; hotline: string }>(DEFAULT_FOOTER);
+
+  // Fetch footer config on mount and listen for updates
+  useEffect(() => {
+    let ignore = false;
+    async function fetchFooter() {
+      try {
+        const data = await footersAPI.getFooter('phuonghagiang2');
+        if (!ignore && data) {
+          setFooterConfig({
+            workingHours: data.work_time || DEFAULT_FOOTER.workingHours,
+            hotline: data.hotline || DEFAULT_FOOTER.hotline,
+          });
+        }
+      } catch {
+        setFooterConfig(DEFAULT_FOOTER);
+      }
+    }
+    fetchFooter();
+    // BroadcastChannel for cross-tab footer config sync
+    let bc: BroadcastChannel | null = null;
+    const handler = async () => {
+      try {
+        const data = await footersAPI.getFooter('phuonghagiang2');
+        if (!ignore && data) {
+          setFooterConfig({
+            workingHours: data.work_time || DEFAULT_FOOTER.workingHours,
+            hotline: data.hotline || DEFAULT_FOOTER.hotline,
+          });
+        }
+      } catch {
+        setFooterConfig(DEFAULT_FOOTER);
+      }
+    };
+    window.addEventListener('footerConfigUpdated', handler);
+    if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+      bc = new BroadcastChannel('footerConfig');
+      bc.onmessage = (event) => {
+        if (event?.data === 'updated') handler();
+      };
+    }
+    return () => {
+      ignore = true;
+      window.removeEventListener('footerConfigUpdated', handler);
+      if (bc) bc.close();
+    };
+  }, []);
 
    // Popup state
   const [popupUrl, setPopupUrl] = useState<string | null>(null);
@@ -111,7 +151,7 @@ export default function KioskMainScreen() {
         // Fallback to legacy data
         const fallbackCounters: Counter[] = legacyCounters.map(counter => ({
           id: counter.id,
-          name: counter.name,
+          name: counter.name.toLocaleUpperCase(),
           is_active: true,
           status: 'active' as const
         }));
@@ -347,11 +387,11 @@ export default function KioskMainScreen() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 p-8">
       
-       <Head>
+       {/* <Head>
         <script src="/jsrsasign-all-min.js" id="jsrsasign-script" defer></script>
         <script src="/qz-tray.js" id="qztray-script" defer></script>
         <script src="/sign-message.js" id="signmessage-script" defer></script>
-      </Head>
+      </Head> */}
 
       <div className="max-w-6xl mx-auto">
         {/* Header màn dọc */}
@@ -440,12 +480,32 @@ export default function KioskMainScreen() {
         {/* Search Bar */}
         <div className="flex justify-center gap-4 mb-12 mt-12" style={{ marginTop: '2rem'}}>
           <div className="relative flex items-center w-full max-w-5xl" style={{ marginTop: '-28px', maxWidth: '70rem' }}>
-            <div style={{ width: '20px' }}></div>
+            {/* Nút tìm kiếm bên trái */}
+            <button
+              onClick={() => {
+                if (searchQuery.trim()) {
+                  setSearchQuery('');
+                } else {
+                  // Focus the input field instead of activating voice search
+                  if (inputRef && inputRef.current) {
+                    inputRef.current.focus();
+                  }
+                }
+              }}
+              className="px-5 py-3 bg-red-600 text-white font-extrabold text-base shadow-lg hover:bg-red-700 transition-colors flex items-center justify-center gap-2"
+              style={{ whiteSpace: 'nowrap', minHeight: '70px', minWidth: '140px', borderRadius: '8px', textAlign: 'center', marginRight: '20px' }}
+            >
+              {searchQuery.trim() ? (
+                <span style={{fontSize: '1.2rem', fontWeight: 'bold'}}>🗑️ Xóa tìm kiếm</span>
+              ) : (
+                <span style={{fontSize: '1.2rem', fontWeight: 'bold', width: '100%', display: 'inline-block', textAlign: 'center'}}>Tìm kiếm</span>
+              )}
+            </button>
             <div className="relative flex-1"> 
               <input 
+                ref={inputRef}
                 name='voice-search'
                 value={searchQuery}
-                // onClick={handleSearchClick}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className={`flex items-center gap-2 px-6 py-3 text-lg pr-12 Shadow cursor-pointer transition-all duration-300 w-full ${
                   showVirtualKeyboard ? 'ring-2 ring-blue-500 border-blue-500' : ''
@@ -465,26 +525,8 @@ export default function KioskMainScreen() {
                   lineHeight: '44px',
                 }}
               />
-              <AudioLines 
-                  size={24} 
-                  className={`absolute right-4 top-1/2 transform -translate-y-1/2 cursor-pointer transition-colors ${
-                    isVoiceActive ? 'text-red-500 animate-pulse' : 'text-blue-500 hover:text-blue-700'
-                  }`}
-                  onClick={handleVoiceSearch}
-                />
+              {/* Không còn icon AudioLines trong input */}
             </div>
-            <div style={{ width: '20px' }}></div>
-            <button
-              onClick={searchQuery.trim() ? () => setSearchQuery('') : handleVoiceSearch}
-              className="px-5 py-3 bg-red-600 text-white font-extrabold text-base shadow-lg hover:bg-red-700 transition-colors flex items-center justify-center gap-2"
-              style={{ whiteSpace: 'nowrap', minHeight: '70px', minWidth: '140px', borderRadius: '8px', textAlign: 'center' }}
-            >
-              {searchQuery.trim() ? (
-                <span style={{fontSize: '1.2rem', fontWeight: 'bold'}}>🗑️ Xóa tìm kiếm</span>
-              ) : (
-                <span style={{fontSize: '1.2rem', fontWeight: 'bold', width: '100%', display: 'inline-block', textAlign: 'center'}}>Tìm kiếm bằng giọng nói</span>
-              )}
-            </button>
             {/* Voice Status Indicator */}
             {isVoiceActive && (
               <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-red-500 text-white px-3 py-1 rounded-full text-sm font-medium animate-pulse">
@@ -492,7 +534,6 @@ export default function KioskMainScreen() {
               </div>
             )}
           </div>
-          {/* Đã gộp nút xóa tìm kiếm vào nút voice */}
         </div>
 
         {/* Search Loading */}
@@ -641,12 +682,8 @@ export default function KioskMainScreen() {
 
         {/* Footer màn dọc */}
         <div className="flex items-center w-full text-gray-600 italic" style={{ position: 'relative', top: '16rem', justifyContent: 'space-around' }}>
-          <p className="text-xl font-extrabold text-red-700 ">
-              Giờ làm việc (Thứ 2 - Thứ 6): 07h30 - 17h00
-          </p>
-          <p className="text-xl font-extrabold text-red-700 ">
-             Hotline hỗ trợ: 0219-1022
-          </p>
+          <p className="text-xl font-extrabold text-red-700 ">{footerConfig.workingHours}</p>
+          <p className="text-xl font-extrabold text-red-700 ">{footerConfig.hotline}</p>
         </div>
 
          {/* Footer màn ngang */} 
@@ -712,4 +749,4 @@ export default function KioskMainScreen() {
 
     </div>
   );
-} 
+}

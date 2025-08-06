@@ -1,8 +1,10 @@
 'use client';
+
 import Image from 'next/image';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import NumberAnimation from './NumberAnimation';
 import { useWebSocketQueue } from '@/hooks/useWebSocketQueue';
+import { footersAPI } from '@/libs/rootApi';
 import { TTSService, type TTSService as TTSServiceType } from '@/libs/ttsService';
 import { rootApi } from '@/libs/rootApi';
 
@@ -35,6 +37,12 @@ interface CounterAPI {
   is_active: boolean;
   status: string;
 }
+
+type FooterConfig = {
+  workingHours: string;
+  hotline: string;
+};
+
 
 export default function QueueDisplay() {
   // API lấy số đang phục vụ cho từng quầy
@@ -82,6 +90,58 @@ export default function QueueDisplay() {
 
   // WebSocket hook for real-time updates
   const { isConnected, lastEvent } = useWebSocketQueue();
+
+  // Footer config state
+  const DEFAULT_FOOTER = {
+    workingHours: 'Giờ làm việc (Thứ 2 - Thứ 6): 07h30 - 17h00',
+    hotline: 'Hotline hỗ trợ: 0916670793',
+  };
+  const [footerConfig, setFooterConfig] = React.useState<FooterConfig>(DEFAULT_FOOTER);
+
+
+  // Fetch footer config on mount and listen for updates
+  useEffect(() => {
+    let ignore = false;
+    async function fetchFooter() {
+      try {
+        const data = await footersAPI.getFooter('phuonghagiang2');
+        if (!ignore && data && (data.work_time || data.hotline)) {
+          setFooterConfig({
+            workingHours: data.work_time || DEFAULT_FOOTER.workingHours,
+            hotline: data.hotline || DEFAULT_FOOTER.hotline,
+          });
+        }
+      } catch {
+        setFooterConfig(DEFAULT_FOOTER);
+      }
+    }
+    fetchFooter();
+    // BroadcastChannel for cross-tab footer config sync
+    let bc: BroadcastChannel | null = null;
+    const handler = async () => {
+      try {
+        const data = await footersAPI.getFooter('phuonghagiang2');
+        if (!ignore && data && (data.work_time || data.hotline)) {
+          setFooterConfig({
+            workingHours: data.work_time || footerConfig.workingHours,
+            hotline: data.hotline || footerConfig.hotline,
+          });
+        }
+      } catch {}
+    };
+    window.addEventListener('footerConfigUpdated', handler);
+    if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+      bc = new BroadcastChannel('footerConfig');
+      bc.onmessage = (event) => {
+        if (event?.data === 'updated') handler();
+      };
+    }
+    return () => {
+      ignore = true;
+      window.removeEventListener('footerConfigUpdated', handler);
+      if (bc) bc.close();
+    };
+  }, []);
 
   // ✅ Initialize TTS Service on client-side only
   useEffect(() => {
@@ -141,6 +201,37 @@ export default function QueueDisplay() {
       setWsServingTickets(servingState);
     };
     initServingTicketsOnLoad();
+  }, [apiCounters]);
+
+    // Lắng nghe broadcast clear serving ticket từ officer (đặt ngay sau các hook useState, useRef, useCallback, useEffect, trước mọi logic điều kiện/return)
+  useEffect(() => {
+    if (typeof window === 'undefined' || !('BroadcastChannel' in window)) return;
+    const bc = new BroadcastChannel('servingTicketCleared');
+    bc.onmessage = (event) => {
+      const { counterId } = event.data || {};
+      if (counterId) {
+        fetchServingTicket(counterId).then((serving) => {
+          setWsServingTickets(prev => {
+            if (serving) {
+              return {
+                ...prev,
+                [counterId]: {
+                  number: serving.number,
+                  counter_name: getCounterName(counterId),
+                  called_at: serving.called_at || new Date().toISOString(),
+                  source: 'broadcast-clear'
+                }
+              };
+            } else {
+              const newState = { ...prev };
+              delete newState[counterId];
+              return newState;
+            }
+          });
+        });
+      }
+    };
+    return () => bc.close();
   }, [apiCounters]);
 
   // ✅ Counter name mapping (API-driven)
@@ -293,7 +384,7 @@ export default function QueueDisplay() {
         console.log('🔌 Connecting to production WebSocket endpoint...');
         console.log('🌐 WebSocket URL: wss://detect-seat.onrender.com/ws/updates');
         
-        // ✅ REAL endpoint từ BE: wss://detect-seat.onrender.com/ws/updates
+        // ✅ REAL endpoint từ BE: wss://detect-seat-we21.onrender.com/ws/updates
         ws = new WebSocket('wss://detect-seat.onrender.com/ws/updates');
         
         ws.onopen = () => {
@@ -564,24 +655,66 @@ export default function QueueDisplay() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fetchAndProcessQueueData]); // Intentionally limited dependencies
 
-  // TTS status bar only: cập nhật trạng thái hàng đợi TTS
+  // TTS status + tự động phát lại lượt 2 sau khi hết lượt đầu
   useEffect(() => {
-    if (!ttsService) return;
-    const updateTTSStatus = () => {
-      if (ttsService && typeof ttsService.getQueueStatus === 'function') {
-        try {
-          const status = ttsService.getQueueStatus();
-          setTtsQueueStatus(status);
-        } catch (error) {
-          console.warn('⚠️ Failed to get TTS queue status:', error);
+  if (!ttsService) return;
+
+  // Lưu trạng thái đã phát lại lượt 2 để không lặp vô hạn
+  const replayedSecondRoundRef = { current: false };
+
+  // Update TTS queue status (safe check for ttsService)
+  const updateTTSStatus = () => {
+    if (ttsService && typeof ttsService.getQueueStatus === 'function') {
+      try {
+        const status = ttsService.getQueueStatus();
+        setTtsQueueStatus(status);
+
+        // Nếu queue rỗng, không còn phát, chưa phát lại lượt 2 thì phát lại lượt 2
+        if (
+          status.queueLength === 0 &&
+          !status.isPlaying &&
+          !replayedSecondRoundRef.current &&
+          announcedTicketsRef.current.size > 0
+        ) {
+          // Phát lại lượt 2 cho tất cả vé đã phát lượt 1, đúng thứ tự, có delay giữa các vé
+          const tickets = Array.from(announcedTicketsRef.current).map(key => {
+            const [counterId, ticketNumber] = key.split('-');
+            return { counterId: Number(counterId), ticketNumber: Number(ticketNumber) };
+          });
+
+          // Hàm phát lại lượt 2 tuần tự, mỗi vé cách nhau 1 giây, và timestamp tăng dần
+          const replaySecondRound = async () => {
+            replayedSecondRoundRef.current = true;
+            let now = Date.now();
+            for (const { counterId, ticketNumber } of tickets) {
+              // Tạo timestamp tăng dần cho từng vé lượt 2
+              now += 1000; // mỗi vé cách nhau 1 giây
+              await ttsService.queueAnnouncement(
+                counterId,
+                ticketNumber,
+                2,
+                'manual',
+                new Date(now).toISOString()
+              );
+              await new Promise(res => setTimeout(res, 1000)); // delay 1s giữa các vé
+            }
+            console.log('🔁 Đã tự động phát lại lượt 2 cho tất cả vé (có delay và timestamp tăng dần)');
+          };
+          replaySecondRound();
         }
+      } catch (error) {
+        console.warn('⚠️ Failed to get TTS queue status:', error);
       }
-    };
-    const ttsInterval = setInterval(updateTTSStatus, 1000);
-    return () => {
-      clearInterval(ttsInterval);
-    };
-  }, [ttsService]);
+    }
+  };
+
+  // TTS status update interval - only when ttsService is available
+  const ttsInterval = setInterval(updateTTSStatus, 1000);
+
+  return () => {
+    clearInterval(ttsInterval);
+  };
+}, [ttsService]);
 
   // ✅ Calculate stats from processed data
   const totalServing = processedCounters.filter(c => c.serving_number !== null).length;
@@ -617,6 +750,9 @@ export default function QueueDisplay() {
       </div>
     );
   }
+
+
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-900 to-purple-900 text-white"
@@ -759,8 +895,8 @@ export default function QueueDisplay() {
         <div className="flex justify-center items-center gap-8 text-lg italic text-red-700 font-extrabold"
           style={{fontSize: '2rem'}}
         >
-          <span>  Giờ làm việc (Thứ 2 - Thứ 6): 7h30 - 17h00</span>
-          <span> Hotline: 0219-1022 </span>
+          <span> {footerConfig.workingHours}</span>
+          <span> {footerConfig.hotline} </span>
           {lastUpdated && (
             <span className="text-lg text-red-700 font-extrabold" style={{fontSize: '2rem'}}>
               Thời gian: {new Date().toLocaleTimeString('vi-VN')}
