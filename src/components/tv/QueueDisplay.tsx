@@ -202,6 +202,36 @@ export default function QueueDisplay() {
     initServingTicketsOnLoad();
   }, [apiCounters]);
 
+   useEffect(() => {
+    if (typeof window === 'undefined' || !('BroadcastChannel' in window)) return;
+    const bc = new BroadcastChannel('servingTicketCleared');
+    bc.onmessage = (event) => {
+      const { counterId } = event.data || {};
+      if (counterId) {
+        fetchServingTicket(counterId).then((serving) => {
+          setWsServingTickets(prev => {
+            if (serving) {
+              return {
+                ...prev,
+                [counterId]: {
+                  number: serving.number,
+                  counter_name: getCounterName(counterId),
+                  called_at: serving.called_at || new Date().toISOString(),
+                  source: 'broadcast-clear'
+                }
+              };
+            } else {
+              const newState = { ...prev };
+              delete newState[counterId];
+              return newState;
+            }
+          });
+        });
+      }
+    };
+    return () => bc.close();
+  }, [apiCounters]);
+
   // ✅ Counter name mapping (API-driven)
   const getCounterName = (counterId: number): string => {
     const found = apiCounters.find(c => c.id === counterId);

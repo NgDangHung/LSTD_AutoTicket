@@ -301,23 +301,29 @@ function OfficerPage() {
       : null;
 
   const handleNextTicket = async () => {
-    if (!currentUser?.counter_id || !counterData) return;
-    try {
-      setActionLoading(true);
-      const response = await countersAPI.callNext(currentUser.counter_id);
-      if (response && response.number) {
-        toast.success(`✅ Gọi vé ${response.number}`);
-        await loadQueueData();
+      if (!currentUser?.counter_id || !counterData) return;
+      try {
+        setActionLoading(true);
+        const response = await countersAPI.callNext(currentUser.counter_id);
+        if (response && response.number) {
+          toast.success(`✅ Gọi vé ${response.number}`);
+          await loadQueueData();
+          const serving = await fetchServingTicket(currentUser.counter_id);
+          setServingTicket(serving);
+        }
+      } catch (error) {
+        // Khi không còn vé chờ, clear vé đang phục vụ và broadcast event cho TV
         const serving = await fetchServingTicket(currentUser.counter_id);
         setServingTicket(serving);
+        if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+          const bc = new BroadcastChannel('servingTicketCleared');
+          bc.postMessage({ counterId: currentUser.counter_id });
+          bc.close();
+        }
+      } finally {
+        setActionLoading(false);
       }
-    } catch (error) {
-      const serving = await fetchServingTicket(currentUser.counter_id);
-      setServingTicket(serving);
-    } finally {
-      setActionLoading(false);
-    }
-  };
+    };
 
   const handlePauseConfirm = async (reason: string) => {
     if (!currentUser?.counter_id) return;
