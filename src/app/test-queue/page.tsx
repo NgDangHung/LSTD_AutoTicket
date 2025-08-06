@@ -12,7 +12,6 @@ import { type CounterDetail, type CurrentServing, type WaitingTicket } from '@/l
 import { footersAPI, countersAPI, type Counter, type CallNextResponse, ticketsAPI, type Ticket, rootApi } from '@/libs/rootApi';
 
 
-
 function TestQueuePage() {
   // Footer config state
   const [footerConfig, setFooterConfig] = useState<{ workingHours: string; hotline: string }>({
@@ -572,11 +571,11 @@ function TestQueuePage() {
                     <button
                       onClick={() => handleNextTicket(counterId)}
                       className={`px-4 py-2 rounded transition-colors text-sm ${
-                        counterDetail.waiting_count === 0 || actionLoading[counter.id]
+                        actionLoading[counter.id]
                           ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
                           : 'bg-green-600 text-white hover:bg-green-700'
                       }`}
-                      disabled={counterDetail.waiting_count === 0 || actionLoading[counter.id]}
+                      disabled={actionLoading[counter.id]}
                     >
                       {actionLoading[counter.id] ? (
                         <span className="flex items-center gap-2">

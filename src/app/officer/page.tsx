@@ -317,7 +317,14 @@ function OfficerPage() {
         setServingTicket(serving);
       }
     } catch (error) {
-      toast.error('❌ Lỗi gọi vé');
+      // Khi không còn vé chờ, clear vé đang phục vụ và broadcast event cho TV
+      const serving = await fetchServingTicket(currentUser.counter_id);
+      setServingTicket(serving);
+      if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+        const bc = new BroadcastChannel('servingTicketCleared');
+        bc.postMessage({ counterId: currentUser.counter_id });
+        bc.close();
+      }
     } finally {
       setActionLoading(false);
     }
@@ -455,9 +462,9 @@ function OfficerPage() {
               <div className="flex gap-3">
                 <button
                   onClick={handleNextTicket}
-                  disabled={actionLoading || counterData.status !== 'active' || counterData.waiting_count === 0}
+                  disabled={actionLoading || counterData.status !== 'active'}
                   className={`px-6 py-3 rounded-lg font-medium transition-colors ${
-                    counterData.status === 'active' && counterData.waiting_count > 0
+                    counterData.status === 'active'
                       ? 'bg-blue-600 hover:bg-blue-700 text-white'
                       : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                   }`}

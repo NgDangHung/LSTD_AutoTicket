@@ -1,4 +1,5 @@
 'use client';
+
 import Image from 'next/image';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import NumberAnimation from './NumberAnimation';
@@ -96,6 +97,7 @@ export default function QueueDisplay() {
     hotline: 'Hotline hỗ trợ: 0916670793',
   };
   const [footerConfig, setFooterConfig] = React.useState<FooterConfig>(DEFAULT_FOOTER);
+
 
   // Fetch footer config on mount and listen for updates
   useEffect(() => {
@@ -199,6 +201,37 @@ export default function QueueDisplay() {
       setWsServingTickets(servingState);
     };
     initServingTicketsOnLoad();
+  }, [apiCounters]);
+
+    // Lắng nghe broadcast clear serving ticket từ officer (đặt ngay sau các hook useState, useRef, useCallback, useEffect, trước mọi logic điều kiện/return)
+  useEffect(() => {
+    if (typeof window === 'undefined' || !('BroadcastChannel' in window)) return;
+    const bc = new BroadcastChannel('servingTicketCleared');
+    bc.onmessage = (event) => {
+      const { counterId } = event.data || {};
+      if (counterId) {
+        fetchServingTicket(counterId).then((serving) => {
+          setWsServingTickets(prev => {
+            if (serving) {
+              return {
+                ...prev,
+                [counterId]: {
+                  number: serving.number,
+                  counter_name: getCounterName(counterId),
+                  called_at: serving.called_at || new Date().toISOString(),
+                  source: 'broadcast-clear'
+                }
+              };
+            } else {
+              const newState = { ...prev };
+              delete newState[counterId];
+              return newState;
+            }
+          });
+        });
+      }
+    };
+    return () => bc.close();
   }, [apiCounters]);
 
   // ✅ Counter name mapping (API-driven)
@@ -718,6 +751,9 @@ export default function QueueDisplay() {
     );
   }
 
+
+
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-900 to-purple-900 text-white"
       style={{
@@ -860,7 +896,7 @@ export default function QueueDisplay() {
           style={{fontSize: '2rem'}}
         >
           <span> {footerConfig.workingHours}</span>
-          <span> Hotline: {footerConfig.hotline} </span>
+          <span> {footerConfig.hotline} </span>
           {lastUpdated && (
             <span className="text-lg text-red-700 font-extrabold" style={{fontSize: '2rem'}}>
               Thời gian: {new Date().toLocaleTimeString('vi-VN')}
