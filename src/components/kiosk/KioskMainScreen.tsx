@@ -9,7 +9,7 @@ import VirtualKeyboard from './VirtualKeyboard';
 import SpeechToText from './SpeechToText';
 import { useCreateTicket } from '@/hooks/useApi';
 import { useOptimizedSearch } from '@/hooks/useOptimizedSearch';
-import { countersAPI, Counter } from '@/libs/rootApi';
+import { countersAPI, footersAPI, Counter } from '@/libs/rootApi';
 import '@/app/index.css';
 import PopUp from './PopUp';
 import DateTimeVN from '../shared/DateTimeVN';
@@ -39,6 +39,58 @@ interface ProcedureResult {
 }
 
 export default function KioskMainScreen() {
+  // Footer config state
+  const DEFAULT_FOOTER = {
+    workingHours: 'Giờ làm việc (Thứ 2 - Thứ 6): 07h30 - 17h00',
+    hotline: 'Hotline hỗ trợ: 0916670793',
+  };
+  const [footerConfig, setFooterConfig] = useState<{ workingHours: string; hotline: string }>(DEFAULT_FOOTER);
+
+  // Fetch footer config on mount and listen for updates
+  useEffect(() => {
+    let ignore = false;
+    async function fetchFooter() {
+      try {
+        const data = await footersAPI.getFooter('phuonghagiang1');
+        if (!ignore && data) {
+          setFooterConfig({
+            workingHours: data.work_time || DEFAULT_FOOTER.workingHours,
+            hotline: data.hotline || DEFAULT_FOOTER.hotline,
+          });
+        }
+      } catch {
+        setFooterConfig(DEFAULT_FOOTER);
+      }
+    }
+    fetchFooter();
+    // BroadcastChannel for cross-tab footer config sync
+    let bc: BroadcastChannel | null = null;
+    const handler = async () => {
+      try {
+        const data = await footersAPI.getFooter('phuonghagiang1');
+        if (!ignore && data) {
+          setFooterConfig({
+            workingHours: data.work_time || DEFAULT_FOOTER.workingHours,
+            hotline: data.hotline || DEFAULT_FOOTER.hotline,
+          });
+        }
+      } catch {
+        setFooterConfig(DEFAULT_FOOTER);
+      }
+    };
+    window.addEventListener('footerConfigUpdated', handler);
+    if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+      bc = new BroadcastChannel('footerConfig');
+      bc.onmessage = (event) => {
+        if (event?.data === 'updated') handler();
+      };
+    }
+    return () => {
+      ignore = true;
+      window.removeEventListener('footerConfigUpdated', handler);
+      if (bc) bc.close();
+    };
+  }, []);
 
    // Popup state
   const [popupUrl, setPopupUrl] = useState<string | null>(null);
@@ -101,7 +153,7 @@ export default function KioskMainScreen() {
         setApiCounters(fallbackCounters);
         setHasLoadedCounters(true); // Mark as loaded even on error
         
-        toast.warn('Sử dụng dữ liệu quầy offline. Vui lòng kiểm tra kết nối mạng.');
+        toast.warn('Using offline counter data');
       } finally {
         setCountersLoading(false);
       }
@@ -330,11 +382,11 @@ export default function KioskMainScreen() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 p-8">
       
-       <Head>
+       {/* <Head>
         <script src="/jsrsasign-all-min.js" id="jsrsasign-script" defer></script>
         <script src="/qz-tray.js" id="qztray-script" defer></script>
         <script src="/sign-message.js" id="signmessage-script" defer></script>
-      </Head>
+      </Head> */}
 
       <div className="max-w-6xl mx-auto">
         {/* Header màn dọc */}
@@ -624,12 +676,8 @@ export default function KioskMainScreen() {
 
         {/* Footer màn dọc */}
         <div className="flex items-center w-full text-gray-600 italic" style={{ position: 'relative', top: '16rem', justifyContent: 'space-around' }}>
-          <p className="text-xl font-extrabold text-red-700 ">
-            Buổi sáng: Từ 7h30 đến 11h00
-          </p>
-          <p className="text-xl font-extrabold text-red-700 ">
-            Buổi chiều: từ 13h30 đến 17h00
-          </p>
+          <p className="text-xl font-extrabold text-red-700 ">{footerConfig.workingHours}</p>
+          <p className="text-xl font-extrabold text-red-700 ">{footerConfig.hotline}</p>
         </div>
 
          {/* Footer màn ngang */} 

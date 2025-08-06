@@ -232,11 +232,6 @@ function OfficerPage() {
         const data = JSON.parse(e.data);
         if (data.event === 'new_ticket' || data.event === 'ticket_called') {
           await loadQueueData();
-          // Tự động cập nhật số đang phục vụ khi có event ticket_called
-          if (data.event === 'ticket_called' && currentUser?.counter_id) {
-            const serving = await fetchServingTicket(currentUser.counter_id);
-            setServingTicket(serving);
-          }
         }
       };
 
@@ -251,7 +246,7 @@ function OfficerPage() {
     return () => {
       if (ws) ws.close();
     };
-  }, [loadCounters, loadQueueData, currentUser, fetchServingTicket]);
+  }, [loadCounters, loadQueueData]);
 
   const processCounterData = useCallback(
     (counter: Counter): CounterDetail => {
@@ -306,22 +301,29 @@ function OfficerPage() {
       : null;
 
   const handleNextTicket = async () => {
-    if (!currentUser?.counter_id || !counterData) return;
-    try {
-      setActionLoading(true);
-      const response = await countersAPI.callNext(currentUser.counter_id);
-      if (response && response.number) {
-        toast.success(`✅ Gọi vé ${response.number}`);
-        await loadQueueData();
+      if (!currentUser?.counter_id || !counterData) return;
+      try {
+        setActionLoading(true);
+        const response = await countersAPI.callNext(currentUser.counter_id);
+        if (response && response.number) {
+          toast.success(`✅ Gọi vé ${response.number}`);
+          await loadQueueData();
+          const serving = await fetchServingTicket(currentUser.counter_id);
+          setServingTicket(serving);
+        }
+      } catch (error) {
+        // Khi không còn vé chờ, clear vé đang phục vụ và broadcast event cho TV
         const serving = await fetchServingTicket(currentUser.counter_id);
         setServingTicket(serving);
+        if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+          const bc = new BroadcastChannel('servingTicketCleared');
+          bc.postMessage({ counterId: currentUser.counter_id });
+          bc.close();
+        }
+      } finally {
+        setActionLoading(false);
       }
-    } catch (error) {
-      toast.error('❌ Lỗi gọi vé');
-    } finally {
-      setActionLoading(false);
-    }
-  };
+    };
 
   const handlePauseConfirm = async (reason: string) => {
     if (!currentUser?.counter_id) return;
@@ -453,15 +455,12 @@ function OfficerPage() {
               
               {/* Counter Controls - Clean interface */}
               <div className="flex gap-3">
-                <button className="px-6 py-3 rounded-lg bg-green-600 hover:bg-green-700 text-white focus:ring-green-500">
-                  Hoàn thành
-                </button>
-
+                
                 <button
                   onClick={handleNextTicket}
-                  disabled={actionLoading || counterData.status !== 'active' || counterData.waiting_count === 0}
+                  disabled={actionLoading || counterData.status !== 'active'}
                   className={`px-6 py-3 rounded-lg font-medium transition-colors ${
-                    counterData.status === 'active' && counterData.waiting_count > 0
+                    counterData.status === 'active'
                       ? 'bg-blue-600 hover:bg-blue-700 text-white'
                       : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                   }`}
