@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import StopServiceModal from '@/components/shared/StopServiceModal';
-import { useCounterOperations } from '@/hooks/useApi';
 import AuthGuard from '@/components/shared/AuthGuard';
 import { useRouter } from 'next/navigation';
 import { TTSService } from '@/libs/ttsService';
@@ -407,19 +406,8 @@ function TestQueuePage() {
   };
 
   // ✅ Test API connectivity
-  const testAPIConnection = async () => {
-    try {
-      console.log('🧪 Testing API connection...');
-      const response = await countersAPI.getCounters();
-      console.log('✅ API connection test successful:', response);
-      toast.success('✅ API kết nối thành công!');
-    } catch (error) {
-      console.error('❌ API connection test failed:', error);
-      toast.error('❌ API không thể kết nối!');
-    }
-  };
 
-    const handleLogout = () => {
+  const handleLogout = () => {
     sessionStorage.clear();
     router.push('/login');
   };

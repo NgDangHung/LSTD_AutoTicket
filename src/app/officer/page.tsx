@@ -386,10 +386,10 @@ function OfficerPage() {
             </h1>
             <div className="flex items-center gap-4 mt-2">
               <span className="text-lg text-gray-600">
-                👤 {currentUser.full_name}
+                 {currentUser.full_name}
               </span>
               <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
-                🏷️ {currentUser.role.toUpperCase()}
+                👤 CÁN BỘ
               </span>
               <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
                 🏢 Quầy {currentUser.counter_id}
@@ -448,6 +448,10 @@ function OfficerPage() {
               
               {/* Counter Controls - Clean interface */}
               <div className="flex gap-3">
+                <button className="px-6 py-3 rounded-lg bg-green-600 hover:bg-green-700 text-white focus:ring-green-500">
+                  Hoàn thành
+                </button>
+
                 <button
                   onClick={handleNextTicket}
                   disabled={actionLoading || counterData.status !== 'active' || counterData.waiting_count === 0}
