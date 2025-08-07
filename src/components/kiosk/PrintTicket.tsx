@@ -51,12 +51,12 @@ const  PrintTicket: React.FC<PrintTicketProps> = ({
   //   </div>
   // `;
     const ticketHTML = `
-  <div style="width:80mm;min-height:60mm;padding:0;margin:0;font-family:'Arial', monospace;font-size:12px;line-height:1.4;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:space-between;">
+  <div style="width:70mm;min-height:60mm;padding:0;margin:0;font-family:'Arial', monospace;font-size:12px;line-height:1.4;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:space-between;">
     <div>
-      <div style="font-weight:bold;font-size:14px;">
+      <div style="font-weight:bold;font-size:12px;">
         TRUNG TÂM PHỤC VỤ HÀNH CHÍNH CÔNG
       </div>
-      <div style="font-weight:bold;font-size:18px;">
+      <div style="font-weight:bold;font-size:16px;">
         PHƯỜNG HÀ GIANG 1 
       </div>
       <div style="margin-top:8px;font-weight: bold;">SỐ THỨ TỰ</div>
