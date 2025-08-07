@@ -37,12 +37,12 @@ export default function Dashboard() {
         const startStr = format(startDate, 'yyyy-MM-dd');
         const endStr = format(endDate, 'yyyy-MM-dd');
         const [tickets, attended, avgTime, waitTime, absentTime, counters] = await Promise.all([
-          rootApi.get('/stats/tickets-per-counter', { params: { start_date: startStr, end_date: endStr, tenxa: 'xavixuyen' }, headers }),
-          rootApi.get('/stats/attended-tickets', { params: { start_date: startStr, end_date: endStr, tenxa: 'xavixuyen' }, headers }),
-          rootApi.get('/stats/average-handling-time', { params: { start_date: startStr, end_date: endStr, tenxa: 'xavixuyen' }, headers }),
-          rootApi.get('/stats/average-waiting-time', { params: { start_date: startStr, end_date: endStr, tenxa: 'xavixuyen' }, headers }),
-          rootApi.get('/stats/afk-duration', { params: { start_date: startStr, end_date: endStr, tenxa: 'xavixuyen' }, headers }),
-          rootApi.get('/counters', { params: { tenxa: 'xavixuyen' }, headers }),
+          rootApi.get('/stats/tickets-per-counter', { params: { start_date: startStr, end_date: endStr, tenxa: 'phuonglaocai' }, headers }),
+          rootApi.get('/stats/attended-tickets', { params: { start_date: startStr, end_date: endStr, tenxa: 'phuonglaocai' }, headers }),
+          rootApi.get('/stats/average-handling-time', { params: { start_date: startStr, end_date: endStr, tenxa: 'phuonglaocai' }, headers }),
+          rootApi.get('/stats/average-waiting-time', { params: { start_date: startStr, end_date: endStr, tenxa: 'phuonglaocai' }, headers }),
+          rootApi.get('/stats/afk-duration', { params: { start_date: startStr, end_date: endStr, tenxa: 'phuonglaocai' }, headers }),
+          rootApi.get('/counters', { params: { tenxa: 'phuonglaocai' }, headers }),
         ]);
 
         // Map counter_id -> name
