@@ -203,36 +203,6 @@ export default function QueueDisplay() {
     initServingTicketsOnLoad();
   }, [apiCounters]);
 
-    // Lắng nghe broadcast clear serving ticket từ officer (đặt ngay sau các hook useState, useRef, useCallback, useEffect, trước mọi logic điều kiện/return)
-  useEffect(() => {
-    if (typeof window === 'undefined' || !('BroadcastChannel' in window)) return;
-    const bc = new BroadcastChannel('servingTicketCleared');
-    bc.onmessage = (event) => {
-      const { counterId } = event.data || {};
-      if (counterId) {
-        fetchServingTicket(counterId).then((serving) => {
-          setWsServingTickets(prev => {
-            if (serving) {
-              return {
-                ...prev,
-                [counterId]: {
-                  number: serving.number,
-                  counter_name: getCounterName(counterId),
-                  called_at: serving.called_at || new Date().toISOString(),
-                  source: 'broadcast-clear'
-                }
-              };
-            } else {
-              const newState = { ...prev };
-              delete newState[counterId];
-              return newState;
-            }
-          });
-        });
-      }
-    };
-    return () => bc.close();
-  }, [apiCounters]);
 
   // ✅ Counter name mapping (API-driven)
   const getCounterName = (counterId: number): string => {
@@ -461,13 +431,25 @@ export default function QueueDisplay() {
     };
     
     // ✅ Handle ticket_called event từ BE documentation - UPDATED for WebSocket state
-    const handleTicketCalledEvent = async (eventData: { event: string, ticket_number: number, counter_name: string }) => {
+    const handleTicketCalledEvent = async (eventData: { event: string, ticket_number: number | null, counter_name: string }) => {
       console.log('📞 Ticket called via WebSocket:', eventData);
       const { ticket_number, counter_name } = eventData;
       const counterId = getCounterIdFromName(counter_name);
       console.log('🎯 Parsed counter ID from counter_name:', counterId, 'for name:', counter_name);
 
-      if (!counterId || !ticket_number) return;
+      if (!counterId) return;
+
+      // Nếu ticket_number là null => clear số đang phục vụ
+      if (ticket_number == null) {
+        setWsServingTickets(prev => {
+          const newState = { ...prev };
+          delete newState[counterId];
+          return newState;
+        });
+        setAnnouncement(null);
+        await fetchAndProcessQueueData(false);
+        return;
+      }
 
       // Key duy nhất cho mỗi quầy - vé
       const key = `${counterId}-${ticket_number}`;
@@ -476,9 +458,6 @@ export default function QueueDisplay() {
         console.log(`⏩ Skip duplicate TTS: ${key}`);
         return;
       }
-
-      // Nếu có currentCounter, chỉ phát cho đúng quầy hiện tại (nếu không có thì bỏ qua check này)
-      // Giả sử currentCounter lấy từ processedCounters hoặc props/context tuỳ bạn, ở đây sẽ bỏ qua check này nếu không có
 
       // Đánh dấu đã phát
       announcedTicketsRef.current.add(key);
