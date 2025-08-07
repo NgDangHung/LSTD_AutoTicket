@@ -232,6 +232,11 @@ function OfficerPage() {
         const data = JSON.parse(e.data);
         if (data.event === 'new_ticket' || data.event === 'ticket_called') {
           await loadQueueData();
+          // Always fetch serving ticket after queue update to sync UI
+          if (currentUser?.counter_id) {
+            const serving = await fetchServingTicket(currentUser.counter_id);
+            setServingTicket(serving);
+          }
         }
       };
 
@@ -246,7 +251,7 @@ function OfficerPage() {
     return () => {
       if (ws) ws.close();
     };
-  }, [loadCounters, loadQueueData]);
+  }, [loadCounters, loadQueueData, currentUser, fetchServingTicket]);
 
   const processCounterData = useCallback(
     (counter: Counter): CounterDetail => {
@@ -301,29 +306,25 @@ function OfficerPage() {
       : null;
 
   const handleNextTicket = async () => {
-      if (!currentUser?.counter_id || !counterData) return;
-      try {
-        setActionLoading(true);
-        const response = await countersAPI.callNext(currentUser.counter_id);
-        if (response && response.number) {
-          toast.success(`✅ Gọi vé ${response.number}`);
-          await loadQueueData();
-          const serving = await fetchServingTicket(currentUser.counter_id);
-          setServingTicket(serving);
-        }
-      } catch (error) {
-        // Khi không còn vé chờ, clear vé đang phục vụ và broadcast event cho TV
-        const serving = await fetchServingTicket(currentUser.counter_id);
-        setServingTicket(serving);
-        if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
-          const bc = new BroadcastChannel('servingTicketCleared');
-          bc.postMessage({ counterId: currentUser.counter_id });
-          bc.close();
-        }
-      } finally {
-        setActionLoading(false);
+    if (!currentUser?.counter_id || !counterData) return;
+    try {
+      setActionLoading(true);
+      const response = await countersAPI.callNext(currentUser.counter_id);
+      if (response && response.number) {
+        toast.success(`✅ Gọi vé ${response.number}`);
       }
-    };
+      // Always reload queue and serving ticket after callNext, regardless of result
+      await loadQueueData();
+      const serving = await fetchServingTicket(currentUser.counter_id);
+      setServingTicket(serving);
+    } catch (error) {
+      // Always reload serving ticket even on error
+      const serving = await fetchServingTicket(currentUser.counter_id);
+      setServingTicket(serving);
+    } finally {
+      setActionLoading(false);
+    }
+  };
 
   const handlePauseConfirm = async (reason: string) => {
     if (!currentUser?.counter_id) return;
