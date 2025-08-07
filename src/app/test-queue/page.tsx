@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import StopServiceModal from '@/components/shared/StopServiceModal';
-import { useCounterOperations } from '@/hooks/useApi';
 import AuthGuard from '@/components/shared/AuthGuard';
 import { useRouter } from 'next/navigation';
 import { TTSService } from '@/libs/ttsService';
@@ -325,64 +324,19 @@ function TestQueuePage() {
       return;
     }
     const waitingTickets = queueTickets.filter(t => t.counter_id === counterIdNum && t.status === 'waiting');
-    if (waitingTickets.length === 0) {
-      toast.warning(`⚠️ Không có vé nào đang chờ cho ${counter.name}!`);
-      return;
-    }
+    // Không còn vé chờ, vẫn gọi API để clear số đang phục vụ
     try {
-      setActionLoading((prev: Record<number, boolean>) => ({ ...prev, [counterIdNum]: true }));
-      const response = await countersAPI.callNext(counterIdNum);
-      if (response && response.number) {
-        toast.success(
-          <div>
-            <div>✅ Đã gọi vé số <strong>{response.number}</strong></div>
-            <div>📢 Cho {counter.name}</div>
-            <div className="text-xs text-gray-500 mt-1">
-              Thời gian: {new Date().toLocaleTimeString('vi-VN')}
-            </div>
-          </div>
-        );
-        await loadQueueData();
-        await loadAllServingTickets();
-        // Dispatch CustomEvent to notify TV display
-        const ticketCalledEvent = new CustomEvent('ticketCalled', {
-          detail: {
-            event: 'ticket_called',
-            ticket_number: response.number,
-            counter_name: counter.name,
-            counter_id: counterIdNum,
-            timestamp: new Date().toISOString()
-          }
-        });
-        window.dispatchEvent(ticketCalledEvent);
-        window.dispatchEvent(new CustomEvent('queueUpdated', {
-          detail: {
-            source: 'test-queue-call-next',
-            counterId: counterIdNum,
-            ticketNumber: response.number
-          }
-        }));
-      } else {
-        toast.error('❌ API response không hợp lệ - thiếu số vé');
-      }
+      setActionLoading(prev => ({ ...prev, [counterIdNum]: true }));
+      await countersAPI.callNext(counterIdNum);
+      // Luôn reload queue và serving tickets sau khi gọi next
+      await loadQueueData();
+      await loadAllServingTickets();
     } catch (error) {
-      let errorMessage = 'Unknown error';
-      if (error instanceof Error) {
-        if (error.message.includes('404')) {
-          errorMessage = `Counter ${counterIdNum} không tồn tại trên server`;
-        } else if (error.message.includes('500')) {
-          errorMessage = 'Lỗi server, vui lòng thử lại sau';
-        } else if (error.message.includes('network')) {
-          errorMessage = 'Lỗi kết nối mạng';
-        } else {
-          errorMessage = error.message;
-        }
-      }
-      toast.error(`❌ Lỗi gọi khách: ${errorMessage}`);
+      // Dù lỗi vẫn reload serving tickets để đảm bảo UI đồng bộ
+      await loadAllServingTickets();
     } finally {
-      setActionLoading((prev: Record<number, boolean>) => ({ ...prev, [counterIdNum]: false }));
+      setActionLoading(prev => ({ ...prev, [counterIdNum]: false }));
     }
-  // (Removed stray closing brace)
   };
 
   // Handle stop service - open modal  
@@ -453,6 +407,8 @@ function TestQueuePage() {
       counterName: ''
     });
   };
+
+  // ✅ Test API connectivity
 
   const handleLogout = () => {
     sessionStorage.clear();
