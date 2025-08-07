@@ -675,7 +675,7 @@ export default function KioskMainScreen() {
         )}
 
         {/* Footer màn dọc */}
-        <div className="flex items-center w-full text-gray-600 italic" style={{ position: 'relative', top: '16rem', justifyContent: 'space-around' }}>
+        <div className="flex items-center w-full text-gray-600 italic" style={{ position: 'relative', top: '5rem', justifyContent: 'space-around' }}>
           <p className="text-xl font-extrabold text-red-700 ">{footerConfig.workingHours}</p>
           <p className="text-xl font-extrabold text-red-700 ">{footerConfig.hotline}</p>
         </div>

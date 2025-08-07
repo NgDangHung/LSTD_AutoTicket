@@ -752,13 +752,13 @@ export default function QueueDisplay() {
         className="flex items-center justify-center"
         style={{ backgroundColor: '' }}
       >
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2" style={{marginTop: '-22px', position: 'relative'}}>
           <Image
             src="/images/logo_vang.png" 
             alt="logo_vang" 
             width={240}
             height={240}
-            className="w-60 h-60 object-contain"
+            className="w-48 h-56 object-contain"
             unoptimized
           />
           <div style={{ marginLeft: '15px'  }}>
@@ -776,17 +776,17 @@ export default function QueueDisplay() {
       </div>
       <>
         <div className="flex justify-between items-center" style={{flexDirection: 'row-reverse'}}>
-          <h2 className="text-2xl text-red-700 font-bold italic" style={{position: 'relative',top: '-50px',left: '-180px', fontSize: '2rem'}}>
-            Phường LÀO CAI,  Ngày {new Date().toLocaleDateString('vi-VN')}
+          <h2 className="text-2xl text-red-700 font-bold italic" style={{position: 'relative',top: '-61px',left: '-180px', fontSize: '2rem'}}>
+             <span>{new Date().toLocaleTimeString('vi-VN')}</span> - Phường Lào Cai,  Ngày {new Date().toLocaleDateString('vi-VN')}
           </h2>
         </div>
       </>
 
       {/* Main Display dạng bảng giống mẫu */}
-      <div className="flex-1 p-4 flex flex-col items-center" style={{position: 'relative',top: '-37px'}}>
+      <div className="flex-1 p-4 flex flex-col items-center" style={{position: 'relative',top: '-63px'}}>
         <div className="w-full" style={{maxWidth: 1500}}>
           {/* Header table */}
-          <div className="grid" style={{gridTemplateColumns: '1.5fr 1fr 1fr', fontSize: '2rem'}}>
+          <div className="grid" style={{gridTemplateColumns: '1.6fr 0.8fr 1fr', fontSize: '1.4rem'}}>
             <div className="bg-red-700 text-white text-center py-4  font-bold border border-white border-b-0 rounded-tl-xl uppercase tracking-wide">QUẦY PHỤC VỤ</div>
             <div className="bg-red-700 text-white text-center py-4  font-bold border border-white border-b-0 uppercase tracking-wide">ĐANG PHỤC VỤ</div>
             <div className="bg-red-700 text-white text-center py-4  font-bold border border-white border-b-0 rounded-tr-xl uppercase tracking-wide">ĐANG CHỜ</div>
@@ -795,13 +795,13 @@ export default function QueueDisplay() {
           {processedCounters.map((counter, idx) => {
             const isEven = idx % 2 === 0;
             return (
-              <div key={counter.counter_id} className={`grid border-b border-white last:rounded-b-xl ${isEven ? 'bg-gray-300 bg-opacity-80' : 'bg-pink-100  bg-opacity-80'}`} style={{minHeight: 80, alignItems: 'center', gridTemplateColumns: '1.5fr 1fr 1fr'}}>
+              <div key={counter.counter_id} className={`grid border-b border-white last:rounded-b-xl ${isEven ? 'bg-gray-300 bg-opacity-80' : 'bg-pink-100  bg-opacity-80'}`} style={{minHeight: 80, alignItems: 'center', gridTemplateColumns: '1.6fr 0.8fr 1fr'}}>
                 {/* Quầy phục vụ */}
                 <div className="text-xl font-extrabold text-red-800 px-4 py-3 border-r border-white uppercase" style={{fontSize: '1.1rem'}}>
                   QUẦY {counter.counter_id} | {counter.counter_name}
                 </div>
                 {/* Đang phục vụ - logic cũ: nếu có số thì hiển thị, không thì hiện 'Chưa có số được phục vụ' */}
-                <div className="text-4xl font-extrabold text-center text-red-800 px-4 py-3 border-r border-white"  >
+                <div className="text-5xl font-extrabold text-center text-red-800 px-4 py-3 border-r border-white"  >
                   {counter.serving_number || wsServingTickets[counter.counter_id] ? (
                     <NumberAnimation number={(counter.serving_number || wsServingTickets[counter.counter_id]?.number)?.toString() || '0'} />
                   ) : (
@@ -830,7 +830,7 @@ export default function QueueDisplay() {
       </div>
 
       {/* Footer */}
-      <footer className="bg-white p-4 text-center fixed bottom-0 left-0 w-full z-40">
+      {/* <footer className="bg-white p-4 text-center fixed bottom-0 left-0 w-full z-40">
         <div className="flex justify-center items-center gap-8 text-lg italic text-red-700 font-extrabold"
           style={{fontSize: '2rem'}}
         >
@@ -842,7 +842,7 @@ export default function QueueDisplay() {
             </span>
           )}
         </div>
-      </footer>
+      </footer> */}
 
     </div>
   );
