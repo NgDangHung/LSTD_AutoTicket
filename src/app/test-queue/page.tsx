@@ -1,24 +1,47 @@
 'use client';
 
-import Button from '@/components/shared/Button';
 import React, { useState, useEffect, useCallback } from 'react';
 import StopServiceModal from '@/components/shared/StopServiceModal';
-import FooterConfigModal from '@/components/shared/ChangeFooterModal';
 import AuthGuard from '@/components/shared/AuthGuard';
 import { useRouter } from 'next/navigation';
 import { TTSService } from '@/libs/ttsService';
 import { toast } from 'react-toastify';
 import { type CounterDetail, type CurrentServing, type WaitingTicket } from '@/libs/queueApi';
-import { footersAPI, countersAPI, type Counter, type CallNextResponse, ticketsAPI, type Ticket, rootApi } from '@/libs/rootApi';
+import { countersAPI, footersAPI, type Counter, type CallNextResponse, ticketsAPI, type Ticket, rootApi } from '@/libs/rootApi';
+import Button from '@/components/shared/Button';
+import FooterConfigModal from '@/components/shared/ChangeFooterModal';
+
 
 
 function TestQueuePage() {
-  // Footer config state
+  const router = useRouter();
+  // TTS Service instance
+  const ttsService = TTSService.getInstance();
+  const [ttsQueueStatus, setTtsQueueStatus] = useState<any>({ queueLength: 0, isPlaying: false, upcomingRequests: [] });
+  const [showFooterModal, setShowFooterModal] = useState(false);
+  // ✅ Real-time queue data states
+  const [apiCounters, setApiCounters] = useState<Counter[]>([]);
+  const [queueTickets, setQueueTickets] = useState<Ticket[]>([]);
+  const [countersLoading, setCountersLoading] = useState(true);
+  const [countersError, setCountersError] = useState<string | null>(null);
+  const [wsConnected, setWsConnected] = useState(false);
+  const [connectionType, setConnectionType] = useState<'websocket' | 'offline'>('websocket');
+  // Additional state hooks for UI actions
+  const [actionLoading, setActionLoading] = useState<Record<number, boolean>>({});
+  const [stopServiceModal, setStopServiceModal] = useState<{ isOpen: boolean; counterId: string; counterName: string }>({ isOpen: false, counterId: '', counterName: '' });
+  
+
+  // ✅ NEW: State to track currently serving tickets from API (like QueueDisplay)
+  const [servingTickets, setServingTickets] = useState<Record<number, {
+    number: number;
+    counter_name: string;
+    called_at: string;
+  }>>({});
+
   const [footerConfig, setFooterConfig] = useState<{ workingHours: string; hotline: string }>({
     workingHours: 'Giờ làm việc (Thứ 2 - Thứ 6): 07h30 - 17h00',
     hotline: 'Hotline hỗ trợ: 0916670793',
   });
-  const [showFooterModal, setShowFooterModal] = useState(false);
 
   // Footer config API helpers
   const TEN_XA = 'xavixuyen';
@@ -41,63 +64,6 @@ function TestQueuePage() {
       hotline: data.hotline,
     };
   }
-
-  // Load footer config from API on mount
-  useEffect(() => {
-    fetchFooterConfig()
-      .then(data => {
-        if (data && (data.workingHours || data.hotline)) {
-          setFooterConfig({
-            workingHours: data.workingHours || footerConfig.workingHours,
-            hotline: data.hotline || footerConfig.hotline,
-          });
-        }
-      })
-      .catch(() => {});
-  }, []);
-
-  // Save footer config to API and broadcast event
-  const handleSaveFooterConfig = async (config: { workingHours: string; hotline: string }) => {
-    try {
-      await saveFooterConfig(config);
-      setFooterConfig(config);
-      setShowFooterModal(false);
-      toast.success('Đã lưu cấu hình footer!');
-      // Broadcast event for all tabs
-      window.dispatchEvent(new CustomEvent('footerConfigUpdated', { detail: config }));
-      // BroadcastChannel for cross-tab sync
-      if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
-        const bc = new BroadcastChannel('footerConfig');
-        bc.postMessage('updated');
-        bc.close();
-      }
-    } catch (err) {
-      toast.error('Lỗi khi lưu cấu hình footer!');
-    }
-  };
-  const router = useRouter();
-  // TTS Service instance
-  const ttsService = TTSService.getInstance();
-  const [ttsQueueStatus, setTtsQueueStatus] = useState<any>({ queueLength: 0, isPlaying: false, upcomingRequests: [] });
-
-  // ✅ Real-time queue data states
-  const [apiCounters, setApiCounters] = useState<Counter[]>([]);
-  const [queueTickets, setQueueTickets] = useState<Ticket[]>([]);
-  const [countersLoading, setCountersLoading] = useState(true);
-  const [countersError, setCountersError] = useState<string | null>(null);
-  const [wsConnected, setWsConnected] = useState(false);
-  const [connectionType, setConnectionType] = useState<'websocket' | 'offline'>('websocket');
-  // Additional state hooks for UI actions
-  const [actionLoading, setActionLoading] = useState<Record<number, boolean>>({});
-  const [stopServiceModal, setStopServiceModal] = useState<{ isOpen: boolean; counterId: string; counterName: string }>({ isOpen: false, counterId: '', counterName: '' });
-  
-
-  // ✅ NEW: State to track currently serving tickets from API (like QueueDisplay)
-  const [servingTickets, setServingTickets] = useState<Record<number, {
-    number: number;
-    counter_name: string;
-    called_at: string;
-  }>>({});
 
   // ✅ Load counters with enhanced error handling and debug logging
   const loadCounters = useCallback(async () => {
@@ -163,6 +129,25 @@ function TestQueuePage() {
     }
   }, []);
 
+  const handleSaveFooterConfig = async (config: { workingHours: string; hotline: string }) => {
+    try {
+      await saveFooterConfig(config);
+      setFooterConfig(config);
+      setShowFooterModal(false);
+      toast.success('Đã lưu cấu hình footer!');
+      // Broadcast event for all tabs
+      window.dispatchEvent(new CustomEvent('footerConfigUpdated', { detail: config }));
+      // BroadcastChannel for cross-tab sync
+      if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+        const bc = new BroadcastChannel('footerConfig');
+        bc.postMessage('updated');
+        bc.close();
+      }
+    } catch (err) {
+      toast.error('Lỗi khi lưu cấu hình footer!');
+    }
+  };
+
   // ✅ WebSocket real-time updates implementation
   useEffect(() => {
     let ws: WebSocket | null = null;
@@ -178,7 +163,7 @@ function TestQueuePage() {
       try {
         console.log('🔌 Connecting to production WebSocket for test-queue...');
         
-         ws = new WebSocket('wss://detect-seat.onrender.com/ws/updates');
+        ws = new WebSocket('wss://detect-seat.onrender.com/ws/updates');
         
         ws.onopen = () => {
           console.log('✅ WebSocket connected for test-queue page');
@@ -339,64 +324,19 @@ function TestQueuePage() {
       return;
     }
     const waitingTickets = queueTickets.filter(t => t.counter_id === counterIdNum && t.status === 'waiting');
-    if (waitingTickets.length === 0) {
-      toast.warning(`⚠️ Không có vé nào đang chờ cho ${counter.name}!`);
-      return;
-    }
+    // Không còn vé chờ, vẫn gọi API để clear số đang phục vụ
     try {
-      setActionLoading((prev: Record<number, boolean>) => ({ ...prev, [counterIdNum]: true }));
-      const response = await countersAPI.callNext(counterIdNum);
-      if (response && response.number) {
-        toast.success(
-          <div>
-            <div>✅ Đã gọi vé số <strong>{response.number}</strong></div>
-            <div>📢 Cho {counter.name}</div>
-            <div className="text-xs text-gray-500 mt-1">
-              Thời gian: {new Date().toLocaleTimeString('vi-VN')}
-            </div>
-          </div>
-        );
-        await loadQueueData();
-        await loadAllServingTickets();
-        // Dispatch CustomEvent to notify TV display
-        const ticketCalledEvent = new CustomEvent('ticketCalled', {
-          detail: {
-            event: 'ticket_called',
-            ticket_number: response.number,
-            counter_name: counter.name,
-            counter_id: counterIdNum,
-            timestamp: new Date().toISOString()
-          }
-        });
-        window.dispatchEvent(ticketCalledEvent);
-        window.dispatchEvent(new CustomEvent('queueUpdated', {
-          detail: {
-            source: 'test-queue-call-next',
-            counterId: counterIdNum,
-            ticketNumber: response.number
-          }
-        }));
-      } else {
-        toast.error('❌ API response không hợp lệ - thiếu số vé');
-      }
+      setActionLoading(prev => ({ ...prev, [counterIdNum]: true }));
+      await countersAPI.callNext(counterIdNum);
+      // Luôn reload queue và serving tickets sau khi gọi next
+      await loadQueueData();
+      await loadAllServingTickets();
     } catch (error) {
-      let errorMessage = 'Unknown error';
-      if (error instanceof Error) {
-        if (error.message.includes('404')) {
-          errorMessage = `Counter ${counterIdNum} không tồn tại trên server`;
-        } else if (error.message.includes('500')) {
-          errorMessage = 'Lỗi server, vui lòng thử lại sau';
-        } else if (error.message.includes('network')) {
-          errorMessage = 'Lỗi kết nối mạng';
-        } else {
-          errorMessage = error.message;
-        }
-      }
-      toast.error(`❌ Lỗi gọi khách: ${errorMessage}`);
+      // Dù lỗi vẫn reload serving tickets để đảm bảo UI đồng bộ
+      await loadAllServingTickets();
     } finally {
-      setActionLoading((prev: Record<number, boolean>) => ({ ...prev, [counterIdNum]: false }));
+      setActionLoading(prev => ({ ...prev, [counterIdNum]: false }));
     }
-  // (Removed stray closing brace)
   };
 
   // Handle stop service - open modal  
@@ -468,13 +408,12 @@ function TestQueuePage() {
     });
   };
 
+  // ✅ Test API connectivity
+
   const handleLogout = () => {
     sessionStorage.clear();
     router.push('/login');
   };
-
-  // Modal component for editing footer (đặt ngoài cùng file)
-  
 
   return (
     <div className="min-h-screen bg-gray-100 p-8">
@@ -496,12 +435,12 @@ function TestQueuePage() {
         <div className="bg-white rounded-lg shadow-md p-6 mb-8">
           <h2 className="text-xl font-semibold mb-4 text-gray-800">🎛️ Điều khiển toàn cục</h2>
           <div className="flex gap-4 flex-wrap">
-            <Button
+            <button
               onClick={() => router.push('/admin')}
               className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
             >
               👑 Trang quản trị
-            </Button>
+            </button>
             <button
               onClick={async () => { await loadCounters(); await loadQueueData(); await loadAllServingTickets(); }}
               className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
@@ -516,7 +455,7 @@ function TestQueuePage() {
             </Button>
           </div>
         </div>
-
+        
         {/* Counter Controls Grid - Only show when data is loaded */}
         {!countersLoading && apiCounters.length > 0 && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -666,6 +605,8 @@ function TestQueuePage() {
             </div>
           </div>
         )}
+        
+        
       </div>
 
       {/* Stop Service Modal */}
@@ -677,7 +618,7 @@ function TestQueuePage() {
       />
 
       {/* Footer Config Modal */}
-      {showFooterModal && (
+       {showFooterModal && (
         <FooterConfigModal
           isOpen={showFooterModal}
           onClose={() => setShowFooterModal(false)}
