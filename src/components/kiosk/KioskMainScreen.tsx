@@ -408,7 +408,7 @@ export default function KioskMainScreen() {
                 TRUNG TÂM PHỤC VỤ HÀNH CHÍNH CÔNG 
               </h1>
                <h1 className="text-3xl font-bold text-red-700 " style={{ lineHeight: '1.3' }}>
-                PHƯỜNG HÀ GIANG 1 
+                PHƯỜNG LÀO CAI 1 
               </h1>
               <p className='text-xl font-extrabold text-red-700 mt-3' style={{fontSize: '1.5rem'}}>
                 Hành chính phục vụ 
@@ -433,7 +433,7 @@ export default function KioskMainScreen() {
               TRUNG TÂM PHỤC VỤ HÀNH CHÍNH CÔNG
             </h1>
             <h1 className="text-3xl font-bold text-red-700" style={{ lineHeight: '1.2' }}>
-              PHƯỜNG HÀ GIANG 1
+              PHƯỜNG LÀO CAI
             </h1>
             <p className='text-xl font-extrabold text-red-700 mt-3'>
               Hành chính phục vụ
@@ -466,7 +466,7 @@ export default function KioskMainScreen() {
           <button
             className="rounded-md bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700"
             style={{ lineHeight: '50px', fontSize: '20px' }}
-            onClick={() => handleOpenPopup('https://dichvucong.gov.vn/p/home/dvc-dich-vu-cong-truc-tuyen-ds.html?pCoQuanId=384979')}
+            onClick={() => handleOpenPopup('https://dichvucong.gov.vn/p/home/dvc-dich-vu-cong-truc-tuyen-ds.html?pCoQuanId=426105')}
           >
             Tra Cứu Thủ Tục Hành Chính
           </button>
