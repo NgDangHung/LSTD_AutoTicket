@@ -795,13 +795,13 @@ export default function QueueDisplay() {
           {processedCounters.map((counter, idx) => {
             const isEven = idx % 2 === 0;
             return (
-              <div key={counter.counter_id} className={`grid border-b border-white last:rounded-b-xl ${isEven ? 'bg-gray-300 bg-opacity-80' : 'bg-pink-100  bg-opacity-80'}`} style={{minHeight: 80, alignItems: 'center', gridTemplateColumns: '1.5fr 1fr 1fr'}}>
+              <div key={counter.counter_id} className={`grid border-b border-white last:rounded-b-xl ${isEven ? 'bg-gray-300 bg-opacity-80' : 'bg-pink-100  bg-opacity-80'}`} style={{minHeight: 120, alignItems: 'center', gridTemplateColumns: '1.5fr 1fr 1fr'}}>
                 {/* Quầy phục vụ */}
-                <div className="text-xl font-extrabold text-red-800 px-4 py-3 border-r border-white uppercase" style={{fontSize: '1.1rem'}}>
+                <div className="text-xl font-extrabold text-red-800 px-4 py-3 border-r border-white uppercase" style={{fontSize: '1.5rem'}}>
                   QUẦY {counter.counter_id} | {counter.counter_name}
                 </div>
                 {/* Đang phục vụ - logic cũ: nếu có số thì hiển thị, không thì hiện 'Chưa có số được phục vụ' */}
-                <div className="text-4xl font-extrabold text-center text-red-800 px-4 py-3 border-r border-white"  >
+                <div className="text-5xl font-extrabold text-center text-red-800 px-4 py-3 border-r border-white"  >
                   {counter.serving_number || wsServingTickets[counter.counter_id] ? (
                     <NumberAnimation number={(counter.serving_number || wsServingTickets[counter.counter_id]?.number)?.toString() || '0'} />
                   ) : (
