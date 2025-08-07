@@ -1,4 +1,5 @@
 'use client';
+
 import Image from 'next/image';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import NumberAnimation from './NumberAnimation';
@@ -202,35 +203,6 @@ export default function QueueDisplay() {
     initServingTicketsOnLoad();
   }, [apiCounters]);
 
-   useEffect(() => {
-    if (typeof window === 'undefined' || !('BroadcastChannel' in window)) return;
-    const bc = new BroadcastChannel('servingTicketCleared');
-    bc.onmessage = (event) => {
-      const { counterId } = event.data || {};
-      if (counterId) {
-        fetchServingTicket(counterId).then((serving) => {
-          setWsServingTickets(prev => {
-            if (serving) {
-              return {
-                ...prev,
-                [counterId]: {
-                  number: serving.number,
-                  counter_name: getCounterName(counterId),
-                  called_at: serving.called_at || new Date().toISOString(),
-                  source: 'broadcast-clear'
-                }
-              };
-            } else {
-              const newState = { ...prev };
-              delete newState[counterId];
-              return newState;
-            }
-          });
-        });
-      }
-    };
-    return () => bc.close();
-  }, [apiCounters]);
 
   // ✅ Counter name mapping (API-driven)
   const getCounterName = (counterId: number): string => {
@@ -459,13 +431,25 @@ export default function QueueDisplay() {
     };
     
     // ✅ Handle ticket_called event từ BE documentation - UPDATED for WebSocket state
-    const handleTicketCalledEvent = async (eventData: { event: string, ticket_number: number, counter_name: string }) => {
+    const handleTicketCalledEvent = async (eventData: { event: string, ticket_number: number | null, counter_name: string }) => {
       console.log('📞 Ticket called via WebSocket:', eventData);
       const { ticket_number, counter_name } = eventData;
       const counterId = getCounterIdFromName(counter_name);
       console.log('🎯 Parsed counter ID from counter_name:', counterId, 'for name:', counter_name);
 
-      if (!counterId || !ticket_number) return;
+      if (!counterId) return;
+
+      // Nếu ticket_number là null => clear số đang phục vụ
+      if (ticket_number == null) {
+        setWsServingTickets(prev => {
+          const newState = { ...prev };
+          delete newState[counterId];
+          return newState;
+        });
+        setAnnouncement(null);
+        await fetchAndProcessQueueData(false);
+        return;
+      }
 
       // Key duy nhất cho mỗi quầy - vé
       const key = `${counterId}-${ticket_number}`;
@@ -474,9 +458,6 @@ export default function QueueDisplay() {
         console.log(`⏩ Skip duplicate TTS: ${key}`);
         return;
       }
-
-      // Nếu có currentCounter, chỉ phát cho đúng quầy hiện tại (nếu không có thì bỏ qua check này)
-      // Giả sử currentCounter lấy từ processedCounters hoặc props/context tuỳ bạn, ở đây sẽ bỏ qua check này nếu không có
 
       // Đánh dấu đã phát
       announcedTicketsRef.current.add(key);
@@ -653,66 +634,26 @@ export default function QueueDisplay() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fetchAndProcessQueueData]); // Intentionally limited dependencies
 
-  // TTS status + tự động phát lại lượt 2 sau khi hết lượt đầu
+  // TTS status: chỉ cập nhật trạng thái queue để hiển thị, không tự động phát lại lượt 2 ở đây nữa
   useEffect(() => {
-  if (!ttsService) return;
+    if (!ttsService) return;
 
-  // Lưu trạng thái đã phát lại lượt 2 để không lặp vô hạn
-  const replayedSecondRoundRef = { current: false };
-
-  // Update TTS queue status (safe check for ttsService)
-  const updateTTSStatus = () => {
-    if (ttsService && typeof ttsService.getQueueStatus === 'function') {
-      try {
-        const status = ttsService.getQueueStatus();
-        setTtsQueueStatus(status);
-
-        // Nếu queue rỗng, không còn phát, chưa phát lại lượt 2 thì phát lại lượt 2
-        if (
-          status.queueLength === 0 &&
-          !status.isPlaying &&
-          !replayedSecondRoundRef.current &&
-          announcedTicketsRef.current.size > 0
-        ) {
-          // Phát lại lượt 2 cho tất cả vé đã phát lượt 1, đúng thứ tự, có delay giữa các vé
-          const tickets = Array.from(announcedTicketsRef.current).map(key => {
-            const [counterId, ticketNumber] = key.split('-');
-            return { counterId: Number(counterId), ticketNumber: Number(ticketNumber) };
-          });
-
-          // Hàm phát lại lượt 2 tuần tự, mỗi vé cách nhau 1 giây, và timestamp tăng dần
-          const replaySecondRound = async () => {
-            replayedSecondRoundRef.current = true;
-            let now = Date.now();
-            for (const { counterId, ticketNumber } of tickets) {
-              // Tạo timestamp tăng dần cho từng vé lượt 2
-              now += 1000; // mỗi vé cách nhau 1 giây
-              await ttsService.queueAnnouncement(
-                counterId,
-                ticketNumber,
-                2,
-                'manual',
-                new Date(now).toISOString()
-              );
-              await new Promise(res => setTimeout(res, 1000)); // delay 1s giữa các vé
-            }
-            console.log('🔁 Đã tự động phát lại lượt 2 cho tất cả vé (có delay và timestamp tăng dần)');
-          };
-          replaySecondRound();
+    const updateTTSStatus = () => {
+      if (ttsService && typeof ttsService.getQueueStatus === 'function') {
+        try {
+          const status = ttsService.getQueueStatus();
+          setTtsQueueStatus(status);
+        } catch (error) {
+          console.warn('⚠️ Failed to get TTS queue status:', error);
         }
-      } catch (error) {
-        console.warn('⚠️ Failed to get TTS queue status:', error);
       }
-    }
-  };
+    };
 
-  // TTS status update interval - only when ttsService is available
-  const ttsInterval = setInterval(updateTTSStatus, 1000);
-
-  return () => {
-    clearInterval(ttsInterval);
-  };
-}, [ttsService]);
+    const ttsInterval = setInterval(updateTTSStatus, 1000);
+    return () => {
+      clearInterval(ttsInterval);
+    };
+  }, [ttsService]);
 
   // ✅ Calculate stats from processed data
   const totalServing = processedCounters.filter(c => c.serving_number !== null).length;
@@ -748,6 +689,9 @@ export default function QueueDisplay() {
       </div>
     );
   }
+
+
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-900 to-purple-900 text-white"
@@ -833,7 +777,7 @@ export default function QueueDisplay() {
       <>
         <div className="flex justify-between items-center" style={{flexDirection: 'row-reverse'}}>
           <h2 className="text-2xl text-red-700 font-bold italic" style={{position: 'relative',top: '-50px',left: '-180px', fontSize: '2rem'}}>
-            Vị Xuyên - Ngày {new Date().toLocaleDateString('vi-VN')}
+            VỊ XUYÊN,  Ngày {new Date().toLocaleDateString('vi-VN')}
           </h2>
         </div>
       </>
@@ -842,7 +786,7 @@ export default function QueueDisplay() {
       <div className="flex-1 p-4 flex flex-col items-center" style={{position: 'relative',top: '-37px'}}>
         <div className="w-full" style={{maxWidth: 1500}}>
           {/* Header table */}
-          <div className="grid" style={{gridTemplateColumns: '1.5fr 1fr 1fr', fontSize: '1.7rem'}}>
+          <div className="grid" style={{gridTemplateColumns: '1.5fr 1fr 1fr', fontSize: '2rem'}}>
             <div className="bg-red-700 text-white text-center py-4  font-bold border border-white border-b-0 rounded-tl-xl uppercase tracking-wide">QUẦY PHỤC VỤ</div>
             <div className="bg-red-700 text-white text-center py-4  font-bold border border-white border-b-0 uppercase tracking-wide">ĐANG PHỤC VỤ</div>
             <div className="bg-red-700 text-white text-center py-4  font-bold border border-white border-b-0 rounded-tr-xl uppercase tracking-wide">ĐANG CHỜ</div>
@@ -853,11 +797,11 @@ export default function QueueDisplay() {
             return (
               <div key={counter.counter_id} className={`grid border-b border-white last:rounded-b-xl ${isEven ? 'bg-gray-300 bg-opacity-80' : 'bg-pink-100  bg-opacity-80'}`} style={{minHeight: 80, alignItems: 'center', gridTemplateColumns: '1.5fr 1fr 1fr'}}>
                 {/* Quầy phục vụ */}
-                <div className="text-xl font-extrabold text-red-800 px-4 py-3 border-r border-white uppercase" style={{fontSize: '1.3rem'}}>
+                <div className="text-xl font-extrabold text-red-800 px-4 py-3 border-r border-white uppercase" style={{fontSize: '1.1rem'}}>
                   QUẦY {counter.counter_id} | {counter.counter_name}
                 </div>
                 {/* Đang phục vụ - logic cũ: nếu có số thì hiển thị, không thì hiện 'Chưa có số được phục vụ' */}
-                <div className="text-5xl font-extrabold text-center text-red-800 px-4 py-3 border-r border-white"  >
+                <div className="text-4xl font-extrabold text-center text-red-800 px-4 py-3 border-r border-white"  >
                   {counter.serving_number || wsServingTickets[counter.counter_id] ? (
                     <NumberAnimation number={(counter.serving_number || wsServingTickets[counter.counter_id]?.number)?.toString() || '0'} />
                   ) : (
@@ -865,7 +809,7 @@ export default function QueueDisplay() {
                   )}
                 </div>
                 {/* Đang chờ */}
-                <div className="text-3xl font-extrabold text-center text-red-800 px-4 py-3">
+                <div className="text-4xl font-extrabold text-center text-red-800 px-4 py-3">
                   {counter.waiting_numbers.length > 0 ? (
                     <>
                       {counter.waiting_numbers.slice(0, 6).map((number, index) => (
@@ -899,6 +843,7 @@ export default function QueueDisplay() {
           )}
         </div>
       </footer>
+
     </div>
   );
 }
