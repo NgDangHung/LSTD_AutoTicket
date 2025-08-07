@@ -655,61 +655,22 @@ export default function QueueDisplay() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fetchAndProcessQueueData]); // Intentionally limited dependencies
 
-  // TTS status + tự động phát lại lượt 2 sau khi hết lượt đầu
-  // Đặt replayedSecondRoundRef ngoài useEffect để không bị reset mỗi lần render
-  const replayedSecondRoundRef = useRef(false);
+  // TTS status: chỉ cập nhật trạng thái queue để hiển thị, không tự động phát lại lượt 2 ở đây nữa
   useEffect(() => {
     if (!ttsService) return;
 
-    // Update TTS queue status (safe check for ttsService)
     const updateTTSStatus = () => {
       if (ttsService && typeof ttsService.getQueueStatus === 'function') {
         try {
           const status = ttsService.getQueueStatus();
           setTtsQueueStatus(status);
-
-          // Nếu queue rỗng, không còn phát, chưa phát lại lượt 2 thì phát lại lượt 2
-          if (
-            status.queueLength === 0 &&
-            !status.isPlaying &&
-            !replayedSecondRoundRef.current &&
-            announcedTicketsRef.current.size > 0
-          ) {
-            // Phát lại lượt 2 cho tất cả vé đã phát lượt 1, đúng thứ tự, có delay giữa các vé
-            const tickets = Array.from(announcedTicketsRef.current).map(key => {
-              const [counterId, ticketNumber] = key.split('-');
-              return { counterId: Number(counterId), ticketNumber: Number(ticketNumber) };
-            });
-
-            // Hàm phát lại lượt 2 tuần tự, mỗi vé cách nhau 1 giây, và timestamp tăng dần
-            const replaySecondRound = async () => {
-              replayedSecondRoundRef.current = true;
-              let now = Date.now();
-              for (const { counterId, ticketNumber } of tickets) {
-                // Tạo timestamp tăng dần cho từng vé lượt 2
-                now += 1000; // mỗi vé cách nhau 1 giây
-                await ttsService.queueAnnouncement(
-                  counterId,
-                  ticketNumber,
-                  2,
-                  'manual',
-                  new Date(now).toISOString()
-                );
-                await new Promise(res => setTimeout(res, 1000)); // delay 1s giữa các vé
-              }
-              console.log('🔁 Đã tự động phát lại lượt 2 cho tất cả vé (có delay và timestamp tăng dần)');
-            };
-            replaySecondRound();
-          }
         } catch (error) {
           console.warn('⚠️ Failed to get TTS queue status:', error);
         }
       }
     };
 
-    // TTS status update interval - only when ttsService is available
     const ttsInterval = setInterval(updateTTSStatus, 1000);
-
     return () => {
       clearInterval(ttsInterval);
     };
