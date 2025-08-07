@@ -399,7 +399,7 @@ export default function QueueDisplay() {
           try {
             const eventData = JSON.parse(event.data);
             console.log('📡 WebSocket event received:', eventData);
-            
+            if (eventData.tenxa !== 'phuonglaocai') return
             // ✅ Handle real events từ BE documentation
             switch (eventData.event) {
               case 'new_ticket':
