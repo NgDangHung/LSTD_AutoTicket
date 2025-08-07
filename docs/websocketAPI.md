@@ -15,7 +15,7 @@ json
   "event": "new_ticket",
   "ticket_number": 20,
   "counter_id": 1
-  "tenxa": phuonghagiang1
+  "tenxa": phuonglaocai
 }
 📌 Ý nghĩa:
 •	Một vé mới được tạo từ kiosk
@@ -28,7 +28,7 @@ Json
   "event": "ticket_called",
   "ticket_number": 20,
   "counter_name": "Văn phòng"
-  "tenxa": phuonghagiang1
+  "tenxa": phuonglaocai
 }
 📌 Ý nghĩa:
 •	Hệ thống gọi khách có số vé 20 tới quầy

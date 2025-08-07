@@ -51,7 +51,7 @@ export default function KioskMainScreen() {
     let ignore = false;
     async function fetchFooter() {
       try {
-        const data = await footersAPI.getFooter('phuonghagiang1');
+        const data = await footersAPI.getFooter('phuonglaocai');
         if (!ignore && data) {
           setFooterConfig({
             workingHours: data.work_time || DEFAULT_FOOTER.workingHours,
@@ -67,7 +67,7 @@ export default function KioskMainScreen() {
     let bc: BroadcastChannel | null = null;
     const handler = async () => {
       try {
-        const data = await footersAPI.getFooter('phuonghagiang1');
+        const data = await footersAPI.getFooter('phuonglaocai');
         if (!ignore && data) {
           setFooterConfig({
             workingHours: data.work_time || DEFAULT_FOOTER.workingHours,

@@ -48,7 +48,7 @@ export default function QueueDisplay() {
   // API lấy số đang phục vụ cho từng quầy
   const fetchServingTicket = async (counterId: number): Promise<RealTicket | null> => {
     try {
-      const response = await rootApi.get(`/tickets/called`, { params: { counter_id: counterId, tenxa: 'phuonghagiang1' } });
+      const response = await rootApi.get(`/tickets/called`, { params: { counter_id: counterId, tenxa: 'phuonglaocai' } });
       const tickets: RealTicket[] = response.data;
       return tickets.length > 0 ? tickets[0] : null;
     } catch (error) {
@@ -104,7 +104,7 @@ export default function QueueDisplay() {
     let ignore = false;
     async function fetchFooter() {
       try {
-        const data = await footersAPI.getFooter('phuonghagiang1');
+        const data = await footersAPI.getFooter('phuonglaocai');
         if (!ignore && data && (data.work_time || data.hotline)) {
           setFooterConfig({
             workingHours: data.work_time || DEFAULT_FOOTER.workingHours,
@@ -120,7 +120,7 @@ export default function QueueDisplay() {
     let bc: BroadcastChannel | null = null;
     const handler = async () => {
       try {
-        const data = await footersAPI.getFooter('phuonghagiang1');
+        const data = await footersAPI.getFooter('phuonglaocai');
         if (!ignore && data && (data.work_time || data.hotline)) {
           setFooterConfig({
             workingHours: data.work_time || footerConfig.workingHours,
@@ -167,7 +167,7 @@ export default function QueueDisplay() {
   useEffect(() => {
     const fetchCounters = async () => {
       try {
-        const response = await rootApi.get('/counters/', { params: { tenxa: 'phuonghagiang1' } });
+        const response = await rootApi.get('/counters/', { params: { tenxa: 'phuonglaocai' } });
         setApiCounters(response.data);
         console.log('✅ Counters from API:', response.data);
       } catch (error) {
@@ -253,7 +253,7 @@ export default function QueueDisplay() {
       console.log('🔄 Fetching all tickets from real API...');
       
       // GET /tickets/waiting - get all tickets (waiting + called + done)
-      const response = await rootApi.get('/tickets/waiting', { params: { tenxa: 'phuonghagiang1' } });
+      const response = await rootApi.get('/tickets/waiting', { params: { tenxa: 'phuonglaocai' } });
       const tickets: RealTicket[] = response.data;
       
       console.log('📡 Real API Response:', tickets);
@@ -275,7 +275,7 @@ export default function QueueDisplay() {
       
       for (let counterId = 1; counterId <= 4; counterId++) {
         try {
-          const response = await rootApi.get('/tickets/waiting', { params: { counter_id: counterId, tenxa: 'phuonghagiang1' } });
+          const response = await rootApi.get('/tickets/waiting', { params: { counter_id: counterId, tenxa: 'phuonglaocai' } });
           allTickets.push(...response.data);
         } catch (counterError) {
           console.warn(`⚠️ Failed to fetch tickets for counter ${counterId}:`, counterError);

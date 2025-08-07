@@ -73,7 +73,7 @@ function OfficerPage() {
   const fetchServingTicket = useCallback(async (counterId: number) => {
     try {
       const response = await rootApi.get('/tickets/called', {
-        params: { counter_id: counterId, tenxa: 'phuonghagiang1' },
+        params: { counter_id: counterId, tenxa: 'phuonglaocai' },
       });
       const tickets = response.data;
       if (tickets && tickets.length > 0) {
@@ -135,7 +135,7 @@ function OfficerPage() {
 
       const response = await rootApi.get('/auths/me', {
         headers: { Authorization: `Bearer ${authToken}` },
-        params: { tenxa: 'phuonghagiang1' },
+        params: { tenxa: 'phuonglaocai' },
       });
 
       const userData = response.data;
@@ -185,7 +185,7 @@ function OfficerPage() {
   const loadQueueData = useCallback(async () => {
     try {
       const response = await rootApi.get('/tickets/waiting', {
-        params: { tenxa: 'phuonghagiang1' },
+        params: { tenxa: 'phuonglaocai' },
       });
       const waitingTickets: Ticket[] = response.data.map((ticket: any) => ({
         id: ticket.id,
