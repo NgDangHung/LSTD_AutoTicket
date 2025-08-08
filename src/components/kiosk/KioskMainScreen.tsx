@@ -1,6 +1,6 @@
 'use client';
 import Head from 'next/head';
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import Image from 'next/image';
 import { AudioLines } from 'lucide-react';
 import { toast } from 'react-toastify';
@@ -379,6 +379,23 @@ export default function KioskMainScreen() {
     // Keyboard will only close when user explicitly closes it
   };
 
+    // Ref cho QR popup
+  const qrRef = useRef<HTMLDivElement>(null);
+
+  // Đóng QR khi click ra ngoài (đặt sau khi popupOpen/setPopupOpen đã được khai báo)
+  useEffect(() => {
+    if (!popupOpen) return;
+    function handleClickOutside(event: MouseEvent) {
+      if (qrRef.current && !qrRef.current.contains(event.target as Node)) {
+        setPopupOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [popupOpen]);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 p-8">
       
@@ -447,29 +464,64 @@ export default function KioskMainScreen() {
         </div>
 
         {/* Navigation Bar */}
-        <div className="flex space-x-4 mb-16" style={{marginLeft: '44px', minHeight: '50px'}}>
+        <div className="flex space-x-4 mb-16" style={{minHeight: '50px', marginLeft: '-16px'}}>
           <button
             aria-current="page"
-            className="rounded-md bg-red-600 px-3 py-2 text-sm font-medium hover:bg-red-700 text-white"
-            style={{ lineHeight: '50px', fontSize: '20px' }}
+            className="rounded-md bg-red-600  py-2 text-sm font-medium hover:bg-red-700 text-white"
+            style={{ lineHeight: '50px', fontSize: '20px',  minWidth: '250px'}}
             onClick={() => handleOpenPopup('https://dichvucong.gov.vn/p/home/dvc-trang-chu.html')}
           >
             Dịch Vụ Công Quốc Gia
           </button>
           <button
-            className="rounded-md bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700"
-            style={{ lineHeight: '50px', fontSize: '20px'}}
+            className="rounded-md bg-red-600  py-2 text-sm font-medium text-white hover:bg-red-700"
+            style={{ lineHeight: '50px', fontSize: '20px',  minWidth: '250px'}}
             onClick={() => handleOpenPopup('https://dichvucong.gov.vn/p/home/dvc-thanh-toan-phi-le-phi-ho-so.html')}
           >
             Thanh Toán Trực Tuyến
           </button>
           <button
-            className="rounded-md bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700"
-            style={{ lineHeight: '50px', fontSize: '20px' }}
+            className="rounded-md bg-red-600 py-2 text-sm font-medium text-white hover:bg-red-700"
+            style={{ lineHeight: '50px', fontSize: '20px', minWidth: '300px' }}
             onClick={() => handleOpenPopup('https://dichvucong.gov.vn/p/home/dvc-dich-vu-cong-truc-tuyen-ds.html?pCoQuanId=426105')}
           >
             Tra Cứu Thủ Tục Hành Chính
           </button>
+          <div className="relative flex flex-col items-center">
+            <button
+              className={`rounded-md bg-red-600 py-2 text-sm font-medium text-white hover:bg-red-700 transition-all ${popupOpen ? 'ring-4 ring-blue-400 scale-105' : ''}`}
+              style={{ lineHeight: '50px', fontSize: '20px', minWidth: '200px', zIndex: 1 }}
+              onClick={() => setPopupOpen((prev) => !prev)}
+            >
+              Gửi file vào kiosk
+            </button>
+            {/* QR code hiển thị nổi, đè lên các thành phần bên dưới */}
+          {popupOpen && (
+            <div
+              ref={qrRef}
+              className="flex flex-col items-center animate-fade-in"
+              style={{
+                position: 'absolute',
+                top: '110%',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                zIndex: 1000,
+                background: 'rgba(255,255,255,0.98)',
+                borderRadius: 16,
+                boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
+                padding: 16,
+                minWidth: 220
+              }}
+            >
+              <img
+                src="/images/QR_gui_file_vao_kiosk.jpg"
+                alt="QR gửi file vào kiosk"
+                style={{ width: 180, height: 180, borderRadius: 12, background: '#fff' }}
+              />
+              <span className="mt-2 text-base font-semibold text-red-700">Quét mã QR để gửi file vào kiosk</span>
+            </div>
+          )}
+          </div>
         </div>
 
         {/* Search Bar */}
@@ -522,7 +574,7 @@ export default function KioskMainScreen() {
             </button>
             {/* Voice Status Indicator */}
             {isVoiceActive && (
-              <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-red-500 text-white px-3 py-1 rounded-full text-sm font-medium animate-pulse">
+              <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-red-500 text-white  py-1 rounded-full text-sm font-medium animate-pulse">
                 🎤 {voiceStopTrigger === 'enter-key' ? 'Đang nghe... (Enter để dừng)' : 'Bấm ra ngoài để dừng ... '}
               </div>
             )}
