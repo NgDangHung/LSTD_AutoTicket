@@ -513,12 +513,13 @@ export default function KioskMainScreen() {
                 minWidth: 220
               }}
             >
-              <img
+              <Image
                 src="/images/QR_gui_file_vao_kiosk.jpg"
                 alt="QR gửi file vào kiosk"
                 style={{ width: 180, height: 180, borderRadius: 12, background: '#fff' }}
+                unoptimized
               />
-              <span className="mt-2 text-base font-semibold text-red-700">Quét mã QR để gửi file vào kiosk</span>
+              <span className="mt-2 text-base font-semibold text-red-700">Quét mã QR để gửi file</span>
             </div>
           )}
           </div>
