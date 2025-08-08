@@ -127,23 +127,17 @@ export default function KioskMainScreen() {
   // Load counters from API on component mount
   useEffect(() => {
     const loadCounters = async () => {
-      // Prevent multiple calls
       if (hasLoadedCounters || countersLoading) {
         return;
       }
-
       try {
         setCountersLoading(true);
         setCountersError(null);
-        
         const countersData = await countersAPI.getCounters();
         setApiCounters(countersData);
-        setHasLoadedCounters(true); // Mark as loaded
+        setHasLoadedCounters(true);
       } catch (error) {
-        // ...existing code...
         setCountersError('Failed to load counters from API');
-        
-        // Fallback to legacy data
         const fallbackCounters: Counter[] = legacyCounters.map(counter => ({
           id: counter.id,
           name: counter.name,
@@ -151,15 +145,68 @@ export default function KioskMainScreen() {
           status: 'active' as const
         }));
         setApiCounters(fallbackCounters);
-        setHasLoadedCounters(true); // Mark as loaded even on error
-        
+        setHasLoadedCounters(true);
         toast.warn('Using offline counter data');
       } finally {
         setCountersLoading(false);
       }
     };
-
     loadCounters();
+
+    // --- WebSocket thuần lắng nghe event 'upsert_counter' ---
+    let ws: WebSocket | null = null;
+    if (typeof window !== 'undefined') {
+      ws = new window.WebSocket('wss://detect-seat.onrender.com/ws/updates');
+      ws.onopen = () => {
+        // Kết nối thành công
+        console.log('WebSocket connected for counter updates');
+      };
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          if ((['upsert_counter', 'delete_counter'].includes(data.event)) && data.tenxa === 'phuonglaocai') {
+            console.log('Received upsert_counter event:', data);
+            // Luôn gọi lại API và cập nhật state, không phụ thuộc vào flag
+            (async () => {
+              try {
+                setCountersLoading(true);
+                setCountersError(null);
+                const countersData = await countersAPI.getCounters();
+                setApiCounters(countersData);
+                setHasLoadedCounters(true);
+              } catch (error) {
+                setCountersError('Failed to load counters from API');
+                const fallbackCounters: Counter[] = legacyCounters.map(counter => ({
+                  id: counter.id,
+                  name: counter.name,
+                  is_active: true,
+                  status: 'active' as const
+                }));
+                setApiCounters(fallbackCounters);
+                setHasLoadedCounters(true);
+                toast.warn('Using offline counter data');
+              } finally {
+                setCountersLoading(false);
+              }
+            })();
+          }
+        } catch (err) {
+          // Ignore parse error
+        }
+      };
+      ws.onerror = () => {
+        // console.warn('WebSocket error for counter updates');
+      };
+      ws.onclose = () => {
+        // console.log('WebSocket closed for counter updates');
+      };
+    }
+    return () => {
+      if (ws) {
+        ws.close();
+        ws = null;
+      }
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Only run once on mount
 
@@ -798,4 +845,4 @@ export default function KioskMainScreen() {
 
     </div>
   );
-} 
+}

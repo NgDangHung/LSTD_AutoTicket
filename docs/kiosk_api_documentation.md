@@ -1,4 +1,3 @@
-
 # 📘 Tài liệu API – Kiosk API
 
 **Base URL:** `/app`
@@ -74,24 +73,18 @@
 ---
 
 ## 📋 Procedures
-
 ---
-
 ### 🔍 [GET] `/procedures/` – Lấy danh sách thủ tục
-
 - **Query Params:**
-  - `search` (string, optional)
 
 - **Response:**
 ```json
-[
   {
     "id": 1,
     "name": "Đăng ký xe",
     "field_id": 2
   }
 ]
-```
 
 ---
 
@@ -117,6 +110,85 @@
   }
 ]
 ```
+## 🧾 Counters
+
+### 🗑️ [DELETE] `/counters/delete-counter` – Xóa quầy phục vụ
+
+- **Query Params:**
+  - `tenxa` (string, required): Tên xã/khu vực (ví dụ: "phuonglaocai")
+  - `counter_id` (integer, required): ID quầy cần xóa
+
+- **Response:**
+```json
+"string" // Thông báo kết quả xóa (thường là "Deleted successfully" hoặc lỗi)
+```
+
+- **Validation Error (422):**
+```json
+{
+  "detail": [
+    {
+      "loc": ["string", 0],
+      "msg": "string",
+      "type": "string"
+    }
+  ]
+}
+```
+
+- **Ý nghĩa:**
+  - Dùng để xóa một quầy phục vụ khỏi hệ thống.
+  - Cần truyền đúng `counter_id` và `tenxa`.
+  - Trả về thông báo kết quả xóa hoặc lỗi nếu không thành công.
+
+
+---
+
+### 🆕 [POST] `/counters/upsert-counter` – Tạo mới hoặc cập nhật tên quầy
+
+- **Query Params:**
+  - `tenxa` (string, required): Tên xã/khu vực (ví dụ: "phuonglaocai")
+
+- **Request Body (application/json):**
+```json
+{
+  "counter_id": 0,      // ID quầy (nếu cập nhật), hoặc 0 để tạo mới
+  "name": "string"     // Tên quầy mới
+}
+```
+
+- **Response:**
+```json
+{
+  "id": 0,
+  "name": "string",
+  "status": "active"
+}
+```
+
+- **Validation Error (422):**
+```json
+{
+  "detail": [
+    {
+      "loc": ["string", 0],
+      "msg": "string",
+      "type": "string"
+    }
+  ]
+}
+```
+
+- **Ý nghĩa:**
+  - Dùng để tạo mới hoặc cập nhật tên quầy phục vụ.
+  - Nếu truyền `counter_id` đã tồn tại, API sẽ cập nhật tên quầy đó.
+  - Nếu truyền `counter_id` là 0 hoặc không tồn tại, API sẽ tạo mới quầy với tên tương ứng.
+  - Trả về thông tin quầy sau khi cập nhật/tạo mới.
+
+---
+
+### ⏭️ [POST] `/counters/{counter_id}/call-next` – Gọi lượt tiếp theo
+
 
 ---
 
@@ -282,6 +354,7 @@
   "status": "active"
 }
 ```
+
 
 ---
 

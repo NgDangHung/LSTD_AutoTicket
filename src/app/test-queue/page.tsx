@@ -10,6 +10,7 @@ import { type CounterDetail, type CurrentServing, type WaitingTicket } from '@/l
 import { countersAPI, footersAPI, type Counter, type CallNextResponse, ticketsAPI, type Ticket, rootApi } from '@/libs/rootApi';
 import Button from '@/components/shared/Button';
 import FooterConfigModal from '@/components/shared/ChangeFooterModal';
+import CounterManagement from '@/components/admin/CounterManagement';
 
 
 
@@ -19,6 +20,7 @@ function TestQueuePage() {
   const ttsService = TTSService.getInstance();
   const [ttsQueueStatus, setTtsQueueStatus] = useState<any>({ queueLength: 0, isPlaying: false, upcomingRequests: [] });
   const [showFooterModal, setShowFooterModal] = useState(false);
+  const [showCounterManagement, setShowCounterManagement] = useState(false);
   // ✅ Real-time queue data states
   const [apiCounters, setApiCounters] = useState<Counter[]>([]);
   const [queueTickets, setQueueTickets] = useState<Ticket[]>([]);
@@ -453,6 +455,12 @@ function TestQueuePage() {
             >
               ⚙️ Chỉnh sửa chân trang
             </Button>
+            <Button
+              className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              onClick={() => setShowCounterManagement(true)}
+            >
+              ⚙️ Chỉnh sửa quầy
+            </Button>
           </div>
         </div>
         
@@ -626,6 +634,21 @@ function TestQueuePage() {
           initialConfig={footerConfig}
         />
       )}
+
+      {/* Counter Management Modal/Panel */}
+        {showCounterManagement && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40"
+            onMouseDown={e => {
+              // Chỉ ẩn modal nếu click vào overlay
+              if (e.target === e.currentTarget) setShowCounterManagement(false);
+            }}
+          >
+            <div className="mx-auto p-6 bg-white rounded-lg shadow w-[1100px]" onMouseDown={e => e.stopPropagation()}>
+              <CounterManagement />
+            </div>
+          </div>
+        )}
 
     </div>
   );

@@ -2,7 +2,7 @@
  * 🏛️ Official Backend API Endpoints
  * Consolidated from official BE documentation
  * 
- * Base URL: https://detect-seat.onrender.com/app
+ * Base URL: https://lstd.onrender.com/app
  * 
  * This file contains ALL official API endpoints provided by the backend
  * organized by category as documented in the official API specification.
@@ -14,7 +14,7 @@ import axios from 'axios';
 // 🔧 Base Configuration
 // ===================================
 
-const BASE_URL = 'https://detect-seat.onrender.com/app';
+const BASE_URL = 'https://lstd.onrender.com/app';
 
 // Create axios instance with base configuration
 const rootApi = axios.create({
@@ -405,6 +405,22 @@ export const countersAPI = {
    */
   resumeCounter: (counterId: number): Promise<ResumeCounterResponse> => {
     return rootApi.put(`/counters/${counterId}/resume`, null, { params: { tenxa: 'phuonglaocai' } }).then(response => response.data);
+  },
+
+  /**
+   * 🆕 [POST] /counters/upsert-counter
+   * Tạo mới hoặc cập nhật tên quầy
+   */
+  upsertCounter: (data: { counter_id: number; name: string }): Promise<{ id: number; name: string; status: string }> => {
+    return rootApi.post('/counters/upsert-counter', data, { params: { tenxa: 'phuonglaocai' } }).then(res => res.data);
+  },
+
+  /**
+   * 🗑️ [DELETE] /counters/delete-counter
+   * Xóa quầy phục vụ
+   */
+  deleteCounter: (counter_id: number): Promise<string> => {
+    return rootApi.delete('/counters/delete-counter', { params: { tenxa: 'phuonglaocai', counter_id } }).then(res => res.data);
   },
 };
 
