@@ -561,7 +561,7 @@ export default function KioskMainScreen() {
               }}
             >
               <Image
-                src="/images/QR_LC_gui_file_kiosk.jpg"
+                src="/images/QR_Sapa_gui_file_kiosk.jpg"
                 alt="QR gửi file vào kiosk"
                 width={180}
                 height={180}  
