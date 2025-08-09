@@ -455,12 +455,12 @@ function TestQueuePage() {
             >
               ⚙️ Chỉnh sửa chân trang
             </Button>
-            <Button
+            {/* <Button
               className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
               onClick={() => setShowCounterManagement(true)}
             >
               ⚙️ Chỉnh sửa quầy
-            </Button>
+            </Button> */}
           </div>
         </div>
         
@@ -636,19 +636,19 @@ function TestQueuePage() {
       )}
 
       {/* Counter Management Modal/Panel */}
-        {showCounterManagement && (
-          <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40"
-            onMouseDown={e => {
-              // Chỉ ẩn modal nếu click vào overlay
-              if (e.target === e.currentTarget) setShowCounterManagement(false);
-            }}
-          >
-            <div className="mx-auto p-6 bg-white rounded-lg shadow w-[1100px]" onMouseDown={e => e.stopPropagation()}>
-              <CounterManagement />
-            </div>
+      {/* {showCounterManagement && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40"
+          onMouseDown={e => {
+            // Chỉ ẩn modal nếu click vào overlay
+            if (e.target === e.currentTarget) setShowCounterManagement(false);
+          }}
+        >
+          <div className="mx-auto p-6 bg-white rounded-lg shadow w-[1100px]" onMouseDown={e => e.stopPropagation()}>
+            <CounterManagement />
           </div>
-        )}
+        </div>
+      )} */}
 
     </div>
   );
