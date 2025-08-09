@@ -111,7 +111,7 @@ export default function CounterManagement() {
           Thêm quầy
         </button>
       </div>
-      <div className="max-h-[420px] overflow-y-auto w-full">
+      <div className="max-h-[420px] overflow-y-auto w-full border border-gray-300 rounded-xl">
         <table className="w-full min-w-[700px] border border-gray-300 rounded-xl shadow-lg overflow-hidden">
           <thead>
             <tr className="bg-gradient-to-r from-blue-700 to-blue-500 text-white text-lg font-bold border-b border-gray-300">
@@ -138,10 +138,18 @@ export default function CounterManagement() {
                   {editId === counter.id ? (
                     <input
                       type="text"
-                      className="border border-blue-400 rounded-lg px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-blue-400"
+                      className=" rounded-lg px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-blue-400"
                       value={editName}
-                      style={{ width: '100%' }}
+                      style={{ 
+                        width: '100%',
+                        borderRadius: '8px', 
+                        // border: '1px solid rgb(220 38 38)', 
+                        color: 'black', 
+                        backgroundColor:'#f8f8f8ff',
+                        lineHeight: '24px',
+                      }}
                       onChange={e => setEditName(e.target.value)}
+                      autoFocus
                     />
                   ) : (
                     <span className="text-black font-medium text-base">{counter.name}</span>
