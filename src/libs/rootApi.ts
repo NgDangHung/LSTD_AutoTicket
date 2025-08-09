@@ -171,6 +171,34 @@ export const ttsAPI = {
     const audioBlob = await response.blob();
     return new Blob([audioBlob], { type: 'audio/mpeg' });
   },
+
+  /**
+   * 🏢 [POST] /tts/generate_counter_audio
+   * Generate audio for counter name (for TV/kiosk announcement)
+   * Request: { counter_id: number, name: string }, query param: tenxa
+   * Returns: string (URL or message)
+   */
+  generateCounterAudio: async (request: { counter_id: number; name: string }): Promise<string> => {
+    const response = await fetch(`${BASE_URL}/tts/generate_counter_audio?tenxa=phuonglaocai`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify(request)
+    });
+    if (!response.ok) {
+      if (response.status === 422) {
+        const errorData = await response.json();
+        throw new Error(`Validation error: ${errorData.detail || 'Invalid data'}`);
+      }
+      throw new Error(`generate_counter_audio API failed: ${response.statusText}`);
+    }
+    const result = await response.json();
+    return result;
+  },
+
+  
 };
 
 // ===================================

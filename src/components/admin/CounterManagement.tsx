@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
-import { countersAPI } from '@/libs/rootApi';
+import { countersAPI, ttsAPI } from '@/libs/rootApi';
+import CreateCounterModal from './CreateCounterModal';
 
 interface Counter {
   id: number;
@@ -12,8 +13,10 @@ export default function CounterManagement() {
   const [counters, setCounters] = useState<Counter[]>([]);
   const [loading, setLoading] = useState(false);
   const [newCounterName, setNewCounterName] = useState('');
+  const [newCounterFullName, setNewCounterFullName] = useState('');
   const [editId, setEditId] = useState<number | null>(null);
   const [editName, setEditName] = useState('');
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   // Load counters
   useEffect(() => {
@@ -31,13 +34,27 @@ export default function CounterManagement() {
       setLoading(false);
     }
   };
+  
+  // const handleCreateCounterAudio = async (fullName: string) => {
+  //   if (!fullName.trim()) return;
+  //   setLoading(true);
+  //   try {
+  //     await ttsAPI.generateCounterAudio({ name: fullName });
+  //     toast.success('Đã tạo file âm thanh cho quầy');
+  //     setNewCounterFullName('');
+  //   } catch (err) {
+  //     toast.error('Lỗi khi tạo file âm thanh');
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // }
 
   // Add or update counter
-  const handleUpsert = async () => {
-    if (!newCounterName.trim()) return;
+  const handleUpsert = async (name: string) => {
+    if (!name.trim()) return;
     setLoading(true);
     try {
-      await countersAPI.upsertCounter({ counter_id: 0, name: newCounterName });
+      await countersAPI.upsertCounter({ counter_id: 0, name });
       toast.success('Đã thêm quầy mới');
       setNewCounterName('');
       fetchCounters();
@@ -46,7 +63,7 @@ export default function CounterManagement() {
     } finally {
       setLoading(false);
     }
-  };
+  }
 
   // Edit counter
   const handleEdit = (counter: Counter) => {
@@ -89,23 +106,9 @@ export default function CounterManagement() {
     <>
       <h2 className="text-2xl font-bold mb-4 text-black">Quản lý Quầy</h2>
       <div className="mb-6 flex gap-2">
-        <input
-          type="text"
-          className="border rounded px-3 py-2 flex-1"
-          placeholder="Tên quầy mới"
-          value={newCounterName}
-          onChange={e => setNewCounterName(e.target.value)}
-          style={{ 
-            borderRadius: '8px', 
-            border: '1px solid rgb(220 38 38)', 
-            color: 'black', 
-            backgroundColor:'#f8f8f8ff',
-            lineHeight: '36px',
-            }}
-        />
         <button
           className="bg-blue-600 text-white px-4 py-2 rounded"
-          onClick={handleUpsert}
+          onClick={() => setShowCreateModal(true)}
           disabled={loading}
         >
           Thêm quầy
@@ -173,6 +176,13 @@ export default function CounterManagement() {
           </tbody>
         </table>
       </div>
+
+      <CreateCounterModal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        handleUpsert={handleUpsert}
+        handleCreateCounterAudio={() => {}} // Provide a stub if not implemented
+      />
     </>
   );
 }

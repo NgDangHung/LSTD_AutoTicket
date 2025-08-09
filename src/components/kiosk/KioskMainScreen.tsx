@@ -497,7 +497,7 @@ export default function KioskMainScreen() {
               TRUNG TÂM PHỤC VỤ HÀNH CHÍNH CÔNG
             </h1>
             <h1 className="text-3xl font-bold text-red-700" style={{ lineHeight: '1.2' }}>
-              PHƯỜNG LÀO CAI
+              PHƯỜNG SA PA
             </h1>
             <p className='text-xl font-extrabold text-red-700 mt-3'>
               Hành chính phục vụ
