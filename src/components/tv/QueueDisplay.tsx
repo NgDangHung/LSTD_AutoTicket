@@ -6,7 +6,7 @@ import NumberAnimation from './NumberAnimation';
 import { useWebSocketQueue } from '@/hooks/useWebSocketQueue';
 import { footersAPI } from '@/libs/rootApi';
 import { TTSService, type TTSService as TTSServiceType } from '@/libs/ttsService';
-import { rootApi } from '@/libs/rootApi';
+import { rootApi, countersAPI } from '@/libs/rootApi';
 
 // ✅ Real API ticket interface based on actual BE response
 interface RealTicket {
@@ -48,7 +48,7 @@ export default function QueueDisplay() {
   // API lấy số đang phục vụ cho từng quầy
   const fetchServingTicket = async (counterId: number): Promise<RealTicket | null> => {
     try {
-      const response = await rootApi.get(`/tickets/called`, { params: { counter_id: counterId, tenxa: 'phuonglaocai' } });
+      const response = await rootApi.get(`/tickets/called`, { params: { counter_id: counterId, tenxa: 'phuonghagiang1' } });
       const tickets: RealTicket[] = response.data;
       return tickets.length > 0 ? tickets[0] : null;
     } catch (error) {
@@ -104,7 +104,7 @@ export default function QueueDisplay() {
     let ignore = false;
     async function fetchFooter() {
       try {
-        const data = await footersAPI.getFooter('phuonglaocai');
+        const data = await footersAPI.getFooter('phuonghagiang1');
         if (!ignore && data && (data.work_time || data.hotline)) {
           setFooterConfig({
             workingHours: data.work_time || DEFAULT_FOOTER.workingHours,
@@ -120,7 +120,7 @@ export default function QueueDisplay() {
     let bc: BroadcastChannel | null = null;
     const handler = async () => {
       try {
-        const data = await footersAPI.getFooter('phuonglaocai');
+        const data = await footersAPI.getFooter('phuonghagiang1');
         if (!ignore && data && (data.work_time || data.hotline)) {
           setFooterConfig({
             workingHours: data.work_time || footerConfig.workingHours,
@@ -162,12 +162,9 @@ export default function QueueDisplay() {
 
   // ✅ State: counters from API
   const [apiCounters, setApiCounters] = useState<CounterAPI[]>([]);
-
-  // ✅ Fetch counters from API on mount
-  useEffect(() => {
-    const fetchCounters = async () => {
+  const fetchCounters = async () => {
       try {
-        const response = await rootApi.get('/counters/', { params: { tenxa: 'phuonglaocai' } });
+        const response = await rootApi.get('/counters/', { params: { tenxa: 'phuonghagiang1' } });
         setApiCounters(response.data);
         console.log('✅ Counters from API:', response.data);
       } catch (error) {
@@ -175,7 +172,11 @@ export default function QueueDisplay() {
         setApiCounters([]);
       }
     };
+  // ✅ Fetch counters from API on mount
+  useEffect(() => {
+
     fetchCounters();
+
   }, []);
 
   // ✅ Khởi tạo wsServingTickets khi đã có apiCounters (reload trang)
@@ -223,7 +224,7 @@ export default function QueueDisplay() {
       console.log('🔄 Fetching all tickets from real API...');
       
       // GET /tickets/waiting - get all tickets (waiting + called + done)
-      const response = await rootApi.get('/tickets/waiting', { params: { tenxa: 'phuonglaocai' } });
+      const response = await rootApi.get('/tickets/waiting', { params: { tenxa: 'phuonghagiang1' } });
       const tickets: RealTicket[] = response.data;
       
       console.log('📡 Real API Response:', tickets);
@@ -245,7 +246,7 @@ export default function QueueDisplay() {
       
       for (let counterId = 1; counterId <= 4; counterId++) {
         try {
-          const response = await rootApi.get('/tickets/waiting', { params: { counter_id: counterId, tenxa: 'phuonglaocai' } });
+          const response = await rootApi.get('/tickets/waiting', { params: { counter_id: counterId, tenxa: 'phuonghagiang1' } });
           allTickets.push(...response.data);
         } catch (counterError) {
           console.warn(`⚠️ Failed to fetch tickets for counter ${counterId}:`, counterError);
@@ -355,7 +356,7 @@ export default function QueueDisplay() {
         console.log('🌐 WebSocket URL: wss://detect-seat.onrender.com/ws/updates');
         
         // ✅ REAL endpoint từ BE: wss://detect-seat.onrender.com/ws/updates
-        ws = new WebSocket('wss://lstd.onrender.com/ws/updates');
+        ws = new WebSocket('wss://detect-seat-we21.onrender.com/ws/updates');
         
         ws.onopen = () => {
           console.log('✅ WebSocket connected to production endpoint');
@@ -369,7 +370,7 @@ export default function QueueDisplay() {
           try {
             const eventData = JSON.parse(event.data);
             console.log('📡 WebSocket event received:', eventData);
-            if (eventData.tenxa !== 'phuonglaocai') return
+            if (eventData.tenxa !== 'phuonghagiang1') return
             // ✅ Handle real events từ BE documentation
             switch (eventData.event) {
               case 'new_ticket':
@@ -378,6 +379,14 @@ export default function QueueDisplay() {
                 
               case 'ticket_called':
                 handleTicketCalledEvent(eventData);
+                break;
+            
+              case 'upsert_counter':
+                fetchCounters()
+                break;
+
+              case 'delete_counter':
+                fetchCounters()
                 break;
                 
               default:
@@ -766,7 +775,7 @@ export default function QueueDisplay() {
               TRUNG TÂM PHỤC VỤ HÀNH CHÍNH CÔNG  
             </h1>
             <h1 className="text-5xl font-bold text-red-700 " style={{ lineHeight: '1.3' }}>
-              PHƯỜNG SA PA
+              PHƯỜNG HÀ GIANG 1
             </h1>
             <p className='text-2xl font-extrabold text-red-700 mt-3' style={{fontSize: '2rem'}}>
               Hành chính phục vụ 
@@ -777,7 +786,7 @@ export default function QueueDisplay() {
       <>
         <div className="flex justify-between items-center" style={{flexDirection: 'row-reverse'}}>
           <h2 className="text-2xl text-red-700 font-bold italic" style={{position: 'relative',top: '-61px',left: '-180px', fontSize: '2rem'}}>
-             <span>{new Date().toLocaleTimeString('vi-VN')}</span> - Phường Sa Pa,  Ngày {new Date().toLocaleDateString('vi-VN')}
+             <span>{new Date().toLocaleTimeString('vi-VN')}</span> - Phường Hà Giang 1,  Ngày {new Date().toLocaleDateString('vi-VN')}
           </h2>
         </div>
       </>
@@ -830,7 +839,7 @@ export default function QueueDisplay() {
       </div>
 
       {/* Footer */}
-      {/* <footer className="bg-white p-4 text-center fixed bottom-0 left-0 w-full z-40">
+      <footer className="bg-white p-4 text-center fixed bottom-0 left-0 w-full z-40">
         <div className="flex justify-center items-center gap-8 text-lg italic text-red-700 font-extrabold"
           style={{fontSize: '2rem'}}
         >
@@ -842,7 +851,7 @@ export default function QueueDisplay() {
             </span>
           )}
         </div>
-      </footer> */}
+      </footer>
 
     </div>
   );

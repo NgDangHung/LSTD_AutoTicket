@@ -1,6 +1,6 @@
 📡 WebSocket API: Nhận sự kiện từ backend
 🔌 Endpoint WebSocket:
-wss://lstd.onrender.com/ws/updates________________________________________
+wss://detect-seat-we21.onrender.com/ws/updates________________________________________
 🔁 Cách sử dụng
 Frontend cần:
 1.	Kết nối WebSocket đến /ws/updates
@@ -14,7 +14,7 @@ json
   "event": "new_ticket",
   "ticket_number": 20,
   "counter_id": 1
-  "tenxa": phuonglaocai
+  "tenxa": phuonghagiang1
 }
 📌 Ý nghĩa:
 •	Một vé mới được tạo từ kiosk
@@ -27,7 +27,7 @@ Json
   "event": "ticket_called",
   "ticket_number": 20,
   "counter_name": "Văn phòng"
-  "tenxa": phuonglaocai
+  "tenxa": phuonghagiang1
 }
 📌 Ý nghĩa:
 •	Hệ thống gọi khách có số vé 20 tới quầy
@@ -40,7 +40,7 @@ Json
   "event": "upsert_counter",
   "counter_id": 5,
   "name": "Tên quầy mới",
-  "tenxa": "phuonglaocai"
+  "tenxa": "phuonghagiang1"
 }
 📌 Ý nghĩa:
 • Một quầy mới được thêm hoặc tên quầy được chỉnh sửa
@@ -53,7 +53,7 @@ Json
 {
   "event": "delete_counter",
   "counter_id": 5,
-  "tenxa": "phuonglaocai"
+  "tenxa": "phuonghagiang1"
 }
 📌 Ý nghĩa:
 • Một quầy vừa bị xóa khỏi hệ thống

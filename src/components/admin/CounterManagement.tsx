@@ -16,6 +16,7 @@ export default function CounterManagement() {
   const [newCounterFullName, setNewCounterFullName] = useState('');
   const [editId, setEditId] = useState<number | null>(null);
   const [editName, setEditName] = useState('');
+  const [editFullName, setEditFullName] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
 
   // Load counters
@@ -35,31 +36,29 @@ export default function CounterManagement() {
     }
   };
   
-  // const handleCreateCounterAudio = async (fullName: string) => {
-  //   if (!fullName.trim()) return;
-  //   setLoading(true);
-  //   try {
-  //     await ttsAPI.generateCounterAudio({ name: fullName });
-  //     toast.success('Đã tạo file âm thanh cho quầy');
-  //     setNewCounterFullName('');
-  //   } catch (err) {
-  //     toast.error('Lỗi khi tạo file âm thanh');
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // }
+  // Đã chuyển logic đồng bộ vào handleUpsert và handleUpdate
 
   // Add or update counter
-  const handleUpsert = async (name: string) => {
-    if (!name.trim()) return;
+  const handleUpsert = async (name: string, fullName: string) => {
+    if (!name.trim() || !fullName.trim()) return;
     setLoading(true);
     try {
-      await countersAPI.upsertCounter({ counter_id: 0, name });
-      toast.success('Đã thêm quầy mới');
+      // Tạo quầy mới
+      const res = await countersAPI.upsertCounter({ counter_id: 0, name });
+      // Giả sử BE trả về { id, name } hoặc { counter_id, name }
+      const counterId = res?.id;
+      const counterName = fullName;
+      if (counterId && counterName) {
+        await ttsAPI.generateCounterAudio({ counter_id: counterId, name: counterName });
+        toast.success('Đã thêm quầy mới và tạo file âm thanh');
+      } else {
+        toast.success('Đã thêm quầy mới');
+      }
       setNewCounterName('');
+      setNewCounterFullName('');
       fetchCounters();
     } catch (err) {
-      toast.error('Lỗi khi thêm quầy');
+      toast.error('Lỗi khi thêm quầy hoặc tạo file âm thanh');
     } finally {
       setLoading(false);
     }
@@ -69,19 +68,29 @@ export default function CounterManagement() {
   const handleEdit = (counter: Counter) => {
     setEditId(counter.id);
     setEditName(counter.name);
+    setEditFullName('');
   };
 
   const handleUpdate = async () => {
-    if (!editName.trim() || editId === null) return;
+    if (!editName.trim() || editId === null || !editFullName.trim()) return;
     setLoading(true);
     try {
-      await countersAPI.upsertCounter({ counter_id: editId, name: editName });
-      toast.success('Đã cập nhật tên quầy');
+      // Sửa tên quầy
+      const res = await countersAPI.upsertCounter({ counter_id: editId, name: editName });
+      const counterId = res?.id || editId;
+      const counterName = editFullName;
+      if (counterId && counterName) {
+        await ttsAPI.generateCounterAudio({ counter_id: counterId, name: counterName });
+        toast.success('Đã cập nhật tên quầy và tạo file âm thanh');
+      } else {
+        toast.success('Đã cập nhật tên quầy');
+      }
       setEditId(null);
       setEditName('');
+      setEditFullName('');
       fetchCounters();
     } catch (err) {
-      toast.error('Lỗi khi cập nhật quầy');
+      toast.error('Lỗi khi cập nhật quầy hoặc tạo file âm thanh');
     } finally {
       setLoading(false);
     }
@@ -139,21 +148,36 @@ export default function CounterManagement() {
                 <td className="py-3 px-5 text-black font-bold text-base text-center">{counter.id}</td>
                 <td className="py-3 px-5 text-black font-medium text-base">
                   {editId === counter.id ? (
-                    <input
-                      type="text"
-                      className=" rounded-lg px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-blue-400"
-                      value={editName}
-                      style={{ 
-                        width: '100%',
-                        borderRadius: '8px', 
-                        // border: '1px solid rgb(220 38 38)', 
-                        color: 'black', 
-                        backgroundColor:'#f8f8f8ff',
-                        lineHeight: '24px',
-                      }}
-                      onChange={e => setEditName(e.target.value)}
-                      autoFocus
-                    />
+                    <div className="flex flex-col gap-2">
+                      <input
+                        type="text"
+                        className="rounded-lg px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-blue-400"
+                        value={editName}
+                        style={{ 
+                          width: '100%',
+                          borderRadius: '8px', 
+                          color: 'black', 
+                          backgroundColor:'#f8f8f8ff',
+                          lineHeight: '24px',
+                        }}
+                        onChange={e => setEditName(e.target.value)}
+                        autoFocus
+                      />
+                      <input
+                        type="text"
+                        className="rounded-lg px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-green-400"
+                        value={editFullName}
+                        style={{ 
+                          width: '100%',
+                          borderRadius: '8px', 
+                          color: 'black', 
+                          backgroundColor:'#f0fff0',
+                          lineHeight: '24px',
+                        }}
+                        onChange={e => setEditFullName(e.target.value)}
+                        placeholder="Tên đầy đủ để tạo file âm thanh"
+                      />
+                    </div>
                   ) : (
                     <span className="text-black font-medium text-base">{counter.name}</span>
                   )}
@@ -181,7 +205,6 @@ export default function CounterManagement() {
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
         handleUpsert={handleUpsert}
-        handleCreateCounterAudio={() => {}} // Provide a stub if not implemented
       />
     </>
   );

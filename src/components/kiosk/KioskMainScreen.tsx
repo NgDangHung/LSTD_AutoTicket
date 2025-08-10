@@ -51,7 +51,7 @@ export default function KioskMainScreen() {
     let ignore = false;
     async function fetchFooter() {
       try {
-        const data = await footersAPI.getFooter('phuonglaocai');
+        const data = await footersAPI.getFooter('phuonghagiang1');
         if (!ignore && data) {
           setFooterConfig({
             workingHours: data.work_time || DEFAULT_FOOTER.workingHours,
@@ -67,7 +67,7 @@ export default function KioskMainScreen() {
     let bc: BroadcastChannel | null = null;
     const handler = async () => {
       try {
-        const data = await footersAPI.getFooter('phuonglaocai');
+        const data = await footersAPI.getFooter('phuonghagiang1');
         if (!ignore && data) {
           setFooterConfig({
             workingHours: data.work_time || DEFAULT_FOOTER.workingHours,
@@ -156,7 +156,7 @@ export default function KioskMainScreen() {
     // --- WebSocket thuần lắng nghe event 'upsert_counter' ---
     let ws: WebSocket | null = null;
     if (typeof window !== 'undefined') {
-      ws = new window.WebSocket('wss://lstd.onrender.com/ws/updates');
+      ws = new window.WebSocket('wss://detect-seat-we21.onrender.com/ws/updates');
       ws.onopen = () => {
         // Kết nối thành công
         console.log('WebSocket connected for counter updates');
@@ -164,7 +164,7 @@ export default function KioskMainScreen() {
       ws.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
-          if ((['upsert_counter', 'delete_counter'].includes(data.event)) && data.tenxa === 'phuonglaocai') {
+          if ((['upsert_counter', 'delete_counter'].includes(data.event)) && data.tenxa === 'phuonghagiang1') {
             console.log('Received upsert_counter event:', data);
             // Luôn gọi lại API và cập nhật state, không phụ thuộc vào flag
             (async () => {
@@ -497,7 +497,7 @@ export default function KioskMainScreen() {
               TRUNG TÂM PHỤC VỤ HÀNH CHÍNH CÔNG
             </h1>
             <h1 className="text-3xl font-bold text-red-700" style={{ lineHeight: '1.2' }}>
-              PHƯỜNG SA PA
+              PHƯỜNG HÀ GIANG 1
             </h1>
             <p className='text-xl font-extrabold text-red-700 mt-3'>
               Hành chính phục vụ
@@ -561,7 +561,7 @@ export default function KioskMainScreen() {
               }}
             >
               <Image
-                src="/images/QR_Sapa_gui_file_kiosk.jpg"
+                src="http://192.168.0.104:4000"
                 alt="QR gửi file vào kiosk"
                 width={180}
                 height={180}  

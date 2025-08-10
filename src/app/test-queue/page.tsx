@@ -46,7 +46,7 @@ function TestQueuePage() {
   });
 
   // Footer config API helpers
-  const TEN_XA = 'phuonglaocai';
+  const TEN_XA = 'phuonghagiang1';
   async function fetchFooterConfig() {
     // API trả về { work_time, hotline }
     const data = await footersAPI.getFooter(TEN_XA);
@@ -100,7 +100,7 @@ function TestQueuePage() {
       console.log('🔄 Fetching WAITING tickets only from API...');
       
       // 🔥 API /tickets/waiting only returns tickets with status: 'waiting' 
-      const response = await rootApi.get('/tickets/waiting', { params: { tenxa: 'phuonglaocai' } });
+      const response = await rootApi.get('/tickets/waiting', { params: { tenxa: 'phuonghagiang1' } });
       const waitingTickets: any[] = response.data; // Only status: 'waiting'
       
       console.log('📡 API Response (waiting tickets only):', waitingTickets);
@@ -155,7 +155,16 @@ function TestQueuePage() {
     let ws: WebSocket | null = null;
     let reconnectCount = 0;
     const maxReconnectAttempts = 5;
-
+    const fetchCounters = async () => {
+          try {
+            const response = await rootApi.get('/counters/', { params: { tenxa: 'phuonghagiang1' } });
+            setApiCounters(response.data);
+            console.log('✅ Counters from API:', response.data);
+          } catch (error) {
+            console.error('❌ Failed to fetch counters:', error);
+            setApiCounters([]);
+          }
+        };
     // Initial data load
     loadCounters();
     loadQueueData();
@@ -165,7 +174,7 @@ function TestQueuePage() {
       try {
         console.log('🔌 Connecting to production WebSocket for test-queue...');
         
-        ws = new WebSocket('wss://lstd.onrender.com/ws/updates');
+        ws = new WebSocket('wss://detect-seat-we21.onrender.com/ws/updates');
         
         ws.onopen = () => {
           console.log('✅ WebSocket connected for test-queue page');
@@ -187,7 +196,14 @@ function TestQueuePage() {
               case 'ticket_called':
                 handleTicketCalledEvent(eventData);
                 break;
-                
+              
+              case 'upsert_counter':
+                fetchCounters();
+                break;
+
+              case 'delete_counter':
+                fetchCounters();
+                break;  
               default:
                 console.log('ℹ️ Unknown WebSocket event:', eventData.event);
             }
@@ -286,7 +302,7 @@ function TestQueuePage() {
   // ✅ Fetch serving ticket for a counter from API (like QueueDisplay)
   const fetchServingTicket = async (counterId: number) => {
     try {
-      const response = await rootApi.get('/tickets/called', { params: { counter_id: counterId, tenxa: 'phuonglaocai' } });
+      const response = await rootApi.get('/tickets/called', { params: { counter_id: counterId, tenxa: 'phuonghagiang1' } });
       const tickets: any[] = response.data;
       return tickets.length > 0 ? tickets[0] : null;
     } catch (error) {
@@ -455,12 +471,12 @@ function TestQueuePage() {
             >
               ⚙️ Chỉnh sửa chân trang
             </Button>
-            {/* <Button
+            <Button
               className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
               onClick={() => setShowCounterManagement(true)}
             >
               ⚙️ Chỉnh sửa quầy
-            </Button> */}
+            </Button>
           </div>
         </div>
         
@@ -636,7 +652,7 @@ function TestQueuePage() {
       )}
 
       {/* Counter Management Modal/Panel */}
-      {/* {showCounterManagement && (
+      {showCounterManagement && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40"
           onMouseDown={e => {
@@ -648,7 +664,7 @@ function TestQueuePage() {
             <CounterManagement />
           </div>
         </div>
-      )} */}
+      )}
 
     </div>
   );

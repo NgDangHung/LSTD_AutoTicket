@@ -73,7 +73,7 @@ function OfficerPage() {
   const fetchServingTicket = useCallback(async (counterId: number) => {
     try {
       const response = await rootApi.get('/tickets/called', {
-        params: { counter_id: counterId, tenxa: 'phuonglaocai' },
+        params: { counter_id: counterId, tenxa: 'phuonghagiang1' },
       });
       const tickets = response.data;
       if (tickets && tickets.length > 0) {
@@ -135,7 +135,7 @@ function OfficerPage() {
 
       const response = await rootApi.get('/auths/me', {
         headers: { Authorization: `Bearer ${authToken}` },
-        params: { tenxa: 'phuonglaocai' },
+        params: { tenxa: 'phuonghagiang1' },
       });
 
       const userData = response.data;
@@ -185,7 +185,7 @@ function OfficerPage() {
   const loadQueueData = useCallback(async () => {
     try {
       const response = await rootApi.get('/tickets/waiting', {
-        params: { tenxa: 'phuonglaocai' },
+        params: { tenxa: 'phuonghagiang1' },
       });
       const waitingTickets: Ticket[] = response.data.map((ticket: any) => ({
         id: ticket.id,
@@ -221,7 +221,7 @@ function OfficerPage() {
     loadQueueData();
 
     const connectWebSocket = () => {
-      ws = new WebSocket('wss://lstd.onrender.com/ws/updates');
+      ws = new WebSocket('wss://detect-seat-we21.onrender.com/ws/updates');
 
       ws.onopen = () => {
         reconnectCount = 0;

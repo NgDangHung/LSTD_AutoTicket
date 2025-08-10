@@ -5,12 +5,11 @@ import Button from "@/components/shared/Button";
 type CreateCounterModalProps = {
   isOpen: boolean;
   onClose: () => void;
-  handleUpsert: (name: string) => void;
-  handleCreateCounterAudio: (fullName: string) => void;
+  handleUpsert: (name: string, fullName: string) => void;
 }
 
 function CreateCounterModal(props: CreateCounterModalProps) {
-  const { isOpen, onClose, handleUpsert, handleCreateCounterAudio } = props;
+  const { isOpen, onClose, handleUpsert } = props;
   const [counterName, setCounterName] = React.useState('');
   const [counterFullName, setCounterFullName] = React.useState('');
   const modalRef = React.useRef<HTMLDivElement>(null);
@@ -30,8 +29,7 @@ function CreateCounterModal(props: CreateCounterModalProps) {
 
   if (!isOpen) return null;
   const handleSave = () => {
-    handleUpsert(counterName);
-    // handleCreateCounterAudio(counterFullName);
+    handleUpsert(counterName, counterFullName);
     setCounterName('');
     setCounterFullName('');
     onClose();
