@@ -1,6 +1,6 @@
 📡 WebSocket API: Nhận sự kiện từ backend
 🔌 Endpoint WebSocket:
-wss://detect-seat-we21.onrender.com/ws/updates________________________________________
+wss://lstd.onrender.com/ws/updates________________________________________
 🔁 Cách sử dụng
 Frontend cần:
 1.	Kết nối WebSocket đến /ws/updates

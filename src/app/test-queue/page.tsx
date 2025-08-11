@@ -174,7 +174,7 @@ function TestQueuePage() {
       try {
         console.log('🔌 Connecting to production WebSocket for test-queue...');
         
-        ws = new WebSocket('wss://detect-seat-we21.onrender.com/ws/updates');
+        ws = new WebSocket('wss://lstd.onrender.com/ws/updates');
         
         ws.onopen = () => {
           console.log('✅ WebSocket connected for test-queue page');

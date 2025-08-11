@@ -13,7 +13,7 @@ import type {
 
 // Create axios instance with base configuration
 const axiosInstance = axios.create({
-  baseURL: 'https://detect-seat-we21.onrender.com/app',
+  baseURL: 'https://lstd.onrender.com/app',
   timeout: 30000,
   headers: {
     'Content-Type': 'application/json',

@@ -49,7 +49,7 @@ export default function LoginPage() {
       
       console.log('🔐 Login Request Details:');
       console.log('📡 Endpoint: POST /auths/login');
-      console.log('🌐 Full URL: https://detect-seat-we21.onrender.com/auths/login');
+      console.log('🌐 Full URL: https://lstd.onrender.com/auths/login');
       console.log('📤 Payload:', JSON.stringify(loginData, null, 2));
       console.log('📋 Headers: Content-Type: application/json');
       
