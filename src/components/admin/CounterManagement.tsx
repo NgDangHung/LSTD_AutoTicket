@@ -123,7 +123,10 @@ export default function CounterManagement() {
           Thêm quầy
         </button>
       </div>
-      <div className="max-h-[420px] overflow-y-auto w-full border border-gray-300 rounded-xl">
+      <div
+        className={`w-full border border-gray-300 rounded-xl ${counters.length > 8 ? 'max-h-[420px] overflow-y-auto' : ''}`}
+        style={counters.length > 8 ? { minHeight: '420px' } : {}}
+      >
         <table className="w-full min-w-[700px] border border-gray-300 rounded-xl shadow-lg overflow-hidden">
           <thead>
             <tr className="bg-gradient-to-r from-blue-700 to-blue-500 text-white text-lg font-bold border-b border-gray-300">
