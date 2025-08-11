@@ -51,7 +51,7 @@ export default function KioskMainScreen() {
     let ignore = false;
     async function fetchFooter() {
       try {
-        const data = await footersAPI.getFooter('phuonghagiang1');
+        const data = await footersAPI.getFooter('phuongtanphong');
         if (!ignore && data) {
           setFooterConfig({
             workingHours: data.work_time || DEFAULT_FOOTER.workingHours,
@@ -67,7 +67,7 @@ export default function KioskMainScreen() {
     let bc: BroadcastChannel | null = null;
     const handler = async () => {
       try {
-        const data = await footersAPI.getFooter('phuonghagiang1');
+        const data = await footersAPI.getFooter('phuongtanphong');
         if (!ignore && data) {
           setFooterConfig({
             workingHours: data.work_time || DEFAULT_FOOTER.workingHours,
@@ -164,7 +164,7 @@ export default function KioskMainScreen() {
       ws.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
-          if ((['upsert_counter', 'delete_counter'].includes(data.event)) && data.tenxa === 'phuonghagiang1') {
+          if ((['upsert_counter', 'delete_counter'].includes(data.event)) && data.tenxa === 'phuongtanphong') {
             console.log('Received upsert_counter event:', data);
             // Luôn gọi lại API và cập nhật state, không phụ thuộc vào flag
             (async () => {
@@ -497,7 +497,7 @@ export default function KioskMainScreen() {
               TRUNG TÂM PHỤC VỤ HÀNH CHÍNH CÔNG
             </h1>
             <h1 className="text-3xl font-bold text-red-700" style={{ lineHeight: '1.2' }}>
-              PHƯỜNG HÀ GIANG 1
+              PHƯỜNG TÂN PHONG
             </h1>
             <p className='text-xl font-extrabold text-red-700 mt-3'>
               Hành chính phục vụ

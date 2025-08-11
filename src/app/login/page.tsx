@@ -66,7 +66,7 @@ export default function LoginPage() {
         // ✅ Get user info to determine redirect path
         try {
           console.log('🔍 Getting user info for redirect...');
-          const userResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000'}/app/auths/me?tenxa=phuonghagiang1`, {
+          const userResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000'}/app/auths/me?tenxa=phuongtanphong`, {
             headers: {
               'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json'

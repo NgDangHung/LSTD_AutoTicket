@@ -115,7 +115,7 @@
 ### 🗑️ [DELETE] `/counters/delete-counter` – Xóa quầy phục vụ
 
 - **Query Params:**
-  - `tenxa` (string, required): Tên xã/khu vực (ví dụ: "phuonghagiang1")
+  - `tenxa` (string, required): Tên xã/khu vực (ví dụ: "phuongtanphong")
   - `counter_id` (integer, required): ID quầy cần xóa
 
 - **Response:**
@@ -147,7 +147,7 @@
 ### 🆕 [POST] `/counters/upsert-counter` – Tạo mới hoặc cập nhật tên quầy
 
 - **Query Params:**
-  - `tenxa` (string, required): Tên xã/khu vực (ví dụ: "phuonghagiang1")
+  - `tenxa` (string, required): Tên xã/khu vực (ví dụ: "phuongtanphong")
 
 - **Request Body (application/json):**
 ```json
