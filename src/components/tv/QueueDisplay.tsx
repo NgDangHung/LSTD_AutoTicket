@@ -785,8 +785,9 @@ export default function QueueDisplay() {
       </div>
       <>
         <div className="flex justify-between items-center" style={{flexDirection: 'row-reverse'}}>
-          <h2 className="text-2xl text-red-700 font-bold italic" style={{position: 'relative',top: '-61px',left: '-180px', fontSize: '2rem'}}>
-             <span>{new Date().toLocaleTimeString('vi-VN')}</span> - Phường Tân Phong,  Ngày {new Date().toLocaleDateString('vi-VN')}
+          <h2 className="text-2xl text-red-700 font-bold italic" style={{position: 'relative',top: '-50px',left: '-180px', fontSize: '2rem'}}>
+             {/* <span>{new Date().toLocaleTimeString('vi-VN')}</span> - Phường Tân Phong,  Ngày {new Date().toLocaleDateString('vi-VN')} */}
+             Phường Tân Phong,  Ngày {new Date().toLocaleDateString('vi-VN')}
           </h2>
         </div>
       </>
@@ -849,11 +850,11 @@ export default function QueueDisplay() {
         >
           <span> {footerConfig.workingHours}</span>
           <span> {footerConfig.hotline} </span>
-          {/* {lastUpdated && (
+          {lastUpdated && (
             <span className="text-lg text-red-700 font-extrabold" style={{fontSize: '2rem'}}>
               Thời gian: {new Date().toLocaleTimeString('vi-VN')}
             </span>
-          )} */}
+          )}
         </div>
       </footer>
 

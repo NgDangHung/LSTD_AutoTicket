@@ -4,7 +4,7 @@ import type { NextRequest } from 'next/server';
 // ✅ Helper function to get user info from API
 async function getUserInfo(token: string) {
   try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000'}/app/auths/me`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/app/auths/me`, {
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'

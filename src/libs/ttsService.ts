@@ -64,7 +64,7 @@ export class TTSService {
   }
 
   private constructor() {
-    this.apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+    this.apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || '';
     // ✅ Only setup WebSocket on client-side to prevent SSR error
     if (typeof window !== 'undefined') {
       // Mặc định load xã hiện tại, có thể thay đổi nếu cần
