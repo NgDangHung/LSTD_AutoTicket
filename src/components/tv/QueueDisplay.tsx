@@ -792,7 +792,7 @@ export default function QueueDisplay() {
       </>
 
       {/* Main Display dạng bảng giống mẫu */}
-      <div className="flex-1 p-4 flex flex-col items-center" style={{position: 'relative',top: '-63px'}}>
+      <div className="flex-1 p-4 flex flex-col items-center" style={{position: 'relative',top: '0px'}}>
         <div className="w-full" style={{maxWidth: 1500}}>
           {/* Header table */}
           <div className="grid" style={{gridTemplateColumns: '1.6fr 0.8fr 1fr', fontSize: '1.4rem'}}>
@@ -801,40 +801,44 @@ export default function QueueDisplay() {
             <div className="bg-red-700 text-white text-center py-4  font-bold border border-white border-b-0 rounded-tr-xl uppercase tracking-wide">ĐANG CHỜ</div>
           </div>
           {/* Table body */}
-          {processedCounters.map((counter, idx) => {
-            const isEven = idx % 2 === 0;
-            return (
-              <div key={counter.counter_id} className={`grid border-b border-white last:rounded-b-xl ${isEven ? 'bg-gray-300 bg-opacity-80' : 'bg-pink-100  bg-opacity-80'}`} style={{minHeight: 80, alignItems: 'center', gridTemplateColumns: '1.6fr 0.8fr 1fr'}}>
-                {/* Quầy phục vụ */}
-                <div className="text-xl font-extrabold text-red-800 px-4 py-3 border-r border-white uppercase" style={{fontSize: '1.1rem'}}>
-                  QUẦY {counter.counter_id} | {counter.counter_name}
+          {(() => {
+            const n = processedCounters.length;
+            const minHeight = n >= 4 && n <= 8 ? Math.floor(640 / n) : 80;
+            return processedCounters.map((counter, idx) => {
+              const isEven = idx % 2 === 0;
+              return (
+                <div key={counter.counter_id} className={`grid border-b border-white last:rounded-b-xl ${isEven ? 'bg-gray-300 bg-opacity-80' : 'bg-pink-100  bg-opacity-80'}`} style={{minHeight, alignItems: 'center', gridTemplateColumns: '1.6fr 0.8fr 1fr'}}>
+                  {/* Quầy phục vụ */}
+                  <div className="text-xl font-extrabold text-red-800 px-4 py-3 border-r border-white uppercase" style={{fontSize: '1.1rem'}}>
+                    QUẦY {counter.counter_id} | {counter.counter_name}
+                  </div>
+                  {/* Đang phục vụ - logic cũ: nếu có số thì hiển thị, không thì hiện 'Chưa có số được phục vụ' */}
+                  <div className="text-5xl font-extrabold text-center text-red-800 px-4 py-3 border-r border-white"  >
+                    {counter.serving_number || wsServingTickets[counter.counter_id] ? (
+                      <NumberAnimation number={(counter.serving_number || wsServingTickets[counter.counter_id]?.number)?.toString() || '0'} />
+                    ) : (
+                      <span className="text-gray-400 text-xl font-bold">Chưa có số được phục vụ</span>
+                    )}
+                  </div>
+                  {/* Đang chờ */}
+                  <div className="text-4xl font-extrabold text-center text-red-800 px-4 py-3">
+                    {counter.waiting_numbers.length > 0 ? (
+                      <>
+                        {counter.waiting_numbers.slice(0, 6).map((number, index) => (
+                          <span key={`waiting-${counter.counter_id}-${number}-${index}`}>{number}{index < Math.min(counter.waiting_numbers.length - 1, 5) ? ', ' : ''}</span>
+                        ))}
+                        {counter.waiting_numbers.length > 6 && (
+                          <span className="text-base text-gray-500 font-normal"> ... </span>
+                        )}
+                      </>
+                    ) : (
+                      <span className="text-gray-400 text-xl font-bold">Không có số đang chờ</span>
+                    )}
+                  </div>
                 </div>
-                {/* Đang phục vụ - logic cũ: nếu có số thì hiển thị, không thì hiện 'Chưa có số được phục vụ' */}
-                <div className="text-5xl font-extrabold text-center text-red-800 px-4 py-3 border-r border-white"  >
-                  {counter.serving_number || wsServingTickets[counter.counter_id] ? (
-                    <NumberAnimation number={(counter.serving_number || wsServingTickets[counter.counter_id]?.number)?.toString() || '0'} />
-                  ) : (
-                    <span className="text-gray-400 text-xl font-bold">Chưa có số được phục vụ</span>
-                  )}
-                </div>
-                {/* Đang chờ */}
-                <div className="text-4xl font-extrabold text-center text-red-800 px-4 py-3">
-                  {counter.waiting_numbers.length > 0 ? (
-                    <>
-                      {counter.waiting_numbers.slice(0, 6).map((number, index) => (
-                        <span key={`waiting-${counter.counter_id}-${number}-${index}`}>{number}{index < Math.min(counter.waiting_numbers.length - 1, 5) ? ', ' : ''}</span>
-                      ))}
-                      {counter.waiting_numbers.length > 6 && (
-                        <span className="text-base text-gray-500 font-normal"> ... </span>
-                      )}
-                    </>
-                  ) : (
-                    <span className="text-gray-400 text-xl font-bold">Không có số đang chờ</span>
-                  )}
-                </div>
-              </div>
-            );
-          })}
+              );
+            });
+          })()}
         </div>
       </div>
 
@@ -845,11 +849,11 @@ export default function QueueDisplay() {
         >
           <span> {footerConfig.workingHours}</span>
           <span> {footerConfig.hotline} </span>
-          {lastUpdated && (
+          {/* {lastUpdated && (
             <span className="text-lg text-red-700 font-extrabold" style={{fontSize: '2rem'}}>
               Thời gian: {new Date().toLocaleTimeString('vi-VN')}
             </span>
-          )}
+          )} */}
         </div>
       </footer>
 

@@ -698,8 +698,8 @@ export default function KioskMainScreen() {
             )}
             
             {/* Grid màn dọc */}
-            <div 
-              className="service-grid-container grid grid-cols-2 gap-6 overflow-y-auto p-4 border rounded-lg backdrop-blur-sm"
+            <div
+              className={`service-grid-container grid grid-cols-2 gap-6 p-4 border rounded-lg backdrop-blur-sm ${filteredCounters.length > 8 ? 'max-h-[480px] overflow-y-auto' : ''}`}
             >
               {filteredCounters.map((counter, idx) => {
                 // So le: idx 0,3,4,... (quầy 1,4,5,...) nền đỏ; idx 1,2,5,... nền trắng
