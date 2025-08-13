@@ -55,6 +55,14 @@ interface CounterDetail {
 }
 
 function OfficerPage() {
+  // Notification API: xin quyền khi vào trang
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'Notification' in window) {
+      if (Notification.permission === 'default') {
+        Notification.requestPermission();
+      }
+    }
+  }, []);
   const router = useRouter();
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
   const [userLoading, setUserLoading] = useState(true);
@@ -231,6 +239,20 @@ function OfficerPage() {
       ws.onmessage = async (e) => {
         const data = JSON.parse(e.data);
         if (data.event === 'new_ticket' || data.event === 'ticket_called') {
+          // Notification: chỉ gửi khi là new_ticket và có ticket_number
+          if (
+            data.event === 'new_ticket' &&
+            data.ticket_number &&
+            currentUser?.counter_id &&
+            (data.counter_id === currentUser.counter_id)
+          ) {
+            if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+              new Notification('Có vé mới vào hàng chờ!', {
+                body: `Khách hàng số ${data.ticket_number} vừa vào hàng chờ tại quầy ${data.counter_id}.`,
+                icon: '/images/logo_vang.png'
+              });
+            }
+          }
           await loadQueueData();
           // Always fetch serving ticket after queue update to sync UI
           if (currentUser?.counter_id) {
