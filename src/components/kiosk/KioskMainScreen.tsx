@@ -156,7 +156,7 @@ export default function KioskMainScreen() {
     // --- WebSocket thuần lắng nghe event 'upsert_counter' ---
     let ws: WebSocket | null = null;
     if (typeof window !== 'undefined') {
-      ws = new window.WebSocket('wss://lstd.onrender.com/ws/updates');
+      ws = new window.WebSocket('wss://detect-seat-we21.onrender.com/ws/updates');
       ws.onopen = () => {
         // Kết nối thành công
         console.log('WebSocket connected for counter updates');

@@ -229,7 +229,7 @@ function OfficerPage() {
     loadQueueData();
 
     const connectWebSocket = () => {
-      ws = new WebSocket('wss://lstd.onrender.com/ws/updates');
+      ws = new WebSocket('wss://detect-seat-we21.onrender.com/ws/updates');
 
       ws.onopen = () => {
         reconnectCount = 0;
@@ -248,7 +248,7 @@ function OfficerPage() {
           ) {
             if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
               new Notification('Có vé mới vào hàng chờ!', {
-                body: `Khách hàng số ${data.ticket_number} vừa vào hàng chờ tại quầy ${data.counter_id}.`,
+                body: `Công dân số ${data.ticket_number} vừa vào hàng chờ tại quầy ${data.counter_id}.`,
                 icon: '/images/logo_vang.png'
               });
             }
