@@ -561,7 +561,8 @@ export default function KioskMainScreen() {
               }}
             >
               <Image
-                src="/images/qr_tanphong_new.jpg"
+                // src="/images/qr_tanphong_new.jpg"
+                src="https://127.0.0.1:4443/qr.png"
                 alt="QR gửi file vào kiosk"
                 width={180}
                 height={180}  
