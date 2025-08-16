@@ -221,7 +221,7 @@ function OfficerPage() {
     loadQueueData();
 
     const connectWebSocket = () => {
-      ws = new WebSocket('wss://lstd.onrender.com/ws/updates/ws/updates');
+      ws = new WebSocket('wss://lstd.onrender.com/ws/updates');
 
       ws.onopen = () => {
         reconnectCount = 0;
