@@ -221,7 +221,7 @@ function OfficerPage() {
     loadQueueData();
 
     const connectWebSocket = () => {
-      ws = new WebSocket('wss://detect-seat.onrender.com/ws/updates');
+      ws = new WebSocket('wss://lstd.onrender.com/ws/updates');
 
       ws.onopen = () => {
         reconnectCount = 0;

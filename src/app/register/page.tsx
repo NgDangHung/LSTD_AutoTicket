@@ -39,7 +39,7 @@ export default function RegisterPage() {
       
       console.log('📝 Register Request Details:');
       console.log('📡 Endpoint: POST /auths/users/');
-      console.log('🌐 Full URL: https://detect-seat.onrender.com/auths/users/');
+      console.log('🌐 Full URL: https://lstd.onrender.com/auths/users/');
       console.log('📤 Payload:', JSON.stringify(registerData, null, 2));
       console.log('📋 Headers: Content-Type: application/json');
       

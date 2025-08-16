@@ -49,7 +49,7 @@ export default function LoginPage() {
       
       console.log('🔐 Login Request Details:');
       console.log('📡 Endpoint: POST /auths/login');
-      console.log('🌐 Full URL: https://detect-seat.onrender.com/auths/login');
+      console.log('🌐 Full URL: https://lstd.onrender.com/auths/login');
       console.log('📤 Payload:', JSON.stringify(loginData, null, 2));
       console.log('📋 Headers: Content-Type: application/json');
       
@@ -66,7 +66,7 @@ export default function LoginPage() {
         // ✅ Get user info to determine redirect path
         try {
           console.log('🔍 Getting user info for redirect...');
-          const userResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://detect-seat.onrender.com'}/app/auths/me?tenxa=xavixuyen`, {
+          const userResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://lstd.onrender.com'}/app/auths/me?tenxa=xavixuyen`, {
             headers: {
               'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json'
