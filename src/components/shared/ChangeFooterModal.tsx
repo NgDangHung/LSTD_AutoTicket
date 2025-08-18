@@ -1,14 +1,15 @@
 import React from "react";
 import Button from "./Button";
-type FooterConfigModalProps = {
+type ConfigModalProps = {
     isOpen: boolean;
     onClose: () => void;
-    onSave: (config: { workingHours: string; hotline: string }) => void;
-    initialConfig: { workingHours: string; hotline: string };
+    onSave: (config: {header: string; workingHours: string; hotline: string }) => void;
+    initialConfig: { header: string; workingHours: string; hotline: string };
   }
 
-function FooterConfigModal(props: FooterConfigModalProps) {
+function ConfigModal(props: ConfigModalProps) {
   const { isOpen, onClose, onSave, initialConfig } = props;
+  const [header, setHeader] = React.useState(initialConfig.header);
   const [workingHours, setWorkingHours] = React.useState(initialConfig.workingHours);
   const [hotline, setHotline] = React.useState(initialConfig.hotline);
   const modalRef = React.useRef<HTMLDivElement>(null);
@@ -38,6 +39,14 @@ function FooterConfigModal(props: FooterConfigModalProps) {
       <div ref={modalRef} className="bg-white rounded-lg shadow-lg p-8 min-w-[500px]">
         <h2 className="text-xl font-bold mb-4 text-gray-800">Chỉnh sửa thông tin footer</h2>
         <div className="mb-4">
+          <label className="block font-semibold mb-2 text-gray-800">Tên cơ sở</label>
+          <input
+            className="w-full border rounded px-3 py-2"
+            value={header}
+            onChange={e => setHeader(e.target.value)}
+          />
+        </div>
+        <div className="mb-4">
           <label className="block font-semibold mb-2 text-gray-800">Giờ làm việc</label>
           <input
             className="w-full border rounded px-3 py-2"
@@ -63,7 +72,7 @@ function FooterConfigModal(props: FooterConfigModalProps) {
           <Button
             // className="px-4 py-2 bg-blue-600 text-white rounded"
             variant="success" size="md"
-            onClick={() => onSave({ workingHours, hotline })}
+            onClick={() => onSave({ header, workingHours, hotline })}
             style={{ width: '150px' }}
           > Lưu </Button>
         </div>
@@ -72,4 +81,4 @@ function FooterConfigModal(props: FooterConfigModalProps) {
   );
 }
 
-export default FooterConfigModal;
+export default ConfigModal;

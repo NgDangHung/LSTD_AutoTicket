@@ -317,6 +317,16 @@ export const ticketsAPI = {
   updateTicketStatus: (ticketId: number, request: UpdateTicketStatusRequest): Promise<Ticket> => {
     return rootApi.patch(`/tickets/${ticketId}/status`, request).then(response => response.data);
   },
+
+  /**
+   * ✅ [GET] /tickets/done
+   * Lấy danh sách vé đã gọi (hoàn thành) theo quầy và xã
+   * @param params { counter_id?: number, tenxa: string }
+   * @returns Promise<Ticket[]>
+   */
+  getTicketDone: (params: { counter_id?: number; tenxa: string }): Promise<Ticket[]> => {
+    return rootApi.get('/tickets/done', { params }).then(response => response.data);
+  },
 };
 
 // ===================================
@@ -456,26 +466,27 @@ export const countersAPI = {
 // 🦶 Footers APIs (/footers/)
 // ===================================
 
-export interface FooterConfig {
+export interface KioskConfig {
+  header: string;
   work_time: string;
   hotline: string;
 }
 
-export const footersAPI = {
+export const configAPI = {
   /**
    * 🦶 [GET] /footers
    * Lấy thông tin work_time và hotline của một xã
    */
-  getFooter: (tenxa: string): Promise<FooterConfig> => {
-    return rootApi.get('/footers', { params: { tenxa } }).then(res => res.data);
+  getConfig: (tenxa: string): Promise<KioskConfig> => {
+    return rootApi.get('/configs', { params: { tenxa } }).then(res => res.data);
   },
 
   /**
    * 🦶 [POST] /footers
    * Tạo hoặc cập nhật thông tin work_time và hotline cho một xã
    */
-  setFooter: (tenxa: string, config: FooterConfig): Promise<FooterConfig> => {
-    return rootApi.post('/footers', config, { params: { tenxa } }).then(res => res.data);
+  setConfig: (tenxa: string, config: KioskConfig): Promise<KioskConfig> => {
+    return rootApi.post('/configs', config, { params: { tenxa } }).then(res => res.data);
   },
 };
 
