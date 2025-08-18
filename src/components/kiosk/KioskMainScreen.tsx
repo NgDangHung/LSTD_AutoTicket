@@ -9,7 +9,7 @@ import VirtualKeyboard from './VirtualKeyboard';
 import SpeechToText from './SpeechToText';
 import { useCreateTicket } from '@/hooks/useApi';
 import { useOptimizedSearch } from '@/hooks/useOptimizedSearch';
-import { countersAPI, footersAPI, Counter } from '@/libs/rootApi';
+import { countersAPI, configAPI, Counter } from '@/libs/rootApi';
 import '@/app/index.css';
 import PopUp from './PopUp';
 import DateTimeVN from '../shared/DateTimeVN';
@@ -40,56 +40,46 @@ interface ProcedureResult {
 
 export default function KioskMainScreen() {
   // Footer config state
-  const DEFAULT_FOOTER = {
+  // Footer config state (now includes header)
+  const DEFAULT_CONFIG = {
+    header: 'PHƯỜNG AAA',
     workingHours: 'Giờ làm việc (Thứ 2 - Thứ 6): 07h30 - 17h00',
     hotline: 'Hotline hỗ trợ: 0916670793',
   };
-  const [footerConfig, setFooterConfig] = useState<{ workingHours: string; hotline: string }>(DEFAULT_FOOTER);
+  const [config, setConfig] = useState<{ header: string; workingHours: string; hotline: string }>(DEFAULT_CONFIG);
 
-  // Fetch footer config on mount and listen for updates
+  // Fetch config from API on mount
+  async function fetchConfig() {
+    try {
+      const data = await configAPI.getConfig('phuongtanphong');
+      if (data && (data.work_time || data.hotline)) {
+        setConfig({
+          header: data.header || DEFAULT_CONFIG.header,
+          workingHours: data.work_time || DEFAULT_CONFIG.workingHours,
+          hotline: data.hotline || DEFAULT_CONFIG.hotline,
+        });
+      }
+    } catch {
+      setConfig(DEFAULT_CONFIG);
+    }
+  }
+
+  // Save config to API
+  async function handleSaveConfig(newConfig: { header: string; work_time: string; hotline: string }, onSuccess?: () => void, onError?: (err: any) => void) {
+    try {
+      await configAPI.setConfig('phuongtanphong', {
+        header: newConfig.header,
+        work_time: newConfig.work_time,
+        hotline: newConfig.hotline
+      });
+      if (onSuccess) onSuccess();
+    } catch (err) {
+      if (onError) onError(err);
+    }
+  }
+
   useEffect(() => {
-    let ignore = false;
-    async function fetchFooter() {
-      try {
-        const data = await footersAPI.getFooter('phuongtanphong');
-        if (!ignore && data) {
-          setFooterConfig({
-            workingHours: data.work_time || DEFAULT_FOOTER.workingHours,
-            hotline: data.hotline || DEFAULT_FOOTER.hotline,
-          });
-        }
-      } catch {
-        setFooterConfig(DEFAULT_FOOTER);
-      }
-    }
-    fetchFooter();
-    // BroadcastChannel for cross-tab footer config sync
-    let bc: BroadcastChannel | null = null;
-    const handler = async () => {
-      try {
-        const data = await footersAPI.getFooter('phuongtanphong');
-        if (!ignore && data) {
-          setFooterConfig({
-            workingHours: data.work_time || DEFAULT_FOOTER.workingHours,
-            hotline: data.hotline || DEFAULT_FOOTER.hotline,
-          });
-        }
-      } catch {
-        setFooterConfig(DEFAULT_FOOTER);
-      }
-    };
-    window.addEventListener('footerConfigUpdated', handler);
-    if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
-      bc = new BroadcastChannel('footerConfig');
-      bc.onmessage = (event) => {
-        if (event?.data === 'updated') handler();
-      };
-    }
-    return () => {
-      ignore = true;
-      window.removeEventListener('footerConfigUpdated', handler);
-      if (bc) bc.close();
-    };
+    fetchConfig();
   }, []);
 
    // Popup state
@@ -153,13 +143,13 @@ export default function KioskMainScreen() {
     };
     loadCounters();
 
-    // --- WebSocket thuần lắng nghe event 'upsert_counter' ---
+    // --- WebSocket lắng nghe event 'upsert_counter', 'delete_counter', và 'update_config' ---
     let ws: WebSocket | null = null;
     if (typeof window !== 'undefined') {
       ws = new window.WebSocket('wss://detect-seat-we21.onrender.com/ws/updates');
       ws.onopen = () => {
         // Kết nối thành công
-        console.log('WebSocket connected for counter updates');
+        console.log('WebSocket connected for counter/config updates');
       };
       ws.onmessage = (event) => {
         try {
@@ -190,15 +180,20 @@ export default function KioskMainScreen() {
               }
             })();
           }
+          // Listen for config update event
+          if (data.event === 'update_config' && data.tenxa === 'phuongtanphong') {
+            console.log('Received update_config event:', data);
+            fetchConfig();
+          }
         } catch (err) {
           // Ignore parse error
         }
       };
       ws.onerror = () => {
-        // console.warn('WebSocket error for counter updates');
+        // console.warn('WebSocket error for counter/config updates');
       };
       ws.onclose = () => {
-        // console.log('WebSocket closed for counter updates');
+        // console.log('WebSocket closed for counter/config updates');
       };
     }
     return () => {
@@ -493,11 +488,11 @@ export default function KioskMainScreen() {
             unoptimized
           />
           <div style={{ marginLeft: '12px' }}>
-            <h1 className="text-3xl font-bold text-red-700" style={{ lineHeight: '1.2' }}>
+            <h1 className="text-3xl font-bold text-red-700" style={{ lineHeight: '1.5' }}>
               TRUNG TÂM PHỤC VỤ HÀNH CHÍNH CÔNG
             </h1>
-            <h1 className="text-3xl font-bold text-red-700" style={{ lineHeight: '1.2' }}>
-              PHƯỜNG TÂN PHONG
+            <h1 className="text-3xl font-bold text-red-700" style={{ lineHeight: '1.3' }}>
+              {config.header}
             </h1>
             <p className='text-xl font-extrabold text-red-700 mt-3'>
               Hành chính phục vụ
@@ -779,8 +774,8 @@ export default function KioskMainScreen() {
 
         {/* Footer màn dọc */}
         <div className="flex items-center w-full text-gray-600 italic" style={{ position: 'relative', top: '5rem', justifyContent: 'space-around' }}>
-          <p className="text-xl font-extrabold text-red-700 ">{footerConfig.workingHours}</p>
-          <p className="text-xl font-extrabold text-red-700 ">{footerConfig.hotline}</p>
+          <p className="text-xl font-extrabold text-red-700 ">{config.workingHours}</p>
+          <p className="text-xl font-extrabold text-red-700 ">{config.hotline}</p>
         </div>
 
          {/* Footer màn ngang */} 

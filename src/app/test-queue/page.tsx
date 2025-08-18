@@ -7,9 +7,9 @@ import { useRouter } from 'next/navigation';
 import { TTSService } from '@/libs/ttsService';
 import { toast } from 'react-toastify';
 import { type CounterDetail, type CurrentServing, type WaitingTicket } from '@/libs/queueApi';
-import { countersAPI, footersAPI, type Counter, type CallNextResponse, ticketsAPI, type Ticket, rootApi } from '@/libs/rootApi';
+import { countersAPI, configAPI, type Counter, type CallNextResponse, ticketsAPI, type Ticket, rootApi } from '@/libs/rootApi';
 import Button from '@/components/shared/Button';
-import FooterConfigModal from '@/components/shared/ChangeFooterModal';
+import ConfigModal from '@/components/shared/ChangeFooterModal';
 import CounterManagement from '@/components/admin/CounterManagement';
 
 
@@ -40,24 +40,27 @@ function TestQueuePage() {
     called_at: string;
   }>>({});
 
-  const [footerConfig, setFooterConfig] = useState<{ workingHours: string; hotline: string }>({
+  const [config, setConfig] = useState<{header:string, workingHours: string; hotline: string }>({
+    header: 'PHƯỜNG AAA',
     workingHours: 'Giờ làm việc (Thứ 2 - Thứ 6): 07h30 - 17h00',
     hotline: 'Hotline hỗ trợ: 0916670793',
   });
 
   // Footer config API helpers
   const TEN_XA = 'phuongtanphong';
-  async function fetchFooterConfig() {
+  async function fetchConfig() {
     // API trả về { work_time, hotline }
-    const data = await footersAPI.getFooter(TEN_XA);
+    const data = await configAPI.getConfig(TEN_XA);
     return {
+      header: data.header,
       workingHours: data.work_time,
       hotline: data.hotline,
     };
   }
-  async function saveFooterConfig(config: { workingHours: string; hotline: string }) {
+  async function saveConfig(config: {header: string, workingHours: string; hotline: string }) {
     // API nhận { work_time, hotline }
-    const data = await footersAPI.setFooter(TEN_XA, {
+    const data = await configAPI.setConfig(TEN_XA, {
+      header: config.header,
       work_time: config.workingHours,
       hotline: config.hotline,
     });
@@ -131,17 +134,17 @@ function TestQueuePage() {
     }
   }, []);
 
-  const handleSaveFooterConfig = async (config: { workingHours: string; hotline: string }) => {
+  const handleSaveConfig = async (config: { header: string, workingHours: string; hotline: string }) => {
     try {
-      await saveFooterConfig(config);
-      setFooterConfig(config);
+      await saveConfig(config);
+      setConfig(config);
       setShowFooterModal(false);
-      toast.success('Đã lưu cấu hình footer!');
+      toast.success('Đã lưu cấu hình!');
       // Broadcast event for all tabs
-      window.dispatchEvent(new CustomEvent('footerConfigUpdated', { detail: config }));
+      window.dispatchEvent(new CustomEvent('configUpdated', { detail: config }));
       // BroadcastChannel for cross-tab sync
       if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
-        const bc = new BroadcastChannel('footerConfig');
+        const bc = new BroadcastChannel('config');
         bc.postMessage('updated');
         bc.close();
       }
@@ -469,7 +472,7 @@ function TestQueuePage() {
               onClick={() => setShowFooterModal(true)}
               className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
             >
-              ⚙️ Chỉnh sửa chân trang
+              ⚙️ Chỉnh sửa cấu hình
             </Button>
             <Button
               className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
@@ -643,11 +646,11 @@ function TestQueuePage() {
 
       {/* Footer Config Modal */}
        {showFooterModal && (
-        <FooterConfigModal
+        <ConfigModal
           isOpen={showFooterModal}
           onClose={() => setShowFooterModal(false)}
-          onSave={handleSaveFooterConfig}
-          initialConfig={footerConfig}
+          onSave={handleSaveConfig}
+          initialConfig={config}
         />
       )}
 

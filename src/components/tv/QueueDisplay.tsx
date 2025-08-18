@@ -4,9 +4,8 @@ import Image from 'next/image';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import NumberAnimation from './NumberAnimation';
 import { useWebSocketQueue } from '@/hooks/useWebSocketQueue';
-import { footersAPI } from '@/libs/rootApi';
 import { TTSService, type TTSService as TTSServiceType } from '@/libs/ttsService';
-import { rootApi, countersAPI } from '@/libs/rootApi';
+import { rootApi, countersAPI, configAPI } from '@/libs/rootApi';
 
 // ✅ Real API ticket interface based on actual BE response
 interface RealTicket {
@@ -38,9 +37,10 @@ interface CounterAPI {
   status: string;
 }
 
-type FooterConfig = {
+type config = {
   workingHours: string;
   hotline: string;
+  header:string
 };
 
 
@@ -92,55 +92,49 @@ export default function QueueDisplay() {
   const { isConnected, lastEvent } = useWebSocketQueue();
 
   // Footer config state
-  const DEFAULT_FOOTER = {
+  const DEFAULT_CONFIG = {
+    header: 'PHƯỜNG TÂN PHONG',
     workingHours: 'Giờ làm việc (Thứ 2 - Thứ 6): 07h30 - 17h00',
     hotline: 'Hotline hỗ trợ: 0916670793',
   };
-  const [footerConfig, setFooterConfig] = React.useState<FooterConfig>(DEFAULT_FOOTER);
+  const [config, setconfig] = React.useState<config>(DEFAULT_CONFIG);
 
 
   // Fetch footer config on mount and listen for updates
-  useEffect(() => {
-    let ignore = false;
-    async function fetchFooter() {
-      try {
-        const data = await footersAPI.getFooter('phuongtanphong');
-        if (!ignore && data && (data.work_time || data.hotline)) {
-          setFooterConfig({
-            workingHours: data.work_time || DEFAULT_FOOTER.workingHours,
-            hotline: data.hotline || DEFAULT_FOOTER.hotline,
-          });
-        }
-      } catch {
-        setFooterConfig(DEFAULT_FOOTER);
+  async function fetchConfig() {
+    try {
+      const data = await configAPI.getConfig('phuongtanphong');
+      if (data && (data.work_time || data.hotline)) {
+        setconfig({
+          workingHours: data.work_time || DEFAULT_CONFIG.workingHours,
+          hotline: data.hotline || DEFAULT_CONFIG.hotline,
+          header: data.header || DEFAULT_CONFIG.header,
+        });
       }
+    } catch {
+      setconfig(DEFAULT_CONFIG);
     }
-    fetchFooter();
-    // BroadcastChannel for cross-tab footer config sync
-    let bc: BroadcastChannel | null = null;
-    const handler = async () => {
-      try {
-        const data = await footersAPI.getFooter('phuongtanphong');
-        if (!ignore && data && (data.work_time || data.hotline)) {
-          setFooterConfig({
-            workingHours: data.work_time || footerConfig.workingHours,
-            hotline: data.hotline || footerConfig.hotline,
-          });
-        }
-      } catch {}
-    };
-    window.addEventListener('footerConfigUpdated', handler);
-    if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
-      bc = new BroadcastChannel('footerConfig');
-      bc.onmessage = (event) => {
-        if (event?.data === 'updated') handler();
-      };
+  }
+
+  // ====== Hàm handleSaveConfig sử dụng API setConfig ======
+  async function handleSaveConfig(newConfig: { header: string; work_time: string; hotline: string }, onSuccess?: () => void, onError?: (err: any) => void) {
+    try {
+      // Đảm bảo truyền đủ header cho BE
+      await configAPI.setConfig('phuongtanphong', {
+        work_time: newConfig.work_time,
+        hotline: newConfig.hotline,
+        header: newConfig.header
+      });
+      if (onSuccess) onSuccess();
+      // Có thể phát sự kiện cập nhật nếu cần: window.dispatchEvent(new Event('configUpdated'));
+    } catch (err) {
+      if (onError) onError(err);
     }
-    return () => {
-      ignore = true;
-      window.removeEventListener('footerConfigUpdated', handler);
-      if (bc) bc.close();
-    };
+  }
+
+  // ====== useEffect fetchConfig khi mount ======
+  useEffect(() => {
+    fetchConfig();
   }, []);
 
   // ✅ Initialize TTS Service on client-side only
@@ -388,7 +382,10 @@ export default function QueueDisplay() {
               case 'delete_counter':
                 fetchCounters()
                 break;
-                
+              
+              case 'update_config':
+                fetchConfig()
+                break;
               default:
                 console.log('ℹ️ Unknown WebSocket event:', eventData.event);
             }
@@ -771,11 +768,11 @@ export default function QueueDisplay() {
             unoptimized
           />
           <div style={{ marginLeft: '15px'  }}>
-            <h1 className="text-5xl font-bold text-red-700 " style={{ lineHeight: '1.5' }}>
-              TRUNG TÂM PHỤC VỤ HÀNH CHÍNH CÔNG  
+            <h1 className="text-5xl font-bold text-red-700" style={{ lineHeight: '1.5' }}>
+              TRUNG TÂM PHỤC VỤ HÀNH CHÍNH CÔNG
             </h1>
-            <h1 className="text-5xl font-bold text-red-700 " style={{ lineHeight: '1.3' }}>
-              PHƯỜNG TÂN PHONG
+            <h1 className="text-5xl font-bold text-red-700" style={{ lineHeight: '1.3' }}>
+              {config.header}
             </h1>
             <p className='text-2xl font-extrabold text-red-700 mt-3' style={{fontSize: '2rem'}}>
               Hành chính phục vụ 
@@ -848,8 +845,8 @@ export default function QueueDisplay() {
         <div className="flex justify-center items-center gap-8 text-lg italic text-red-700 font-extrabold"
           style={{fontSize: '2rem'}}
         >
-          <span> {footerConfig.workingHours}</span>
-          <span> {footerConfig.hotline} </span>
+          <span> {config.workingHours}</span>
+          <span> {config.hotline} </span>
           {lastUpdated && (
             <span className="text-lg text-red-700 font-extrabold" style={{fontSize: '2rem'}}>
               Thời gian: {new Date().toLocaleTimeString('vi-VN')}
