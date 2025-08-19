@@ -449,9 +449,8 @@ export default function KioskMainScreen() {
 
       <div className="max-w-6xl mx-auto">
         {/* Header màn dọc */}
-        {/* <div 
+        <div 
           className="flex items-center justify-center mb-12"
-          style={{ backgroundColor: '' }}
         >
           <div className="flex items-center gap-2">
             <Image
@@ -467,18 +466,18 @@ export default function KioskMainScreen() {
                 TRUNG TÂM PHỤC VỤ HÀNH CHÍNH CÔNG 
               </h1>
                <h1 className="text-3xl font-bold text-red-700 " style={{ lineHeight: '1.3' }}>
-                PHƯỜNG LÀO CAI 1 
+                {config.header}
               </h1>
               <p className='text-xl font-extrabold text-red-700 mt-3' style={{fontSize: '1.5rem'}}>
                 Hành chính phục vụ 
               </p>
             </div>
           </div>
-        </div> */}
+        </div>
 
         {/* Header màn ngang */}
 
-        <div className="flex items-center justify-center mb-6" style={{ minHeight: 200 }}>
+        {/* <div className="flex items-center justify-center mb-6" style={{ minHeight: 200 }}>
           <Image
             src="/images/logo_vang.png"
             alt="logo_vang"
@@ -498,7 +497,7 @@ export default function KioskMainScreen() {
               Hành chính phục vụ
             </p>
           </div>
-        </div>
+        </div> */}
 
         {/* DateTimeVN Component */}
         <div className="text-center text-xl font-extrabold text-red-700" style = {{position: 'relative', right: '-260px', top: '-50px'}}>
@@ -695,7 +694,7 @@ export default function KioskMainScreen() {
             
             {/* Grid màn dọc */}
             <div
-              className={`service-grid-container grid grid-cols-2 gap-6 p-4 border rounded-lg backdrop-blur-sm ${filteredCounters.length > 8 ? 'max-h-[480px] overflow-y-auto' : ''}`}
+              className={`service-grid-container grid grid-cols-2 gap-6 p-4 border rounded-lg backdrop-blur-sm ${filteredCounters.length > 8 ? 'max-h-[1020px] overflow-y-auto' : ''}`}
             >
               {filteredCounters.map((counter, idx) => {
                 // So le: idx 0,3,4,... (quầy 1,4,5,...) nền đỏ; idx 1,2,5,... nền trắng
@@ -720,13 +719,13 @@ export default function KioskMainScreen() {
 
             {/* Grid màn ngang */}
             {/* <div
-              className="service-grid-container grid grid-cols-4  p-6 border rounded-lg backdrop-blur-sm"
+              className="service-grid-container grid grid-cols-4 p-6 border rounded-lg backdrop-blur-sm overflow-y-auto"
               style={{
                 width: '1600px',
                 margin: '0 auto',
-                minHeight: 400,
                 background: 'rgba(255,255,255,0.2)',
-                boxSizing: 'border-box'
+                boxSizing: 'border-box',
+                maxHeight: 2 * 200 + 60, // chiều cao cho 2 hàng + padding
               }}
             >
               {filteredCounters.map((counter, idx) => (
@@ -747,9 +746,9 @@ export default function KioskMainScreen() {
                     lineHeight: '35px',
                   }}
                 >
-                  <span className="text-lg font-bold mb-1">{`QUẦY ${String(idx + 1).padStart(2, '0')}`}</span>
+                  <span className="text-lg font-bold mb-1">{`QUẦY ${String(counter.id).padStart(2, '0')}`}</span>
                   <span
-                    className="text-xl font-extrabold mb-1  text-center w-full"
+                    className="text-xl font-extrabold mb-1 text-center w-full"
                     style={{
                       maxWidth: counter.id === 8 ? '100%' : '80%',
                       lineHeight: '40px',
