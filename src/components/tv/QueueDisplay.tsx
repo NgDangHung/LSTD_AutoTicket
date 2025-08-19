@@ -830,7 +830,7 @@ export default function QueueDisplay() {
       </div>
 
       {/* Footer */}
-      <footer className="bg-white p-4 text-center fixed bottom-0 left-0 w-full z-40">
+      {/* <footer className="bg-white p-4 text-center fixed bottom-0 left-0 w-full z-40">
         <div className="flex justify-center items-center gap-8 text-lg italic text-red-700 font-extrabold"
           style={{fontSize: '2rem'}}
         >
@@ -842,7 +842,7 @@ export default function QueueDisplay() {
             </span>
           )}
         </div>
-      </footer>
+      </footer> */}
 
     </div>
   );

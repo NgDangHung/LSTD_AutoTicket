@@ -430,7 +430,7 @@ export default function KioskMainScreen() {
 
         {/* Header màn ngang */}
 
-        <div className="flex items-center justify-center mb-6" style={{ minHeight: 200 }}>
+        <div className="flex items-center justify-center" style={{ minHeight: 200 }}>
           <Image
             src="/images/logo_vang.png"
             alt="logo_vang"
@@ -588,7 +588,7 @@ export default function KioskMainScreen() {
           <div className="flex flex-col items-center" style={{width: '1600px', position: 'relative', right: '222px'}}>
             {/* Scroll Indicator */}
             {filteredCounters.length > 4 && (
-              <div className="mb-4 text-center">
+              <div className="text-center">
                 <p className="text-gray-600 text-sm flex items-center justify-center gap-2">
                   <span>📋 {filteredCounters.length} quầy có sẵn</span>
                 </p>
@@ -622,13 +622,13 @@ export default function KioskMainScreen() {
 
             {/* Grid màn ngang */}
             <div
-              className="service-grid-container grid grid-cols-4  p-6 border rounded-lg backdrop-blur-sm"
+              className="service-grid-container grid grid-cols-4 p-6 border rounded-lg backdrop-blur-sm overflow-y-auto"
               style={{
                 width: '1600px',
                 margin: '0 auto',
-                minHeight: 400,
                 background: 'rgba(255,255,255,0.2)',
-                boxSizing: 'border-box'
+                boxSizing: 'border-box',
+                maxHeight: 2 * 200 + 60, // chiều cao cho 2 hàng + padding
               }}
             >
               {filteredCounters.map((counter, idx) => (
@@ -651,7 +651,7 @@ export default function KioskMainScreen() {
                 >
                   <span className="text-lg font-bold mb-1">{`QUẦY ${String(counter.id).padStart(2, '0')}`}</span>
                   <span
-                    className="text-xl font-extrabold mb-1  text-center w-full"
+                    className="text-xl font-extrabold mb-1 text-center w-full"
                     style={{
                       maxWidth: counter.id === 8 ? '100%' : '80%',
                       lineHeight: '40px',
@@ -662,6 +662,7 @@ export default function KioskMainScreen() {
                 </div>
               ))}
             </div>
+
           </div>
         )}
 
