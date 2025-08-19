@@ -636,7 +636,7 @@ function OfficerPage() {
                 <div className="text-gray-500">Chưa có lịch sử gọi số</div>
               ) : (
                  <div className="space-y-2 overflow-y-auto" style={{maxHeight: '180px'}}>
-                   {callHistory.slice(0, 10).map((ticket) => (
+                   {callHistory.map((ticket) => (
                      <div key={ticket.id} className="flex justify-between items-center p-3 rounded-lg border bg-gray-50 border-gray-200">
                        <div className="flex items-center gap-3">
                          <span className="font-bold text-lg text-gray-600">{ticket.number}</span>
