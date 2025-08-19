@@ -206,8 +206,9 @@ export default function QueueDisplay() {
   };
 
   // ✅ Counter ID parsing from name (API-driven, strict match)
-  const getCounterIdFromName = (counterName: string): number | null => {
-    // So sánh tuyệt đối, loại bỏ fallback số quầy để tránh bug mapping
+  // Ưu tiên dùng counter_id nếu có, chỉ fallback sang counter_name nếu thiếu
+  const getCounterIdFromName = (counterName: string, counterId?: number): number | null => {
+    if (typeof counterId === 'number') return counterId;
     const found = apiCounters.find(c => c.name.trim().toLowerCase() === counterName.trim().toLowerCase());
     return found ? found.id : null;
   };
@@ -437,11 +438,11 @@ export default function QueueDisplay() {
     };
     
     // ✅ Handle ticket_called event từ BE documentation - UPDATED for WebSocket state
-    const handleTicketCalledEvent = async (eventData: { event: string, ticket_number: number | null, counter_name: string }) => {
+    const handleTicketCalledEvent = async (eventData: { event: string, ticket_number: number | null, counter_name: string, counter_id?: number }) => {
       console.log('📞 Ticket called via WebSocket:', eventData);
-      const { ticket_number, counter_name } = eventData;
-      const counterId = getCounterIdFromName(counter_name);
-      console.log('🎯 Parsed counter ID from counter_name:', counterId, 'for name:', counter_name);
+      const { ticket_number, counter_name, counter_id } = eventData;
+      const counterId = getCounterIdFromName(counter_name, counter_id);
+      console.log('🎯 Parsed counter ID:', counterId, 'for name:', counter_name, 'and counter_id:', counter_id);
 
       if (!counterId) return;
 
@@ -543,12 +544,9 @@ export default function QueueDisplay() {
     // ✅ BACKUP: Listen for ticket called events from test-queue (fallback)
     const handleTicketCalledFromTestQueue = (event: CustomEvent) => {
       console.log('🔔 Backup: Ticket called event from test-queue:', event.detail);
-      
       const { ticket_number, counter_name, counter_id } = event.detail;
-      
-      // Parse counter ID
-      const counterId = counter_id || getCounterIdFromName(counter_name);
-      
+      // Ưu tiên dùng counter_id nếu có
+      const counterId = getCounterIdFromName(counter_name, counter_id);
       if (counterId && ticket_number) {
         // ✅ Store serving ticket in WebSocket state (backup source)
         const servingTicket = {
@@ -584,7 +582,6 @@ export default function QueueDisplay() {
         // Auto-hide announcement after 4 seconds
         setTimeout(() => setAnnouncement(null), 4000);
       }
-      
       // Refresh queue data
       fetchAndProcessQueueData(false);
     };
