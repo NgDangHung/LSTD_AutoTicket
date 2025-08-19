@@ -83,16 +83,14 @@ export class TTSService {
       // Listen for ticket_called events từ WebSocket với timestamp
       const handleTicketCalled = (event: Event) => {
         const customEvent = event as CustomEvent;
-        const { ticket_number, counter_name, timestamp, tenxa } = customEvent.detail;
+        const { ticket_number, counter_id, timestamp, tenxa } = customEvent.detail;
         // Chỉ xử lý nếu tenxa === xã hiện tại
         if (tenxa !== 'phuongtanphong') return;
-        // Truyền tenxa vào extractCounterIdFromName
-        const counterId = this.extractCounterIdFromName(counter_name, tenxa);
-        if (counterId == null) {
-          console.warn('❌ Không xác định được counterId từ counter_name:', counter_name, tenxa);
+        if (typeof counter_id !== 'number') {
+          console.warn('❌ Không xác định được counter_id từ event:', customEvent.detail);
           return;
         }
-        this.queueAnnouncement(counterId, ticket_number, 1, 'ai', timestamp, tenxa);
+        this.queueAnnouncement(counter_id, ticket_number, 1, 'ai', timestamp, tenxa);
       };
       window.addEventListener('ticketCalledWithTimestamp', handleTicketCalled);
     } catch (error) {
@@ -100,15 +98,7 @@ export class TTSService {
     }
   }
 
-  /**
-   * Trả về counterId nếu tên quầy match tuyệt đối trong từng xã, ngược lại trả về null (không phát TTS nếu không xác định được)
-   */
-  private extractCounterIdFromName(counterName: string, tenxa: string): number | null {
-    if (!counterName || !tenxa) return null;
-    const normalized = counterName.trim();
-    if (!this.countersLoaded[tenxa]) this.loadCounters(tenxa);
-    return this.counterMapping[tenxa]?.[normalized] ?? null;
-  }
+
 
   async queueAnnouncement(
     counterId: number, 
@@ -118,6 +108,8 @@ export class TTSService {
     timestamp?: string,
     tenxa?: string
   ): Promise<void> {
+    // Log đầu vào
+    console.log('[TTS] queueAnnouncement:', { counterId, ticketNumber, callAttempt, source, timestamp, tenxa });
     // Check call limit
     if (callAttempt > this.maxRetries) {
       console.warn(`🔊 Ticket ${ticketNumber} exceeded max calls (${this.maxRetries})`);
@@ -210,16 +202,15 @@ export class TTSService {
 
   private async callTTSAPI(counterId: number, ticketNumber: number, tenxa: string): Promise<TTSResponse> {
     try {
-      console.log(`🎵 Calling TTS API for Counter ${counterId}, Ticket ${ticketNumber}, tenxa: ${tenxa}`);
+      console.log(`[TTS] callTTSAPI: counterId=${counterId}, ticketNumber=${ticketNumber}, tenxa=${tenxa}`);
       // Chuẩn hóa truyền tenxa vào object request
       const audioBlob = await ttsAPI.generateAudio(counterId, ticketNumber, tenxa);
+      console.log(`[TTS] callTTSAPI: audioBlob.size=${audioBlob.size}`);
       const audioUrl = URL.createObjectURL(audioBlob);
-      console.log(`✅ TTS API success - Generated MP3 blob (${audioBlob.size} bytes)`);
-      console.log(`🎵 Audio URL created: ${audioUrl}`);
+      console.log(`[TTS] callTTSAPI: audioUrl=${audioUrl}`);
       return { audioUrl, success: true };
     } catch (error) {
-      console.error(`❌ TTS API failed for Counter ${counterId}, Ticket ${ticketNumber}:`, error);
-      
+      console.error(`[TTS] callTTSAPI ERROR: counterId=${counterId}, ticketNumber=${ticketNumber}, error=`, error);
       if (error instanceof Error) {
         if (error.message.includes('Counter not found')) {
           return { 
@@ -236,7 +227,6 @@ export class TTSService {
           };
         }
       }
-      
       return { 
         audioUrl: '', 
         success: false, 
@@ -248,23 +238,20 @@ export class TTSService {
   private async playAudio(audioUrl: string, request: TTSRequest): Promise<void> {
     return new Promise((resolve, reject) => {
       this.currentAudio = new Audio(audioUrl);
-      
       this.currentAudio.onended = () => {
         URL.revokeObjectURL(audioUrl); // Cleanup blob URL
         this.currentAudio = null;
-        console.log(`🔊 Audio completed: Counter ${request.counterId}, Ticket ${request.ticketNumber}`);
+        console.log(`[TTS] playAudio: Audio completed: Counter ${request.counterId}, Ticket ${request.ticketNumber}`);
         resolve();
       };
-
-      this.currentAudio.onerror = () => {
+      this.currentAudio.onerror = (e) => {
         URL.revokeObjectURL(audioUrl);
         this.currentAudio = null;
-        console.error(`🔊 Audio playback failed: Counter ${request.counterId}, Ticket ${request.ticketNumber}`);
+        console.error(`[TTS] playAudio: Audio playback failed: Counter ${request.counterId}, Ticket ${request.ticketNumber}`, e);
         reject(new Error('Audio playback failed'));
       };
-
       this.currentAudio.play().catch(error => {
-        console.error('🔊 Audio play failed:', error);
+        console.error('[TTS] playAudio: Audio play failed:', error);
         reject(error);
       });
     });
