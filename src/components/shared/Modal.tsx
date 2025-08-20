@@ -67,7 +67,7 @@ export default function Modal({
                 className="text-gray-500 hover:text-gray-700 transition-colors p-1 rounded hover:bg-gray-100"
                 type="button"
               >
-                <X size={20} />
+                
               </button>
             )}
           </div>
