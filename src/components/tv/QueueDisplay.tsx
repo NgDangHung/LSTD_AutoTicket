@@ -132,17 +132,11 @@ export default function QueueDisplay() {
     }
   }
 
-  // ====== useEffect fetchConfig khi mount ======
-  useEffect(() => {
-    fetchConfig();
-  }, []);
-
   // ✅ Initialize TTS Service on client-side only
   useEffect(() => {
     if (typeof window !== 'undefined') {
       try {
         const initTTS = async () => {
-          const { TTSService } = await import('@/libs/ttsService');
           const tts = TTSService.getInstance();
           setTtsService(tts);
           console.log('✅ TTS Service initialized for TV display');
@@ -166,11 +160,10 @@ export default function QueueDisplay() {
         setApiCounters([]);
       }
     };
-  // ✅ Fetch counters from API on mount
+  // ✅ Fetch counters and configs from API on mount
   useEffect(() => {
-
     fetchCounters();
-
+    fetchConfig();
   }, []);
 
   // ✅ Khởi tạo wsServingTickets khi đã có apiCounters (reload trang)
@@ -205,13 +198,6 @@ export default function QueueDisplay() {
     return found ? found.name : `Quầy ${counterId}`;
   };
 
-  // ✅ Counter ID parsing from name (API-driven, strict match)
-  // Ưu tiên dùng counter_id nếu có, chỉ fallback sang counter_name nếu thiếu
-  const getCounterIdFromName = (counterName: string, counterId?: number): number | null => {
-    if (typeof counterId === 'number') return counterId;
-    const found = apiCounters.find(c => c.name.trim().toLowerCase() === counterName.trim().toLowerCase());
-    return found ? found.id : null;
-  };
 
   // ✅ Fetch all tickets from real API
   const fetchAllTickets = async (): Promise<RealTicket[]> => {
@@ -439,12 +425,15 @@ export default function QueueDisplay() {
     
     // ✅ Handle ticket_called event từ BE documentation - UPDATED for WebSocket state
     const handleTicketCalledEvent = async (eventData: { event: string, ticket_number: number | null, counter_name: string, counter_id?: number }) => {
-      console.log('📞 Ticket called via WebSocket:', eventData);
+      console.log('📞 [TTS DEBUG] Ticket called via WebSocket:', eventData, 'ttsService:', !!ttsService);
       const { ticket_number, counter_name, counter_id } = eventData;
-      const counterId = getCounterIdFromName(counter_name, counter_id);
-      console.log('🎯 Parsed counter ID:', counterId, 'for name:', counter_name, 'and counter_id:', counter_id);
+      const counterId = typeof counter_id === 'number' ? counter_id : null;
+      console.log('🎯 [TTS DEBUG] Using counter_id from event:', counterId, 'for name:', counter_name, 'and counter_id:', counter_id);
 
-      if (!counterId) return;
+      if (!counterId) {
+        console.warn('[TTS DEBUG] counterId is null, skip TTS');
+        return;
+      }
 
       // Nếu ticket_number là null => clear số đang phục vụ
       if (ticket_number == null) {
@@ -462,12 +451,13 @@ export default function QueueDisplay() {
       const key = `${counterId}-${ticket_number}`;
       // Nếu đã phát rồi thì bỏ qua
       if (announcedTicketsRef.current.has(key)) {
-        console.log(`⏩ Skip duplicate TTS: ${key}`);
+        console.log(`[TTS DEBUG] ⏩ Skip duplicate TTS: ${key}`);
         return;
       }
 
       // Đánh dấu đã phát
       announcedTicketsRef.current.add(key);
+      console.log(`[TTS DEBUG] Marked as announced: ${key}`);
 
       // Gọi API lấy vé đang phục vụ cho quầy này
       const servingTicket = await fetchServingTicket(counterId);
@@ -493,6 +483,7 @@ export default function QueueDisplay() {
       // TTS announcement nếu chưa phát
       if (ttsService) {
         try {
+          console.log('[TTS DEBUG] Calling ttsService.queueAnnouncement', { counterId, ticket_number });
           await ttsService.queueAnnouncement(
             counterId,
             ticket_number,
@@ -500,12 +491,14 @@ export default function QueueDisplay() {
             'manual', // Source type: manual (từ WebSocket)
             new Date().toISOString()
           );
-          console.log(`📢 TTS queued for Counter ${counterId} - Ticket ${ticket_number}`);
+          console.log(`[TTS DEBUG] 📢 TTS queued for Counter ${counterId} - Ticket ${ticket_number}`);
         } catch (error) {
-          console.warn('⚠️ Failed to queue TTS:', error);
+          console.warn('[TTS DEBUG] ⚠️ Failed to queue TTS:', error);
           // Xoá khỏi set nếu queue thất bại để retry sau
           announcedTicketsRef.current.delete(key);
         }
+      } else {
+        console.warn('[TTS DEBUG] ttsService is null, cannot call queueAnnouncement');
       }
 
       // Auto-hide announcement after 4 seconds
@@ -545,8 +538,7 @@ export default function QueueDisplay() {
     const handleTicketCalledFromTestQueue = (event: CustomEvent) => {
       console.log('🔔 Backup: Ticket called event from test-queue:', event.detail);
       const { ticket_number, counter_name, counter_id } = event.detail;
-      // Ưu tiên dùng counter_id nếu có
-      const counterId = getCounterIdFromName(counter_name, counter_id);
+      const counterId = typeof counter_id === 'number' ? counter_id : null;
       if (counterId && ticket_number) {
         // ✅ Store serving ticket in WebSocket state (backup source)
         const servingTicket = {
