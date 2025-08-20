@@ -446,9 +446,7 @@ function OfficerPage() {
               🏢 Quầy Làm Việc
             </h1>
             <div className="flex items-center gap-4 mt-2">
-              <span className="text-lg text-gray-600">
-                 {currentUser.full_name}
-              </span>
+              
               <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
                 👤 CÁN BỘ
               </span>

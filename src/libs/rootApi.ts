@@ -412,6 +412,13 @@ export interface ResumeCounterResponse {
   resumed_at: string;
 }
 
+export interface UpsertCounterRequest {
+  counter_id: number;
+  name: string;
+  postfix: string;
+  password: string;
+}
+
 export const countersAPI = {
   /**
    * 📋 [GET] /counters/
@@ -449,7 +456,7 @@ export const countersAPI = {
    * 🆕 [POST] /counters/upsert-counter
    * Tạo mới hoặc cập nhật tên quầy
    */
-  upsertCounter: (data: { counter_id: number; name: string }): Promise<{ id: number; name: string; status: string }> => {
+  upsertCounter: (data: UpsertCounterRequest): Promise<{ id: number; name: string; status: string, postfix: string, password: string }> => {
     return rootApi.post('/counters/upsert-counter', data, { params: { tenxa: 'phuongtanphong' } }).then(res => res.data);
   },
 

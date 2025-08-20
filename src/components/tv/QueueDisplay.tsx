@@ -811,10 +811,10 @@ export default function QueueDisplay() {
                   <div className="text-4xl font-extrabold text-center text-red-800 px-4 py-3">
                     {counter.waiting_numbers.length > 0 ? (
                       <>
-                        {counter.waiting_numbers.slice(0, 6).map((number, index) => (
+                        {counter.waiting_numbers.slice(0, 4).map((number, index) => (
                           <span key={`waiting-${counter.counter_id}-${number}-${index}`}>{number}{index < Math.min(counter.waiting_numbers.length - 1, 5) ? ', ' : ''}</span>
                         ))}
-                        {counter.waiting_numbers.length > 6 && (
+                        {counter.waiting_numbers.length > 4 && (
                           <span className="text-base text-gray-500 font-normal"> ... </span>
                         )}
                       </>
