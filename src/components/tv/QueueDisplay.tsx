@@ -2,8 +2,8 @@
 
 import Image from 'next/image';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import NumberAnimation from './NumberAnimation';
 import { useWebSocketQueue } from '@/hooks/useWebSocketQueue';
+import CounterRow from './CounterRow';
 import { TTSService, type TTSService as TTSServiceType } from '@/libs/ttsService';
 import { rootApi, countersAPI, configAPI } from '@/libs/rootApi';
 
@@ -63,6 +63,11 @@ export default function QueueDisplay() {
   
   // ✅ New state using ProcessedCounterData
   const [processedCounters, setProcessedCounters] = useState<ProcessedCounterData[]>([]);
+  // Ref mirror to avoid stale-closure issues when events fire fast
+  const processedCountersRef = useRef<ProcessedCounterData[]>([]);
+  useEffect(() => {
+    processedCountersRef.current = processedCounters;
+  }, [processedCounters]);
   const [isLoading, setIsLoading] = useState(true);
   const [apiError, setApiError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<string>('');
@@ -412,15 +417,49 @@ export default function QueueDisplay() {
       }
     };
     
-    // ✅ Handle new_ticket event từ BE documentation
+    // ✅ Handle new_ticket event từ BE documentation - optimized to avoid full re-render
     const handleNewTicketEvent = async (eventData: { event: string, ticket_number: number, counter_id: number }) => {
       console.log('🎫 New ticket created via WebSocket:', eventData);
-      
-      // Refresh queue data sau khi có vé mới
-      await fetchAndProcessQueueData(false);
-      
-      // Optional: Show brief notification
-      console.log(`📢 New ticket #${eventData.ticket_number} created for counter ${eventData.counter_id}`);
+
+      const { ticket_number, counter_id } = eventData;
+      const cid = typeof counter_id === 'number' ? counter_id : null;
+
+      // If counters not initialized or counter id missing -> fallback to full refresh
+      if (!cid || processedCountersRef.current.length === 0) {
+        await fetchAndProcessQueueData(false);
+        console.log(`📢 Fallback full refresh for new ticket #${ticket_number} (counter ${counter_id})`);
+        return;
+      }
+
+      // Early exit if ticket already present (use ref to avoid stale closure)
+      const existingCounterRef = processedCountersRef.current.find(c => c.counter_id === cid);
+      if (existingCounterRef && existingCounterRef.waiting_numbers.includes(ticket_number)) {
+        console.log(`ℹ️ Ticket #${ticket_number} already present in counter ${cid}, skipping`);
+        return;
+      }
+
+      // Local functional update: only change the affected counter
+      setProcessedCounters(prev => {
+        if (!prev || prev.length === 0) return prev;
+        const idx = prev.findIndex(c => c.counter_id === cid);
+        if (idx === -1) {
+          // unknown counter -> fallback asynchronously
+          setTimeout(() => fetchAndProcessQueueData(false), 0);
+          return prev;
+        }
+
+        const target = prev[idx];
+        // double-check duplicate protection
+        if (target.waiting_numbers.includes(ticket_number)) return prev;
+
+        const newWaiting = [...target.waiting_numbers, ticket_number];
+        const newCounter = { ...target, waiting_numbers: newWaiting, waiting_count: newWaiting.length };
+
+        const next = prev.slice();
+        next[idx] = newCounter;
+        console.log(`📢 Locally appended new ticket #${ticket_number} to counter ${cid}`);
+        return next;
+      });
     };
     
     // ✅ Handle ticket_called event từ BE documentation - UPDATED for WebSocket state
@@ -459,18 +498,33 @@ export default function QueueDisplay() {
       announcedTicketsRef.current.add(key);
       console.log(`[TTS DEBUG] Marked as announced: ${key}`);
 
-      // Gọi API lấy vé đang phục vụ cho quầy này
-      const servingTicket = await fetchServingTicket(counterId);
-      if (servingTicket) {
-        setWsServingTickets(prev => ({
-          ...prev,
-          [counterId]: {
-            number: servingTicket.number,
-            counter_name: getCounterName(counterId),
-            called_at: servingTicket.called_at || new Date().toISOString(),
-            source: 'api-called'
-          }
-        }));
+      // Immediately store the serving ticket from the event so UI updates fast
+      setWsServingTickets(prev => ({
+        ...prev,
+        [counterId]: {
+          number: ticket_number as number,
+          counter_name: counter_name || getCounterName(counterId),
+          called_at: new Date().toISOString(),
+          source: 'ws-event'
+        }
+      }));
+
+      // Also call API to reconcile/confirm and update state when API returns
+      try {
+        const servingTicket = await fetchServingTicket(counterId);
+        if (servingTicket) {
+          setWsServingTickets(prev => ({
+            ...prev,
+            [counterId]: {
+              number: servingTicket.number,
+              counter_name: getCounterName(counterId),
+              called_at: servingTicket.called_at || new Date().toISOString(),
+              source: 'api-called'
+            }
+          }));
+        }
+      } catch (err) {
+        // ignore API error - we already showed event value
       }
 
       // Show announcement cho TV display
@@ -796,36 +850,22 @@ export default function QueueDisplay() {
             const minHeight = n >= 4 && n <= 8 ? Math.floor(640 / n) : 80;
             return processedCounters.map((counter, idx) => {
               const isEven = idx % 2 === 0;
+
+              // derive stable primitives for child props
+              // Prefer real-time WebSocket state so UI reflects incoming events immediately
+              const servingNumber = (wsServingTickets[counter.counter_id]?.number ?? counter.serving_number) ?? null;
+              const waitingPreview = counter.waiting_numbers.slice(0, 4);
+
               return (
-                <div key={counter.counter_id} className={`grid border-b border-white last:rounded-b-xl ${isEven ? 'bg-gray-300 bg-opacity-80' : 'bg-pink-100  bg-opacity-80'}`} style={{minHeight, alignItems: 'center', gridTemplateColumns: '1.6fr 0.8fr 1fr'}}>
-                  {/* Quầy phục vụ */}
-                  <div className="text-xl font-extrabold text-red-800 px-4 py-3 border-r border-white uppercase" style={{fontSize: '1.1rem'}}>
-                    QUẦY {counter.counter_id} | {counter.counter_name}
-                  </div>
-                  {/* Đang phục vụ - logic cũ: nếu có số thì hiển thị, không thì hiện 'Chưa có số được phục vụ' */}
-                  <div className="text-5xl font-extrabold text-center text-red-800 px-4 py-3 border-r border-white"  >
-                    {counter.serving_number || wsServingTickets[counter.counter_id] ? (
-                      <NumberAnimation number={(counter.serving_number || wsServingTickets[counter.counter_id]?.number)?.toString() || '0'} />
-                    ) : (
-                      <span className="text-gray-400 text-xl font-bold">Chưa có số được phục vụ</span>
-                    )}
-                  </div>
-                  {/* Đang chờ */}
-                  <div className="text-4xl font-extrabold text-center text-red-800 px-4 py-3">
-                    {counter.waiting_numbers.length > 0 ? (
-                      <>
-                        {counter.waiting_numbers.slice(0, 4).map((number, index) => (
-                          <span key={`waiting-${counter.counter_id}-${number}-${index}`}>{number}{index < Math.min(counter.waiting_numbers.length - 1, 5) ? ', ' : ''}</span>
-                        ))}
-                        {counter.waiting_numbers.length > 4 && (
-                          <span className="text-base text-gray-500 font-normal"> ... </span>
-                        )}
-                      </>
-                    ) : (
-                      <span className="text-gray-400 text-xl font-bold">Không có số đang chờ</span>
-                    )}
-                  </div>
-                </div>
+                <CounterRow
+                  key={counter.counter_id}
+                  counterId={counter.counter_id}
+                  counterName={counter.counter_name}
+                  servingNumber={servingNumber}
+                  waitingNumbers={waitingPreview}
+                  isEven={isEven}
+                  minHeight={minHeight}
+                />
               );
             });
           })()}
