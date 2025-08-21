@@ -480,11 +480,12 @@ export default function QueueDisplay() {
         timestamp: new Date().toISOString()
       });
 
-      // TTS announcement nếu chưa phát
-      if (ttsService) {
-        try {
-          console.log('[TTS DEBUG] Calling ttsService.queueAnnouncement', { counterId, ticket_number });
-          await ttsService.queueAnnouncement(
+      // TTS announcement: get instance at call-time to avoid stale closure/null state
+      try {
+        const tts = TTSService.getInstance();
+        if (tts) {
+          console.log('[TTS DEBUG] Calling tts.queueAnnouncement', { counterId, ticket_number });
+          await tts.queueAnnouncement(
             counterId,
             ticket_number,
             1, // First attempt
@@ -492,13 +493,15 @@ export default function QueueDisplay() {
             new Date().toISOString()
           );
           console.log(`[TTS DEBUG] 📢 TTS queued for Counter ${counterId} - Ticket ${ticket_number}`);
-        } catch (error) {
-          console.warn('[TTS DEBUG] ⚠️ Failed to queue TTS:', error);
-          // Xoá khỏi set nếu queue thất bại để retry sau
+        } else {
+          console.warn('[TTS DEBUG] TTSService.getInstance() returned null, cannot queue TTS');
+          // Remove mark so we can retry later when TTS becomes available
           announcedTicketsRef.current.delete(key);
         }
-      } else {
-        console.warn('[TTS DEBUG] ttsService is null, cannot call queueAnnouncement');
+      } catch (error) {
+        console.warn('[TTS DEBUG] ⚠️ Failed to queue TTS:', error);
+        // Remove mark so we can retry later when TTS fails
+        announcedTicketsRef.current.delete(key);
       }
 
       // Auto-hide announcement after 4 seconds
