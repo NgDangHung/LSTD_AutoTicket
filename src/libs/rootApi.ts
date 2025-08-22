@@ -470,6 +470,139 @@ export const countersAPI = {
 };
 
 // ===================================
+// 📺 TV Groups APIs (/tv-groups/)
+// ===================================
+
+export interface TVGroup {
+  id: number;
+  name: string;
+  counter_ids: number[];
+  description?: string;
+}
+
+export const tvGroupsAPI = {
+  /**
+   * 📋 [GET] /tv-groups
+   * Get all TV groups
+   */
+  getGroups: async (): Promise<TVGroup[]> => {
+    // Try real API first, fallback to localStorage mock
+    try {
+      const res = await rootApi.get('/tv-groups', { params: { tenxa: 'phuongtanphong' } });
+      return res.data;
+    } catch (err) {
+      // Fallback to localStorage
+      if (typeof window === 'undefined') return [];
+      const key = 'tv_groups_v1';
+      try {
+        const raw = localStorage.getItem(key);
+        if (!raw) return [];
+        const parsed: TVGroup[] = JSON.parse(raw);
+        return parsed;
+      } catch (e) {
+        console.error('tvGroupsAPI.getGroups fallback parse error', e);
+        return [];
+      }
+    }
+  },
+
+  /**
+   * 📋 [GET] /tv-groups/{id}
+   * Get group by id
+   */
+  getGroup: async (id: number): Promise<TVGroup> => {
+    try {
+      const res = await rootApi.get(`/tv-groups/${id}`, { params: { tenxa: 'phuongtanphong' } });
+      return res.data;
+    } catch (err) {
+      if (typeof window === 'undefined') throw err;
+      const key = 'tv_groups_v1';
+      const raw = localStorage.getItem(key);
+      if (!raw) throw new Error('Group not found');
+      const parsed: TVGroup[] = JSON.parse(raw);
+      const found = parsed.find(g => g.id === id);
+      if (!found) throw new Error('Group not found');
+      return found;
+    }
+  },
+
+  /**
+   * ➕ [POST] /tv-groups
+   * Create new group
+   */
+  createGroup: async (data: { name: string; counter_ids: number[]; description?: string }): Promise<TVGroup> => {
+    try {
+      const res = await rootApi.post('/tv-groups', data, { params: { tenxa: 'phuongtanphong' } });
+      // broadcast update
+      try { window.dispatchEvent(new CustomEvent('tvGroupsUpdated', { detail: { action: 'create', id: res.data.id } })); } catch {}
+      if (typeof window !== 'undefined' && 'BroadcastChannel' in window) { try { const bc = new BroadcastChannel('tv-groups'); bc.postMessage({ type: 'updated' }); bc.close(); } catch {} }
+      return res.data;
+    } catch (err) {
+      // Fallback: store in localStorage
+      if (typeof window === 'undefined') throw err;
+      const key = 'tv_groups_v1';
+      let groups: TVGroup[] = [];
+      try { groups = JSON.parse(localStorage.getItem(key) || '[]'); } catch (e) { groups = []; }
+      const nextId = groups.length ? Math.max(...groups.map(g => g.id)) + 1 : 1;
+      const newGroup: TVGroup = { id: nextId, name: data.name, counter_ids: data.counter_ids || [], description: data.description };
+      groups.push(newGroup);
+      localStorage.setItem(key, JSON.stringify(groups));
+      // broadcast update
+      try { window.dispatchEvent(new CustomEvent('tvGroupsUpdated', { detail: { action: 'create', id: newGroup.id } })); } catch {}
+      if ('BroadcastChannel' in window) { try { const bc = new BroadcastChannel('tv-groups'); bc.postMessage({ type: 'updated' }); bc.close(); } catch {} }
+      return newGroup;
+    }
+  },
+
+  /**
+   * ✏️ [PUT] /tv-groups/{id}
+   * Update group
+   */
+  updateGroup: async (id: number, data: { name: string; counter_ids: number[]; description?: string }): Promise<TVGroup> => {
+    try {
+      const res = await rootApi.put(`/tv-groups/${id}`, data, { params: { tenxa: 'phuongtanphong' } });
+      try { window.dispatchEvent(new CustomEvent('tvGroupsUpdated', { detail: { action: 'update', id } })); } catch {}
+      if (typeof window !== 'undefined' && 'BroadcastChannel' in window) { try { const bc = new BroadcastChannel('tv-groups'); bc.postMessage({ type: 'updated' }); bc.close(); } catch {} }
+      return res.data;
+    } catch (err) {
+      if (typeof window === 'undefined') throw err;
+      const key = 'tv_groups_v1';
+      let groups: TVGroup[] = [];
+      try { groups = JSON.parse(localStorage.getItem(key) || '[]'); } catch (e) { groups = []; }
+      const idx = groups.findIndex(g => g.id === id);
+      if (idx === -1) throw new Error('Group not found');
+      groups[idx] = { ...groups[idx], name: data.name, counter_ids: data.counter_ids || [], description: data.description };
+      localStorage.setItem(key, JSON.stringify(groups));
+      try { window.dispatchEvent(new CustomEvent('tvGroupsUpdated', { detail: { action: 'update', id } })); } catch {}
+      if ('BroadcastChannel' in window) { try { const bc = new BroadcastChannel('tv-groups'); bc.postMessage({ type: 'updated' }); bc.close(); } catch {} }
+      return groups[idx];
+    }
+  },
+
+  /**
+   * 🗑️ [DELETE] /tv-groups/{id}
+   */
+  deleteGroup: async (id: number): Promise<string> => {
+    try {
+      const res = await rootApi.delete(`/tv-groups/${id}`, { params: { tenxa: 'phuongtanphong' } });
+      try { window.dispatchEvent(new CustomEvent('tvGroupsUpdated', { detail: { action: 'delete', id } })); } catch {}
+      if (typeof window !== 'undefined' && 'BroadcastChannel' in window) { try { const bc = new BroadcastChannel('tv-groups'); bc.postMessage({ type: 'updated' }); bc.close(); } catch {} }
+      return res.data;
+    } catch (err) {
+      if (typeof window === 'undefined') throw err;
+      const key = 'tv_groups_v1';
+      let groups: TVGroup[] = [];
+      try { groups = JSON.parse(localStorage.getItem(key) || '[]'); } catch (e) { groups = []; }
+      groups = groups.filter(g => g.id !== id);
+      localStorage.setItem(key, JSON.stringify(groups));
+      try { window.dispatchEvent(new CustomEvent('tvGroupsUpdated', { detail: { action: 'delete', id } })); } catch {}
+      if ('BroadcastChannel' in window) { try { const bc = new BroadcastChannel('tv-groups'); bc.postMessage({ type: 'updated' }); bc.close(); } catch {} }
+      return 'ok';
+    }
+  },
+};
+
+// ===================================
 // 🦶 Footers APIs (/footers/)
 // ===================================
 
@@ -593,6 +726,7 @@ export const officialAPI = {
   tickets: ticketsAPI,
   seats: seatsAPI,
   counters: countersAPI,
+  tvGroups: tvGroupsAPI,
   stats: statsDashboardAPI,
 };
 

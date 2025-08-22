@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 
 interface TicketFeedbackInfo {
@@ -52,30 +51,18 @@ function ReviewPage() {
     return mapApiToVn[r] ?? r;
   };
 
-  // lấy query param (safe trong client component)
-    const searchParams = useSearchParams();
-    const ticketNumber = searchParams?.get("ticket_number");
-    const tenxa = searchParams?.get("tenxa");
+  // Read query params from window.location.search (client-only) to avoid next/navigation SSR subtlety
+  const [ticketNumber, setTicketNumber] = useState<string | null>(null);
+  const [tenxa, setTenxa] = useState<string | null>(null);
 
-  const fetchTicketInfo = async () => {
-    if (!ticketNumber || !tenxa) {
-      setMessage("Thiếu thông tin vé.");
-      return;
-    }
-    setLoading(true);
-    try {
-      const res = await fetch(`${API_BASE}/${ticketNumber}/feedback?tenxa=${tenxa}`);
-      if (!res.ok) throw new Error("Không tìm thấy vé hoặc vé chưa hoàn tất");
-      const data = await res.json();
-      setTicketInfo(data);
-      setMessage("");
-    } catch (err: any) {
-      setMessage(err.message);
-      setTicketInfo(null);
-    } finally {
-      setLoading(false);
-    }
-  };
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    setTicketNumber(params.get('ticket_number'));
+    setTenxa(params.get('tenxa'));
+  }, []);
+
+  // fetchTicketInfo moved inside effect to satisfy hook dependency rules
 
   const submitFeedback = async () => {
     if (!ticketNumber || !tenxa || !rating) return;
@@ -126,7 +113,21 @@ function ReviewPage() {
   useEffect(() => {
     // only attempt fetch on client when params are present
     if (!ticketNumber || !tenxa) return;
-    fetchTicketInfo();
+    (async () => {
+      setLoading(true);
+      try {
+        const res = await fetch(`${API_BASE}/${ticketNumber}/feedback?tenxa=${tenxa}`);
+        if (!res.ok) throw new Error('Không tìm thấy vé hoặc vé chưa hoàn tất');
+        const data = await res.json();
+        setTicketInfo(data);
+        setMessage('');
+      } catch (err: any) {
+        setMessage(err.message);
+        setTicketInfo(null);
+      } finally {
+        setLoading(false);
+      }
+    })();
   }, [ticketNumber, tenxa]);
 
   return (

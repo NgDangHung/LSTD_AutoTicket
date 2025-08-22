@@ -5,7 +5,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useWebSocketQueue } from '@/hooks/useWebSocketQueue';
 import CounterRow from './CounterRow';
 import { TTSService, type TTSService as TTSServiceType } from '@/libs/ttsService';
-import { rootApi, countersAPI, configAPI } from '@/libs/rootApi';
+import { rootApi, countersAPI, configAPI, tvGroupsAPI } from '@/libs/rootApi';
 
 // ✅ Real API ticket interface based on actual BE response
 interface RealTicket {
@@ -43,6 +43,12 @@ type config = {
   header:string
 };
 
+
+const DEFAULT_CONFIG = {
+  header: 'PHƯỜNG TÂN PHONG',
+  workingHours: 'Giờ làm việc (Thứ 2 - Thứ 6): 07h30 - 17h00',
+  hotline: 'Hotline hỗ trợ: 0916670793',
+};
 
 export default function QueueDisplay() {
   // API lấy số đang phục vụ cho từng quầy
@@ -83,6 +89,9 @@ export default function QueueDisplay() {
     called_at: string;
     source: string;
   }>>({});
+
+  // ✅ Optional filter: when TV opened with ?groupId= the display will only show those counters
+  const [allowedCounterIds, setAllowedCounterIds] = useState<number[] | null>(null);
   
   // Announcement states
   const [announcement, setAnnouncement] = useState<{
@@ -96,17 +105,11 @@ export default function QueueDisplay() {
   // WebSocket hook for real-time updates
   const { isConnected, lastEvent } = useWebSocketQueue();
 
-  // Footer config state
-  const DEFAULT_CONFIG = {
-    header: 'PHƯỜNG TÂN PHONG',
-    workingHours: 'Giờ làm việc (Thứ 2 - Thứ 6): 07h30 - 17h00',
-    hotline: 'Hotline hỗ trợ: 0916670793',
-  };
   const [config, setconfig] = React.useState<config>(DEFAULT_CONFIG);
 
 
   // Fetch footer config on mount and listen for updates
-  async function fetchConfig() {
+  const fetchConfig = useCallback(async () => {
     try {
       const data = await configAPI.getConfig('phuongtanphong');
       if (data && (data.work_time || data.hotline)) {
@@ -119,7 +122,7 @@ export default function QueueDisplay() {
     } catch {
       setconfig(DEFAULT_CONFIG);
     }
-  }
+  }, []);
 
   // ====== Hàm handleSaveConfig sử dụng API setConfig ======
   async function handleSaveConfig(newConfig: { header: string; work_time: string; hotline: string }, onSuccess?: () => void, onError?: (err: any) => void) {
@@ -155,7 +158,7 @@ export default function QueueDisplay() {
 
   // ✅ State: counters from API
   const [apiCounters, setApiCounters] = useState<CounterAPI[]>([]);
-  const fetchCounters = async () => {
+  const fetchCounters = useCallback(async () => {
       try {
         const response = await rootApi.get('/counters/', { params: { tenxa: 'phuongtanphong' } });
         setApiCounters(response.data);
@@ -164,11 +167,48 @@ export default function QueueDisplay() {
         console.error('❌ Failed to fetch counters:', error);
         setApiCounters([]);
       }
-    };
+    }, []);
   // ✅ Fetch counters and configs from API on mount
   useEffect(() => {
     fetchCounters();
     fetchConfig();
+  }, [fetchCounters, fetchConfig]);
+
+  // ✅ Counter name mapping (API-driven)
+  const getCounterName = useCallback((counterId: number): string => {
+    const found = apiCounters.find(c => c.id === counterId);
+    return found ? found.name : `Quầy ${counterId}`;
+  }, [apiCounters]);
+
+  // Load TV group if groupId query param present and set allowedCounterIds
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const gid = params.get('groupId');
+    if (!gid) {
+      setAllowedCounterIds(null);
+      return;
+    }
+    const id = parseInt(gid as string, 10);
+    if (isNaN(id)) {
+      setAllowedCounterIds(null);
+      return;
+    }
+
+    let mounted = true;
+    (async () => {
+      try {
+        const group = await tvGroupsAPI.getGroup(id);
+        if (!mounted) return;
+        console.log('[TV Groups] loaded group for TV display:', group);
+        setAllowedCounterIds(group.counter_ids || []);
+      } catch (err) {
+        console.warn('[TV Groups] failed to load group', err);
+        if (mounted) setAllowedCounterIds(null);
+      }
+    })();
+
+    return () => { mounted = false; };
   }, []);
 
   // ✅ Khởi tạo wsServingTickets khi đã có apiCounters (reload trang)
@@ -176,7 +216,8 @@ export default function QueueDisplay() {
     const initServingTicketsOnLoad = async () => {
       if (apiCounters.length === 0) return;
       const servingState: Record<number, { number: number; counter_name: string; called_at: string; source: string }> = {};
-      for (const counter of apiCounters) {
+      const countersToInit = allowedCounterIds ? apiCounters.filter(c => allowedCounterIds.includes(c.id)) : apiCounters;
+      for (const counter of countersToInit) {
         try {
           const ticket = await fetchServingTicket(counter.id);
           if (ticket) {
@@ -194,14 +235,8 @@ export default function QueueDisplay() {
       setWsServingTickets(servingState);
     };
     initServingTicketsOnLoad();
-  }, [apiCounters]);
+  }, [apiCounters, allowedCounterIds, getCounterName]);
 
-
-  // ✅ Counter name mapping (API-driven)
-  const getCounterName = (counterId: number): string => {
-    const found = apiCounters.find(c => c.id === counterId);
-    return found ? found.name : `Quầy ${counterId}`;
-  };
 
 
   // ✅ Fetch all tickets from real API
@@ -244,11 +279,12 @@ export default function QueueDisplay() {
   };
 
   // ✅ Process tickets into counter groups với WebSocket serving state (API-driven counters)
-  const processTicketsToCounters = (tickets: RealTicket[]): ProcessedCounterData[] => {
+    const processTicketsToCounters = useCallback((tickets: RealTicket[]): ProcessedCounterData[] => {
     console.log('🔧 Processing tickets into counter groups with WebSocket serving state...');
     const countersMap = new Map<number, ProcessedCounterData>();
-    // Khởi tạo tất cả quầy từ API
-    apiCounters.forEach(counterApi => {
+    // Khởi tạo quầy từ API (apply group filter if present)
+    const sourceCounters = allowedCounterIds ? apiCounters.filter(c => allowedCounterIds.includes(c.id)) : apiCounters;
+    sourceCounters.forEach(counterApi => {
       countersMap.set(counterApi.id, {
         counter_id: counterApi.id,
         counter_name: counterApi.name,
@@ -265,7 +301,7 @@ export default function QueueDisplay() {
     console.log('🎯 WebSocket serving tickets:', wsServingTickets);
     // Process waiting tickets
     waitingTickets.forEach(ticket => {
-      const counter = countersMap.get(ticket.counter_id);
+  const counter = countersMap.get(ticket.counter_id);
       if (!counter) return;
       counter.waiting_tickets.push(ticket);
     });
@@ -292,7 +328,7 @@ export default function QueueDisplay() {
     });
     // Trả về danh sách quầy theo thứ tự id tăng dần
     return Array.from(countersMap.values()).sort((a, b) => a.counter_id - b.counter_id);
-  };
+  }, [apiCounters, wsServingTickets, allowedCounterIds]);
 
   // ✅ Main data fetching và processing function
   const fetchAndProcessQueueData = useCallback(async (showLoading = false) => {
@@ -321,7 +357,7 @@ export default function QueueDisplay() {
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [apiCounters]);
+  }, [apiCounters, processTicketsToCounters]);
 
   // ✅ Simplified: No need to re-process since we render directly from wsServingTickets
   // useEffect removed - direct rendering is more reliable

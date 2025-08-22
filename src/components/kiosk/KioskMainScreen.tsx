@@ -1,4 +1,4 @@
-'use client';
+ 'use client';
 import Head from 'next/head';
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import Image from 'next/image';
@@ -39,17 +39,17 @@ interface ProcedureResult {
 }
 
 export default function KioskMainScreen() {
-  // Footer config state
+// Footer default config (module-scope stable)
+const DEFAULT_CONFIG = {
+  header: 'PHƯƠNG AAA',
+  workingHours: 'Giờ làm việc (Thứ 2 - Thứ 6): 07h30 - 17h00',
+  hotline: 'Hotline hỗ trợ: 0916670793',
+};
   // Footer config state (now includes header)
-  const DEFAULT_CONFIG = {
-    header: 'PHƯỜNG AAA',
-    workingHours: 'Giờ làm việc (Thứ 2 - Thứ 6): 07h30 - 17h00',
-    hotline: 'Hotline hỗ trợ: 0916670793',
-  };
   const [config, setConfig] = useState<{ header: string; workingHours: string; hotline: string }>(DEFAULT_CONFIG);
 
   // Fetch config from API on mount
-  async function fetchConfig() {
+  const fetchConfig = React.useCallback(async () => {
     try {
       const data = await configAPI.getConfig('phuongtanphong');
       if (data && (data.work_time || data.hotline)) {
@@ -62,7 +62,7 @@ export default function KioskMainScreen() {
     } catch {
       setConfig(DEFAULT_CONFIG);
     }
-  }
+  }, [DEFAULT_CONFIG]);
 
   // Save config to API
   async function handleSaveConfig(newConfig: { header: string; work_time: string; hotline: string }, onSuccess?: () => void, onError?: (err: any) => void) {
@@ -80,7 +80,7 @@ export default function KioskMainScreen() {
 
   useEffect(() => {
     fetchConfig();
-  }, []);
+  }, [fetchConfig]);
 
    // Popup state
   const [popupUrl, setPopupUrl] = useState<string | null>(null);
@@ -285,7 +285,7 @@ export default function KioskMainScreen() {
     });
 
     return filtered;
-  }, [isSearchMode, searchResults, counters, searchValue]);
+  }, [isSearchMode, searchResults, counters]);
 
   // ✅ Enhanced handleCounterSelect using API search data
   

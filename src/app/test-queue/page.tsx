@@ -11,6 +11,7 @@ import { countersAPI, configAPI, type Counter, type CallNextResponse, ticketsAPI
 import Button from '@/components/shared/Button';
 import ConfigModal from '@/components/shared/ChangeFooterModal';
 import CounterManagement from '@/components/admin/CounterManagement';
+import TvManagement from '@/components/tv/TvManagement';
 
 
 
@@ -21,6 +22,7 @@ function TestQueuePage() {
   const [ttsQueueStatus, setTtsQueueStatus] = useState<any>({ queueLength: 0, isPlaying: false, upcomingRequests: [] });
   const [showFooterModal, setShowFooterModal] = useState(false);
   const [showCounterManagement, setShowCounterManagement] = useState(false);
+  const [showTvManagement, setShowTvManagement] = useState(false);
   // ✅ Real-time queue data states
   const [apiCounters, setApiCounters] = useState<Counter[]>([]);
   const [queueTickets, setQueueTickets] = useState<Ticket[]>([]);
@@ -480,6 +482,12 @@ function TestQueuePage() {
             >
               ⚙️ Chỉnh sửa quầy
             </Button>
+            {/* <Button
+              className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              onClick={() => setShowTvManagement(true)}
+            >
+              ⚙️ Chỉnh sửa TV
+            </Button> */}
           </div>
         </div>
         
@@ -665,6 +673,20 @@ function TestQueuePage() {
         >
           <div className="mx-auto p-6 bg-white rounded-lg shadow w-[1100px]" onMouseDown={e => e.stopPropagation()}>
             <CounterManagement />
+          </div>
+        </div>
+      )}
+
+      {showTvManagement && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40"
+          onMouseDown={e => {
+            // Chỉ ẩn modal nếu click vào overlay
+            if (e.target === e.currentTarget) setShowTvManagement(false);
+          }}
+        >
+          <div className="mx-auto p-6 bg-white rounded-lg shadow w-[1100px]" onMouseDown={e => e.stopPropagation()}>
+            <TvManagement />
           </div>
         </div>
       )}

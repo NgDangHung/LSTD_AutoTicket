@@ -45,11 +45,11 @@ const PopUp: React.FC<PopUpProps> = ({ url, open, timeoutMs = DEFAULT_TIMEOUT, o
       if (popupRef.current && !popupRef.current.closed) {
         popupRef.current.close();
       }
-      if (timerRef.current) clearTimeout(timerRef.current);
+      const t = timerRef.current;
+      if (t) clearTimeout(t);
       if (pollTimer) clearInterval(pollTimer);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, url]);
+  }, [open, url, onClose]);
 
   return null; // Headless
 };

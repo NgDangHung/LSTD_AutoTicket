@@ -135,7 +135,8 @@ let OFF_X = -5, OFF_Y = -7;  // nếu còn lệch trái: tăng OFF_X; lệch lê
   const y = MARGIN + OFF_Y;
 
   const pdf = new jsPDF({ unit: 'mm', format: [PDF_W, PDF_H] });
-  pdf.addImage(img, 'PNG', x, y, w, h, undefined, 'FAST');
+  // Use 6-argument addImage to satisfy current jsPDF typings
+  pdf.addImage(img, 'PNG', x, y, w, h);
 
   return pdf.output('datauristring').split(',')[1];
 }, []);
@@ -254,8 +255,8 @@ const performAgentPrint = React.useCallback(
         await performAgentPrint(t, d);
       }
     })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [autoPrint, number, counterId, counterName]); // CỐ Ý không phụ thuộc handlePrint
+      // include handlePrint to satisfy hook deps
+    }, [autoPrint, number, counterId, counterName, handlePrint, performAgentPrint]);
 
   return (
     <div className="flex flex-col space-y-4">
