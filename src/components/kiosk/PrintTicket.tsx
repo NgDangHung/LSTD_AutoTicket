@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
+import QRCode from 'qrcode';
 
 // GIỮ NGUYÊN props
 interface PrintTicketProps {
@@ -23,6 +24,10 @@ const PrintTicket: React.FC<PrintTicketProps> = ({
   autoPrint = false,
   onPrintComplete
 }) => {
+  // TEN_XA config: prefer env var NEXT_PUBLIC_TENXA, fallback to localStorage or default
+  const TEN_XA = 'phuongtanphong'
+
+  const [qrDataUrl, setQrDataUrl] = useState<string>('');
   const [printStatus, setPrintStatus] = useState('');
   const [busy, setBusy] = useState(false);
 
@@ -32,7 +37,9 @@ const PrintTicket: React.FC<PrintTicketProps> = ({
   // Lấy tên máy in 1 lần (không đổi mỗi render)
   const [printerName] = useState<string>(() => {
     if (typeof window === 'undefined') return 'POS-80C';
+    // if (typeof window === 'undefined') return 'Microsoft Print to PDF';
     return localStorage.getItem('kioskPrinterName') || 'POS-80C';
+    // return localStorage.getItem('kioskPrinterName') || 'Microsoft Print to PDF';
   });
 
   // Đánh dấu đã in vé nào rồi (để autoPrint chạy đúng 1 lần/vé)
@@ -40,7 +47,7 @@ const PrintTicket: React.FC<PrintTicketProps> = ({
 
 // ===== HTML vé – chữ to toàn bộ, cân giữa =====
 const generateThermalTicketHTML = React.useCallback(
-  (time: string, date: string) => {
+  (time: string, date: string, qr?: string) => {
     // Loại bỏ số 0 ở đầu nếu counterId đã có 0
     const counterIdDisplay = counterId.replace(/^0+/, '');
     return `
@@ -58,9 +65,9 @@ const generateThermalTicketHTML = React.useCallback(
   <div style="padding-bottom:6px">
     <div style="font-size:18px;line-height:1;">QUẦY PHỤC VỤ ${counterIdDisplay.padStart(2, '0')}</div>
     <div style="font-weight:900;font-size:26px;line-height:1.1;margin-top:2px;">${counterName.toUpperCase()}</div>
-
     <div style="font-size:16px;line-height:1.1;margin-top:6px;">THỜI GIAN IN VÉ: ${date} - ${time}</div>
-    <div style="font-style:italic;font-weight:800;font-size:22px;line-height:1.1;margin-top:2px;">Cảm ơn Quý khách!</div>
+    ${qr ? `<div style="margin-top:8px;text-align:center"><img src="${qr}" alt="QR đánh giá" style="width:88px;height:88px;display:block;margin:0 auto;border-radius:6px;"/><div style="font-size:12px;margin-top:6px;">Quét mã để đánh giá dịch vụ</div></div>` : ''}
+    <div style="font-style:italic;font-weight:800;font-size:22px;line-height:1.1;margin-top:8px;">Cảm ơn Quý khách!</div>
   </div>
 </div>`;
   },
@@ -165,7 +172,7 @@ let OFF_X = -5, OFF_Y = -7;  // nếu còn lệch trái: tăng OFF_X; lệch lê
   // );
 // đổi performAgentPrint để dùng /health + /print (gửi HTML)
 const performAgentPrint = React.useCallback(
-  async (timeString: string, dateString: string) => {
+  async (timeString: string, dateString: string, qr?: string) => {
     setPrintStatus('🖨️ Kiểm tra Agent...');
     const ping = await fetch(`${AGENT}/health`).catch(() => null); // <-- /health
     if (!ping || !ping.ok) {
@@ -174,7 +181,7 @@ const performAgentPrint = React.useCallback(
     }
 
     setPrintStatus('🖨️ Đang dựng vé...');
-    const html = generateThermalTicketHTML(timeString, dateString);
+  const html = generateThermalTicketHTML(timeString, dateString, qr);
 
     setPrintStatus('🖨️ Gửi lệnh in...');
     const jobId = `ticket-${number}-${counterId}-${Date.now()}`;
@@ -208,7 +215,18 @@ const performAgentPrint = React.useCallback(
     const t = now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
     const d = now.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
 
-    try { await performAgentPrint(t, d); }
+    try {
+      // Generate QR synchronously before printing
+      try {
+        const origin = typeof window !== 'undefined' ? window.location.origin : '';
+        const url = `${origin}/review?ticket_number=${number}&tenxa=${TEN_XA}`;
+        const dataUrl = await QRCode.toDataURL(url, { width: 300, margin: 1 });
+        await performAgentPrint(t, d, dataUrl);
+      } catch (qrErr) {
+        console.warn('QR generation failed, printing without QR', qrErr);
+        await performAgentPrint(t, d);
+      }
+    }
     finally { setTimeout(() => { lockRef.current = false; setBusy(false); }, 1500); }
   }, [performAgentPrint]);
 
@@ -223,8 +241,19 @@ const performAgentPrint = React.useCallback(
     const t = now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
     const d = now.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
 
-    // gọi trực tiếp để tránh phụ thuộc identity của handlePrint
-    performAgentPrint(t, d);
+    // Generate QR then print
+    (async () => {
+      try {
+        const origin = typeof window !== 'undefined' ? window.location.origin : '';
+        const url = `${origin}/review?ticket_number=${number}&tenxa=${TEN_XA}`;
+        const dataUrl = await QRCode.toDataURL(url, { width: 300, margin: 1 });
+        setQrDataUrl(dataUrl);
+        await performAgentPrint(t, d, dataUrl);
+      } catch (err) {
+        console.warn('AutoPrint: QR generation failed, printing without QR', err);
+        await performAgentPrint(t, d);
+      }
+    })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoPrint, number, counterId, counterName]); // CỐ Ý không phụ thuộc handlePrint
 
