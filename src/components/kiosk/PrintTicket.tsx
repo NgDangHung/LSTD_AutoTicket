@@ -60,13 +60,13 @@ const generateThermalTicketHTML = React.useCallback(
     <div style="font-weight:800;font-size:26px;line-height:1.1;margin-top:6px;">SỐ THỨ TỰ</div>
   </div>
 
-  <div style="font-size:170px; font-weight:900; line-height:1; margin:0;">${number}</div>
+  <div style="font-size:100px; font-weight:900; line-height:1; margin:0;">${number}</div>
 
   <div style="padding-bottom:6px">
     <div style="font-size:18px;line-height:1;">QUẦY PHỤC VỤ ${counterIdDisplay.padStart(2, '0')}</div>
     <div style="font-weight:900;font-size:26px;line-height:1.1;margin-top:2px;">${counterName.toUpperCase()}</div>
     <div style="font-size:16px;line-height:1.1;margin-top:6px;">THỜI GIAN IN VÉ: ${date} - ${time}</div>
-    ${qr ? `<div style="margin-top:8px;text-align:center"><img src="${qr}" alt="QR đánh giá" style="width:88px;height:88px;display:block;margin:0 auto;border-radius:6px;"/><div style="font-size:12px;margin-top:6px;">Quét mã để đánh giá dịch vụ</div></div>` : ''}
+  ${qr ? `<div style="margin-top:8px;text-align:center"><img src="${qr}" alt="QR đánh giá" style="width:160px;height:160px;display:block;margin:0 auto;border-radius:6px;"/><div style="font-size:12px;margin-top:6px;">Quét mã để đánh giá dịch vụ</div></div>` : ''}
     <div style="font-style:italic;font-weight:800;font-size:22px;line-height:1.1;margin-top:8px;">Cảm ơn Quý khách!</div>
   </div>
 </div>`;
@@ -220,8 +220,9 @@ const performAgentPrint = React.useCallback(
       // Generate QR synchronously before printing
       try {
         const origin = typeof window !== 'undefined' ? window.location.origin : '';
-        const url = `${origin}/review?ticket_number=${number}&tenxa=${TEN_XA}`;
-        const dataUrl = await QRCode.toDataURL(url, { width: 300, margin: 1 });
+  const url = `${origin}/review?ticket_number=${number}&tenxa=${TEN_XA}`;
+  // Generate a higher-resolution QR for printing so it is scannable on paper
+  const dataUrl = await QRCode.toDataURL(url, { width: 600, margin: 1 });
         await performAgentPrint(t, d, dataUrl);
       } catch (qrErr) {
         console.warn('QR generation failed, printing without QR', qrErr);
@@ -246,8 +247,9 @@ const performAgentPrint = React.useCallback(
     (async () => {
       try {
         const origin = typeof window !== 'undefined' ? window.location.origin : '';
-        const url = `${origin}/review?ticket_number=${number}&tenxa=${TEN_XA}`;
-        const dataUrl = await QRCode.toDataURL(url, { width: 300, margin: 1 });
+  const url = `${origin}/review?ticket_number=${number}&tenxa=${TEN_XA}`;
+  // AutoPrint uses a larger QR to ensure printed tickets have a scannable QR
+  const dataUrl = await QRCode.toDataURL(url, { width: 600, margin: 1 });
         setQrDataUrl(dataUrl);
         await performAgentPrint(t, d, dataUrl);
       } catch (err) {
