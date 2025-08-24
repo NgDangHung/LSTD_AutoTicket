@@ -128,7 +128,7 @@ function ReviewPage() {
         setTicketInfo(prev => ({ ...(prev || (resBody || {})), rating: payloadRating, can_rate: false } as TicketFeedbackInfo));
       }
     } catch (err: any) {
-      setMessage('*Gửi đánh giá thất bại, vui lòng nhập góp ý của bạn để Trung tâm có thể phục vụ bạn tốt hơn');
+      setMessage('*Vui lòng nhập góp ý của bạn để Trung tâm có thể phục vụ bạn tốt hơn');
     } finally {
       setLoading(false);
     }
@@ -151,7 +151,7 @@ function ReviewPage() {
           setTicketInfo(data);
           setMessage('');
         } catch (err: any) {
-          setMessage(err?.message || 'Không tìm thấy vé hoặc vé chưa hoàn tất');
+          setMessage('Không tìm thấy vé hoặc vé chưa hoàn tất');
           setTicketInfo(null);
         } finally {
           setLoading(false);
@@ -200,21 +200,22 @@ function ReviewPage() {
 
         {ticketInfo && (
           <div className="text-gray-700">
-            <p>
+            <p className="mb-2">
               Vé số: <b>{ticketInfo.ticket_number}</b>
             </p>
-            <p>
+            <p className="mb-2">
               Quầy: <b>{ticketInfo.counter_name}</b>
             </p>
-            <p>Trạng thái: {getStatusLabel(ticketInfo.status)}</p>
-            <p>
+            <p className="mb-2">Trạng thái: <b>{getStatusLabel(ticketInfo.status)}</b></p>
+            <p className="mb-2">
               Hoàn tất lúc:{" "}
               {new Date(ticketInfo.finished_at).toLocaleString("vi-VN")}
             </p>
-
+            
             {ticketInfo.can_rate ? (
               <div className="mt-4">
-                <p className="font-semibold mb-2">Bạn cảm thấy thế nào?</p>
+                <p className="font-semibold mb-2">Mời Quý khách đánh giá mức độ hài lòng đối với lượt phục vụ</p>
+
                 <div className="flex gap-2">
                   <button
                     onClick={() => setRating("Hài lòng")}

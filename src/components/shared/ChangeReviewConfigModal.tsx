@@ -9,12 +9,12 @@ type Props = {
 };
 
 const ChangeReviewConfigModal: React.FC<Props> = ({ isOpen, onClose, onSave, initialConfig }) => {
-  const [timeout, setTimeoutSec] = React.useState<number>(initialConfig.feedback_timeout || 0);
+  const [timeout, setTimeoutMin] = React.useState<number>(initialConfig.feedback_timeout || 0);
   const [qrRating, setQrRating] = React.useState<boolean>(!!initialConfig.qr_rating);
   const modalRef = React.useRef<HTMLDivElement | null>(null);
 
   React.useEffect(() => {
-    setTimeoutSec(initialConfig.feedback_timeout || 0);
+    setTimeoutMin(initialConfig.feedback_timeout || 0);
     setQrRating(!!initialConfig.qr_rating);
   }, [initialConfig]);
 
@@ -45,13 +45,13 @@ const ChangeReviewConfigModal: React.FC<Props> = ({ isOpen, onClose, onSave, ini
         </div>
 
         <div className="mb-4">
-          <label className="block text-sm font-medium mb-1">Thời gian cho phép đánh giá (giây)</label>
+          <label className="block text-sm font-medium mb-1">Thời gian cho phép đánh giá (phút)</label>
           <input
             type="number"
             className="bg-gray-100 w-full border rounded px-3 py-2"
             value={timeout}
             min={1}
-            onChange={e => setTimeoutSec(Number(e.target.value))}
+            onChange={e => setTimeoutMin(Number(e.target.value))}
           />
         </div>
 
