@@ -327,6 +327,36 @@ export const ticketsAPI = {
   getTicketDone: (params: { counter_id?: number; tenxa: string }): Promise<Ticket[]> => {
     return rootApi.get('/tickets/done', { params }).then(response => response.data);
   },
+  /**
+   * GET /tickets/feedback
+   * Verify a review token or lookup pending feedback for a ticket.
+   * Usage (Workflow A): the review QR contains a signed token `t` produced by the BE.
+   * Client should call: GET /tickets/feedback?t=<token>
+   * BE verifies signature, expiry and ticket status, then returns ticket details used by the review page:
+   * {
+   *   ticket_number: number,
+   *   status: 'done'|'waiting'|'called',
+   *   finished_at: string,
+   *   counter_id: number,
+   *   counter_name: string,
+   *   can_rate: boolean
+   * }
+   */
+  getFeedback: (params: { token?: string; ticket_number?: string; tenxa?: string }): Promise<any> => {
+    // prefer token-based lookup: ?t=<signed-token>
+    return rootApi.get('/tickets/feedback', { params }).then(response => response.data);
+  },
+
+  /**
+   * POST /tickets/feedback
+   * Submit rating/feedback for a ticket referenced by a signed token `t` (Workflow A).
+   * Client call: POST /tickets/feedback?t=<token>
+   * Body: { rating: 'satisfied'|'neutral'|'needs_improvement', feedback?: string }
+   * Server will re-verify token, check ticket status and one-time policy, persist rating and return success.
+   */
+  submitFeedback: (params: { token?: string; ticket_number?: string; tenxa?: string }, body: { rating: string; feedback?: string }): Promise<any> => {
+    return rootApi.post('/tickets/feedback', body, { params }).then(response => response.data);
+  },
 };
 
 // ===================================
@@ -612,6 +642,12 @@ export interface KioskConfig {
   hotline: string;
 }
 
+// QR rating configuration returned by BE
+export interface QrRatingConfig {
+  feedback_timeout: number; // seconds
+  qr_rating: boolean;
+}
+
 export const configAPI = {
   /**
    * 🦶 [GET] /footers
@@ -627,6 +663,23 @@ export const configAPI = {
    */
   setConfig: (tenxa: string, config: KioskConfig): Promise<KioskConfig> => {
     return rootApi.post('/configs', config, { params: { tenxa } }).then(res => res.data);
+  },
+  /**
+   * 📦 [GET] /configs/qr_rating
+   * Get QR rating configuration for a tenxa
+   * Query param: tenxa (required)
+   */
+  getQrRating: (tenxa: string): Promise<QrRatingConfig> => {
+    return rootApi.get('/configs/qr_rating', { params: { tenxa } }).then(res => res.data);
+  },
+
+  /**
+   * 📦 [PUT] /configs/qr_rating
+   * Update QR rating configuration for a tenxa
+   * Body: { feedback_timeout: number, qr_rating: boolean }
+   */
+  setQrRating: (tenxa: string, body: QrRatingConfig): Promise<QrRatingConfig> => {
+    return rootApi.put('/configs/qr_rating', body, { params: { tenxa } }).then(res => res.data);
   },
 };
 

@@ -38,13 +38,15 @@ interface ProcedureResult {
   serviceNames?: string; // Add optional serviceNames field
 }
 
-export default function KioskMainScreen() {
-// Footer default config (module-scope stable)
 const DEFAULT_CONFIG = {
   header: 'PHƯƠNG AAA',
   workingHours: 'Giờ làm việc (Thứ 2 - Thứ 6): 07h30 - 17h00',
   hotline: 'Hotline hỗ trợ: 0916670793',
 };
+
+export default function KioskMainScreen() {
+// Footer default config (module-scope stable)
+
   // Footer config state (now includes header)
   const [config, setConfig] = useState<{ header: string; workingHours: string; hotline: string }>(DEFAULT_CONFIG);
 
@@ -96,7 +98,7 @@ const DEFAULT_CONFIG = {
   };
 
   // Original states
-  const [printData, setPrintData] = useState<{ number: number; counterId: string; counterName: string } | null>(null);
+  const [printData, setPrintData] = useState<{ number: number; counterId: string; counterName: string; token?: string } | null>(null);
   const [selectedService, setSelectedService] = useState<string>('');
   const [selectedServiceName, setSelectedServiceName] = useState<string>('');
   const [showConfirmCounter, setShowConfirmCounter] = useState(false);
@@ -339,7 +341,7 @@ const DEFAULT_CONFIG = {
       // Call API to create ticket instead of generating random number
       const newTicket = await createTicket(parseInt(counterId));
 
-      if (newTicket) {
+  if (newTicket) {
         // Find counter name from selectedProcedure or fallback
         let counterName = `Quầy ${counterId}`;
 
@@ -350,11 +352,15 @@ const DEFAULT_CONFIG = {
           }
         }
 
-        // 🖨️ Gửi dữ liệu cho PrintTicket component
+        // Extract optional server-signed token (Workflow A)
+        const token = (newTicket as any).token as string | undefined;
+
+        // 🖨️ Gửi dữ liệu cho PrintTicket component (bao gồm token nếu BE trả về)
         setPrintData({
           number: newTicket.number,
           counterId: newTicket.counter_id.toString(),
-          counterName: counterName
+          counterName: counterName,
+          token
         });
 
         // Reset states
@@ -824,13 +830,13 @@ const DEFAULT_CONFIG = {
         stopTrigger={voiceStopTrigger}
       />
       
-
       {/* Print Component */}
       {printData && (
         <PrintTicket
           number={printData.number}
           counterId={printData.counterId}
           counterName={printData.counterName}
+          token={printData.token}
           autoPrint={true}
         />
       )}

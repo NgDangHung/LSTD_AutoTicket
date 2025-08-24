@@ -82,6 +82,7 @@ export const useCreateTicket = () => {
     setError(null);
     try {
       const response = await ticketsAPI.createTicket({ counter_id: counterId });
+      console.log('Ticket created successfully:', response.data);
       setLastCreatedTicket(response.data);
       return response.data;
     } catch (err: any) {

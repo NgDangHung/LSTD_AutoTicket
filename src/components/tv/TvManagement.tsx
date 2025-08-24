@@ -165,11 +165,11 @@ export default function TvManagement() {
           <div className="bg-white border rounded p-4">
             <div className="mb-3">
               <label className="block text-sm text-gray-700 font-medium mb-1">Tên group</label>
-              <input value={nameInput} onChange={e => setNameInput(e.target.value)} className="w-full bg-white border rounded px-3 py-2" style={{color: 'black'}}/>
+              <input value={nameInput} onChange={e => setNameInput(e.target.value)} className="bg-gray-100 text-gray-800 w-full border rounded px-3 py-2"/>
             </div>
             <div className="mb-3">
               <label className="block text-sm text-gray-700 font-medium mb-1">Mô tả</label>
-              <input value={descriptionInput} onChange={e => setDescriptionInput(e.target.value)} className="w-full bg-white border rounded px-3 py-2" style={{color: 'black'}}/>
+              <input value={descriptionInput} onChange={e => setDescriptionInput(e.target.value)} className="bg-gray-100 text-gray-800 w-full border rounded px-3 py-2"/>
             </div>
 
             <div className="mb-3">

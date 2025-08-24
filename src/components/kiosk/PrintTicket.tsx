@@ -8,6 +8,8 @@ interface PrintTicketProps {
   number: number;
   counterId: string;
   counterName: string;
+  // Optional server-signed token (Workflow A). If present the QR will encode /review?t=<token>
+  token?: string;
   autoPrint?: boolean;
   onPrintComplete?: () => void;
 }
@@ -21,11 +23,13 @@ const PrintTicket: React.FC<PrintTicketProps> = ({
   number,
   counterId,
   counterName,
+  token, // server-signed token (optional)
   autoPrint = false,
   onPrintComplete
 }) => {
   // TEN_XA config: prefer env var NEXT_PUBLIC_TENXA, fallback to localStorage or default
   const TEN_XA = 'phuongtanphong'
+  // token prop is available as `token` (optional server-signed token for Workflow A)
 
   const [qrDataUrl, setQrDataUrl] = useState<string>('');
   const [printStatus, setPrintStatus] = useState('');
@@ -220,9 +224,14 @@ const performAgentPrint = React.useCallback(
       // Generate QR synchronously before printing
       try {
         const origin = typeof window !== 'undefined' ? window.location.origin : '';
-  const url = `${origin}/review?ticket_number=${number}&tenxa=${TEN_XA}`;
-  // Generate a higher-resolution QR for printing so it is scannable on paper
-  const dataUrl = await QRCode.toDataURL(url, { width: 600, margin: 1 });
+        // Build review URL: prefer server-signed token (Workflow A). If token missing, fall back
+        // to embedding identifying params (Workflow B).
+        // Use `token` query param as required by the backend
+        const url = token
+          ? `${origin}/review?token=${encodeURIComponent(token)}`
+          : `${origin}/review?ticket_number=${number}&tenxa=${TEN_XA}&counter_name=${encodeURIComponent(counterName)}`;
+        // Generate a higher-resolution QR for printing so it is scannable on paper
+        const dataUrl = await QRCode.toDataURL(url, { width: 600, margin: 1 });
         await performAgentPrint(t, d, dataUrl);
       } catch (qrErr) {
         console.warn('QR generation failed, printing without QR', qrErr);
@@ -247,9 +256,13 @@ const performAgentPrint = React.useCallback(
     (async () => {
       try {
         const origin = typeof window !== 'undefined' ? window.location.origin : '';
-  const url = `${origin}/review?ticket_number=${number}&tenxa=${TEN_XA}`;
-  // AutoPrint uses a larger QR to ensure printed tickets have a scannable QR
-  const dataUrl = await QRCode.toDataURL(url, { width: 600, margin: 1 });
+        // Use `t` query param for auto-printed tickets (server token). Keep fallback to ticket params.
+        // Use `token` query param for auto-printed tickets (server token).
+        const url = token
+          ? `${origin}/review?token=${encodeURIComponent(token)}`
+          : `${origin}/review?ticket_number=${number}&tenxa=${TEN_XA}&counter_name=${encodeURIComponent(counterName)}`;
+        // AutoPrint uses a larger QR to ensure printed tickets have a scannable QR
+        const dataUrl = await QRCode.toDataURL(url, { width: 600, margin: 1 });
         setQrDataUrl(dataUrl);
         await performAgentPrint(t, d, dataUrl);
       } catch (err) {
@@ -258,7 +271,7 @@ const performAgentPrint = React.useCallback(
       }
     })();
       // include handlePrint to satisfy hook deps
-    }, [autoPrint, number, counterId, counterName, handlePrint, performAgentPrint]);
+    }, [autoPrint, number, counterId, counterName, handlePrint, performAgentPrint, token]);
 
   return (
     <div className="flex flex-col space-y-4">

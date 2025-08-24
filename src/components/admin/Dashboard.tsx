@@ -72,7 +72,7 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-4xl font-bold text-gray-800 mb-8">📊 Dashboard Quản trị</h1>
+        <h1 className="text-4xl font-bold text-gray-800 mb-8">📊 Thống kê</h1>
 
         <div className="mb-6 flex flex-wrap gap-4 items-end">
           <div>

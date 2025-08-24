@@ -107,7 +107,7 @@ export default function StopServiceModal({
               value={customReason}
               onChange={(e) => setCustomReason(e.target.value)}
               placeholder="Vui lòng nhập lý do ngừng phục vụ..."
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 resize-none"
+              className="bg-gray-200 text-gray-800 w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 resize-none"
               autoFocus
             />
           </div>

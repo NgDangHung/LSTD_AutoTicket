@@ -1,10 +1,13 @@
 'use client'
 
 import { useEffect, useState } from "react";
+import { ticketsAPI } from '@/libs/rootApi';
 import Image from "next/image";
+import { color } from "html2canvas/dist/types/css/types/color";
 
 interface TicketFeedbackInfo {
   ticket_number: number;
+  counter_name: string
   status: string;
   finished_at: string;
   can_rate: boolean;
@@ -54,18 +57,20 @@ function ReviewPage() {
   // Read query params from window.location.search (client-only) to avoid next/navigation SSR subtlety
   const [ticketNumber, setTicketNumber] = useState<string | null>(null);
   const [tenxa, setTenxa] = useState<string | null>(null);
+  const [token, setToken] = useState<string | null>(null);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const params = new URLSearchParams(window.location.search);
     setTicketNumber(params.get('ticket_number'));
     setTenxa(params.get('tenxa'));
+    setToken(params.get('token'));
   }, []);
 
   // fetchTicketInfo moved inside effect to satisfy hook dependency rules
 
   const submitFeedback = async () => {
-    if (!ticketNumber || !tenxa || !rating) return;
+  if (!rating) return;
     setLoading(true);
     try {
       // Map Vietnamese UI labels to API expected enum values if needed
@@ -79,41 +84,83 @@ function ReviewPage() {
       const payload = { rating: payloadRating, feedback };
       console.debug('📤 Submitting feedback payload', payload, { ticketNumber, tenxa });
 
-      const res = await fetch(`${API_BASE}/${ticketNumber}/feedback?tenxa=${tenxa}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-
-      // Attempt to read response body for better error messages
+      let res: Response | null = null;
       let resBody: any = null;
-      try { resBody = await res.json(); } catch { try { resBody = await res.text(); } catch {} }
 
-      if (!res.ok) {
-        console.warn('❌ Feedback API returned error', res.status, resBody);
-        const detail = typeof resBody === 'object' ? JSON.stringify(resBody) : String(resBody || res.statusText);
-        throw new Error(`Gửi đánh giá thất bại (${res.status}): ${detail}`);
+      if (token) {
+        // Workflow A: submit using token-based endpoint
+        try {
+          const resp = await ticketsAPI.submitFeedback({ token: token }, payload as any);
+          // ticketsAPI returns parsed response body
+          resBody = resp;
+          setMessage('Đã gửi đánh giá thành công!');
+          setTicketInfo(prev => ({ ...(prev || {}), rating: (payload as any).rating, can_rate: false } as TicketFeedbackInfo));
+          return;
+        } catch (err: any) {
+          throw new Error(err?.message || 'Gửi đánh giá thất bại');
+        }
+      } else {
+        // Workflow B: fallback to ticket_number + tenxa
+        if (!ticketNumber || !tenxa) {
+          throw new Error('Thiếu thông tin vé để gửi đánh giá');
+        }
+        res = await fetch(`${API_BASE}/${ticketNumber}/feedback?tenxa=${tenxa}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
       }
 
-      setMessage('Đã gửi đánh giá thành công!');
-      // Update local ticket info to show submitted rating and disable further rating
-      setTicketInfo(prev => ({
-        ...(prev || (resBody || {})),
-        rating: payloadRating,
-        can_rate: false,
-      } as TicketFeedbackInfo));
+      // Attempt to read response body for better error messages
+      // If we reach here it means we used Workflow B and have a fetch Response
+      if (res) {
+        try { resBody = await res.json(); } catch { try { resBody = await res.text(); } catch {} }
+
+        if (!res.ok) {
+          console.warn('❌ Feedback API returned error', res.status, resBody);
+          const detail = (typeof resBody === 'object' && resBody && typeof resBody.detail === 'string')
+            ? resBody.detail
+            : (typeof resBody === 'object' ? JSON.stringify(resBody) : String(resBody || res.statusText));
+          throw new Error(detail);
+        }
+
+        setMessage('Đã gửi đánh giá thành công!');
+        setTicketInfo(prev => ({ ...(prev || (resBody || {})), rating: payloadRating, can_rate: false } as TicketFeedbackInfo));
+      }
     } catch (err: any) {
-      setMessage(err.message || 'Gửi đánh giá thất bại');
+      setMessage('*Gửi đánh giá thất bại, vui lòng nhập góp ý của bạn để Trung tâm có thể phục vụ bạn tốt hơn');
     } finally {
       setLoading(false);
     }
   };
 
-  // gọi fetch khi params thay đổi / khi client đã có search params
+  // gọi fetch khi params/token thay đổi
   useEffect(() => {
-    // only attempt fetch on client when params are present
-    if (!ticketNumber || !tenxa) return;
     (async () => {
+      // Workflow A: token-based verify
+      if (token) {
+        setLoading(true);
+        try {
+          // Use `token` param as returned/required by backend
+          // Log token for debugging
+          // eslint-disable-next-line no-console
+          console.log('[ReviewPage] verifying token via ticketsAPI.getFeedback', { token });
+          const data = await ticketsAPI.getFeedback({ token } as any);
+          // eslint-disable-next-line no-console
+          console.log('[ReviewPage] ticketsAPI.getFeedback response', data);
+          setTicketInfo(data);
+          setMessage('');
+        } catch (err: any) {
+          setMessage(err?.message || 'Không tìm thấy vé hoặc vé chưa hoàn tất');
+          setTicketInfo(null);
+        } finally {
+          setLoading(false);
+        }
+        return;
+      }
+
+      // Workflow B: ticket_number + tenxa
+      if (!ticketNumber || !tenxa) return;
       setLoading(true);
       try {
         const res = await fetch(`${API_BASE}/${ticketNumber}/feedback?tenxa=${tenxa}`);
@@ -128,31 +175,36 @@ function ReviewPage() {
         setLoading(false);
       }
     })();
-  }, [ticketNumber, tenxa]);
+  }, [ticketNumber, tenxa, token]);
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-4">
-      <div className="bg-white shadow-md rounded-2xl p-6 w-full" style={{maxWidth: '500px'}}>
-        <div className="flex items-center gap-2">
-            <Image
-                src="/images/logo_vang.png" 
-                alt="logo_vang" 
-                width={120}
-                height={120}
-                className="w-30 h-30 object-contain"
-                unoptimized
-            />
-            <div style={{ marginLeft: '15px'  }}>
-                <h1 className="text-xl font-bold mb-4 text-gray-700">Đánh giá chất lượng dịch vụ</h1>
-            </div>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-4">
+        <div className="bg-white shadow-md rounded-2xl p-4 w-full" style={{maxWidth: '500px'}}>
+      <div className="flex flex-col items-center mb-4 text-center">
+        <Image
+          src="/images/logo_vang.png"
+          alt="logo_vang"
+          width={100}
+          height={100}
+          className="w-20 h-20 object-contain mb-2"
+          unoptimized
+        />
+        <div style={{ fontSize: '12px' }}>
+          <h1 className="font-bold text-gray-700">TRUNG TÂM PHỤC VỤ HÀNH CHÍNH CÔNG</h1>
+          <h1 className="font-bold text-gray-700">PHƯỜNG TÂN PHONG</h1>
         </div>
-
+      </div>
+        
+        <h1 className="font-bold mb-4 text-gray-700 text-center" style={{ fontSize: '10px' }}>HỆ THỐNG ĐÁNH GIÁ MỨC ĐỘ HÀI LÒNG</h1>
         {loading && <p>Đang tải...</p>}
 
         {ticketInfo && (
           <div className="text-gray-700">
             <p>
               Vé số: <b>{ticketInfo.ticket_number}</b>
+            </p>
+            <p>
+              Quầy: <b>{ticketInfo.counter_name}</b>
             </p>
             <p>Trạng thái: {getStatusLabel(ticketInfo.status)}</p>
             <p>
@@ -193,7 +245,7 @@ function ReviewPage() {
                 </div>
 
                 <textarea
-                  placeholder="Góp ý cải thiện dịch vụ ..."
+                  placeholder="Nhập góp ý của bạn..."
                   value={feedback}
                   onChange={(e) => setFeedback(e.target.value)}
                   className="w-full border rounded-lg p-2 mt-3 bg-white text"
@@ -206,6 +258,7 @@ function ReviewPage() {
                 >
                   Gửi đánh giá
                 </button>
+                
               </div>
               ) : (
                 // Nếu không còn được phép đánh giá thì chỉ hiển thị kết quả đánh giá nếu có
@@ -213,6 +266,7 @@ function ReviewPage() {
                   <p className="mt-3 text-gray-600">Bạn đã đánh giá: {getRatingLabel(ticketInfo.rating)}</p>
                 ) : null
               )}
+
           </div>
         )}
 

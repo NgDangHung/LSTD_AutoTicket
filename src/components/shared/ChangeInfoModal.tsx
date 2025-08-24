@@ -37,11 +37,11 @@ function ConfigModal(props: ConfigModalProps) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
       <div ref={modalRef} className="bg-white rounded-lg shadow-lg p-8 min-w-[500px]">
-        <h2 className="text-xl font-bold mb-4 text-gray-800">Chỉnh sửa thông tin footer</h2>
+        <h2 className="text-xl font-bold mb-4 text-gray-800">Chỉnh sửa thông tin</h2>
         <div className="mb-4">
           <label className="block font-semibold mb-2 text-gray-800">Tên cơ sở</label>
           <input
-            className="w-full border rounded px-3 py-2"
+            className="bg-gray-200 text-gray-800 w-full border rounded px-3 py-2"
             value={header}
             onChange={e => setHeader(e.target.value)}
           />
@@ -49,7 +49,7 @@ function ConfigModal(props: ConfigModalProps) {
         <div className="mb-4">
           <label className="block font-semibold mb-2 text-gray-800">Giờ làm việc</label>
           <input
-            className="w-full border rounded px-3 py-2"
+            className="bg-gray-200 text-gray-800 w-full border rounded px-3 py-2"
             value={workingHours}
             onChange={e => setWorkingHours(e.target.value)}
           />
@@ -57,7 +57,7 @@ function ConfigModal(props: ConfigModalProps) {
         <div className="mb-4">
           <label className="block font-semibold mb-2 text-gray-800">Hotline hỗ trợ</label>
           <input
-            className="w-full border rounded px-3 py-2"
+            className="bg-gray-200 text-gray-800 w-full border rounded px-3 py-2"
             value={hotline}
             onChange={e => setHotline(e.target.value)}
           />

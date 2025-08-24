@@ -41,7 +41,7 @@ function CreateCounterModal(props: CreateCounterModalProps) {
         <div className="mb-4">
           <label className="block font-semibold mb-2 text-gray-800">Tên quầy (có thể chứa từ viết tắt)</label>
           <input
-            className="w-full border rounded px-3 py-2"
+            className="bg-gray-200 text-gray-800 w-full border rounded px-3 py-2"
             value={counterName}
             onChange={e => setCounterName(e.target.value)}
           />
@@ -49,7 +49,7 @@ function CreateCounterModal(props: CreateCounterModalProps) {
         <div className="mb-4">
           <label className="block font-semibold mb-2 text-gray-800">Tên quầy đầy đủ để tạo file âm thanh</label>
           <input
-            className="w-full border rounded px-3 py-2"
+            className="bg-gray-200 text-gray-800 w-full border rounded px-3 py-2"
             value={counterFullName}
             onChange={e => setCounterFullName(e.target.value)}
           />
