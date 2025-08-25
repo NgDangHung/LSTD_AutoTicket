@@ -231,7 +231,7 @@ const performAgentPrint = React.useCallback(
           ? `${origin}/review?token=${encodeURIComponent(token)}`
           : `${origin}/review?ticket_number=${number}&tenxa=${TEN_XA}&counter_name=${encodeURIComponent(counterName)}`;
         // Generate a higher-resolution QR for printing so it is scannable on paper
-        const dataUrl = await QRCode.toDataURL(url, { width: 600, margin: 1 });
+        const dataUrl = await QRCode.toDataURL(url, { width: 288, margin: 2 });
         await performAgentPrint(t, d, dataUrl);
       } catch (qrErr) {
         console.warn('QR generation failed, printing without QR', qrErr);
@@ -262,7 +262,7 @@ const performAgentPrint = React.useCallback(
           ? `${origin}/review?token=${encodeURIComponent(token)}`
           : `${origin}/review?ticket_number=${number}&tenxa=${TEN_XA}&counter_name=${encodeURIComponent(counterName)}`;
         // AutoPrint uses a larger QR to ensure printed tickets have a scannable QR
-        const dataUrl = await QRCode.toDataURL(url, { width: 600, margin: 1 });
+        const dataUrl = await QRCode.toDataURL(url, { width: 288, margin: 2 });
         setQrDataUrl(dataUrl);
         await performAgentPrint(t, d, dataUrl);
       } catch (err) {
