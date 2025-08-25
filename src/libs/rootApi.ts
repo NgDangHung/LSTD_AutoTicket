@@ -698,6 +698,23 @@ export interface CounterStats {
   ended_at?: string;
 }
 
+// Rating per counter response
+export interface RatingPerCounter {
+  counter_id: number;
+  satisfied: number;
+  neutral: number;
+  need_improvement: number;
+}
+
+// Feedback item returned by /stats/feedbacks
+export interface FeedbackItem {
+  ticket_number: number;
+  counter_id: number;
+  rating: string;
+  feedback: string;
+  created_at: string;
+}
+
 export const statsDashboardAPI = {
   /**
    * 🟢 [GET] /stats/tickets-per-counter
@@ -740,6 +757,20 @@ export const statsDashboardAPI = {
    */
   getWorkingTimeCheck: (params?: { date_check?: string }) =>
     rootApi.get('/stats/working-time-check', { params: { ...params, tenxa: 'phuongtanphong' } }).then(res => res.data),
+  /**
+   * 📊 [GET] /stats/rating-per-counter
+   * Returns aggregated rating counts per counter.
+   * Query params: start_date, end_date, tenxa(required)
+   */
+  getRatingPerCounter: (params?: { start_date?: string; end_date?: string }) =>
+    rootApi.get('/stats/rating-per-counter', { params: { ...params, tenxa: 'phuongtanphong' } }).then(res => res.data as RatingPerCounter[]),
+
+  /**
+   * 💬 [GET] /stats/feedbacks
+   * List feedbacks with optional filters: rating, counter_id, start_date, end_date
+   */
+  getFeedbacks: (params?: { rating?: string; counter_id?: number; start_date?: string; end_date?: string }) =>
+    rootApi.get('/stats/feedbacks', { params: { ...params, tenxa: 'phuongtanphong' } }).then(res => res.data as FeedbackItem[]),
 };
 
 // ===================================

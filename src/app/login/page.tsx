@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { userAPI } from '@/libs/api';
+import { rootApi } from '@/libs/rootApi';
 import { toast } from 'react-toastify';
 import Link from 'next/link';
 
@@ -61,59 +62,61 @@ export default function LoginPage() {
       const responseData = response.data || response;
       if (responseData.token || responseData.access_token) {
         const token = responseData.token || responseData.access_token;
+
+        // Mark login flow in-progress so AuthGuard can wait for user_data
+        try { sessionStorage.setItem('auth_in_progress', '1'); } catch {}
         sessionStorage.setItem('auth_token', token);
-        
-        // ✅ Get user info to determine redirect path
+
+        // helper: wrap a promise with timeout
+        const withTimeout = async <T,>(p: Promise<T>, ms = 7000): Promise<T> => {
+          const timeout = new Promise<never>((_, rej) => setTimeout(() => rej(new Error('timeout')), ms));
+          return Promise.race([p, timeout]) as Promise<T>;
+        };
+
+        // ✅ Get user info to determine redirect path using rootApi (same axios instance)
         try {
-          console.log('🔍 Getting user info for redirect...');
-          const userResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://detect-seat.onrender.com'}/app/auths/me?tenxa=phuongtanphong`, {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            }
-          });
-          
-          if (userResponse.ok) {
-            const userData = await userResponse.json();
-            console.log('👤 User info:', userData);
-            
-            // ✅ Lưu user data vào sessionStorage
-            sessionStorage.setItem('user_data', JSON.stringify(userData));
-            
-            toast.success(`🎉 Chào mừng ${userData.full_name}!`);
-            
-            // ✅ Role-based redirect
-            if (userData.role === 'admin') {
-              console.log('🔀 Redirecting admin to test-queue');
-              router.push('/test-queue');
-            } else if (userData.role === 'officer') {
-              console.log('🔀 Redirecting officer to officer page');
-              
-              // Check if officer has counter assigned
-              if (userData.counter_id) {
-                router.push('/officer');
-              } else {
-                toast.error('❌ Tài khoản officer chưa được gán quầy!');
-                sessionStorage.removeItem('auth_token');
-                sessionStorage.removeItem('user_data');
-                return;
-              }
-            } else if (userData.role === 'leader') {
-              console.log('🔀 Redirecting leader to admin');
-              router.push('/admin');
+          console.log('🔍 Getting user info for redirect (rootApi)...');
+          const resp = await withTimeout(rootApi.get('/auths/me', { params: { tenxa: 'phuongtanphong' } }), 7000);
+          const userData = resp.data;
+          console.log('👤 User info:', userData);
+
+          // ✅ Lưu user data vào sessionStorage
+          sessionStorage.setItem('user_data', JSON.stringify(userData));
+
+          // clear in-progress flag
+          try { sessionStorage.removeItem('auth_in_progress'); } catch {}
+
+          toast.success(`🎉 Chào mừng ${userData.full_name}!`);
+
+          // ✅ Role-based redirect
+          if (userData.role === 'admin') {
+            console.log('🔀 Redirecting admin to test-queue');
+            router.push('/test-queue');
+          } else if (userData.role === 'officer') {
+            console.log('🔀 Redirecting officer to officer page');
+
+            // Check if officer has counter assigned
+            if (userData.counter_id) {
+              router.push('/officer');
             } else {
-              console.log('🔀 Unknown role, redirecting to default');
-              router.push('/test-queue');
+              toast.error('❌ Tài khoản officer chưa được gán quầy!');
+              sessionStorage.removeItem('auth_token');
+              sessionStorage.removeItem('user_data');
+              return;
             }
+          } else if (userData.role === 'leader') {
+            console.log('🔀 Redirecting leader to admin');
+            router.push('/admin');
           } else {
-            // Fallback to test-queue if can't get user info
-            console.warn('⚠️ Could not get user info, redirecting to test-queue');
-            toast.success('Đăng nhập thành công!');
+            console.log('🔀 Unknown role, redirecting to default');
             router.push('/test-queue');
           }
         } catch (userError) {
-          console.error('❌ Error getting user info:', userError);
-          // Fallback to test-queue
+          console.error('❌ Error getting user info (rootApi or timeout):', userError);
+          // clear flag
+          try { sessionStorage.removeItem('auth_in_progress'); } catch {}
+
+          // Fallback to test-queue but keep token for manual verification later
           toast.success('Đăng nhập thành công!');
           router.push('/test-queue');
         }
@@ -172,7 +175,7 @@ export default function LoginPage() {
               value={formData.password}
               onChange={handleInputChange}
               required
-              className="bg-gray-200 text-gray-800 w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+              className="bg-gray-200 text-gray-800 w-full px-4 py-3 border border-gr y-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
               placeholder="Nhập mật khẩu"
             />
           </div>
