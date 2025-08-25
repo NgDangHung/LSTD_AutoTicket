@@ -19,6 +19,17 @@ const AGENT = 'http://127.0.0.1:5544';
 const HEADERS_STABLE: Record<string, string> = { 'Content-Type': 'application/json' };
 // Nếu agent có khóa: HEADERS_STABLE['x-agent-key'] = 'YOUR_KEY';
 
+// QR / rasterization tuning
+// Desired CSS size of the QR on the ticket (px)
+const DESIRED_QR_CSS_PX = 220;
+// html2canvas scale (kept in sync with renderTicketToPdfBase64)
+const CANVAS_SCALE = 2;
+
+function computeIntrinsicQrPx(desiredCssPx: number) {
+  const dpr = typeof window !== 'undefined' ? (window.devicePixelRatio || 1) : 1;
+  return Math.ceil(desiredCssPx * CANVAS_SCALE * dpr);
+}
+
 const PrintTicket: React.FC<PrintTicketProps> = ({
   number,
   counterId,
@@ -54,24 +65,25 @@ const generateThermalTicketHTML = React.useCallback(
   (time: string, date: string, qr?: string) => {
     // Loại bỏ số 0 ở đầu nếu counterId đã có 0
     const counterIdDisplay = counterId.replace(/^0+/, '');
+    // Use flex-start and minimal top padding so content sits higher on the printed paper
     return `
-<div style="width:624px;height:464px;margin:0;padding:0;background:#fff;
-            font-family:'Arial', monospace; text-align:center; display:flex; flex-direction:column; justify-content:space-between;">
-  <div style="padding-top:6px">
-    <div style="font-weight:800;font-size:26px;line-height:1.1;">TRUNG TÂM</div>
-    <div style="font-weight:800;font-size:26px;line-height:1.1;">PHỤC VỤ HÀNH CHÍNH CÔNG</div>
-    <div style="font-weight:900;font-size:32px;line-height:1.1;margin-top:4px;">PHƯỜNG LÀO CAI</div>
-    <div style="font-weight:800;font-size:26px;line-height:1.1;margin-top:6px;">SỐ THỨ TỰ</div>
+<div style="width:624px;height:464px;margin:0;padding:2px 0 6px;background:#fff;
+            font-family:'Arial', monospace; text-align:center; display:flex; flex-direction:column; justify-content:flex-start; align-items:center;">
+  <div style="padding-top:2px">
+    <div style="font-weight:800;font-size:26px;line-height:1.05;">TRUNG TÂM</div>
+    <div style="font-weight:800;font-size:26px;line-height:1.05;">PHỤC VỤ HÀNH CHÍNH CÔNG</div>
+    <div style="font-weight:900;font-size:32px;line-height:1.05;margin-top:2px;">PHƯỜNG LÀO CAI</div>
+    <div style="font-weight:800;font-size:24px;line-height:1.05;margin-top:4px;">SỐ THỨ TỰ</div>
   </div>
 
-  <div style="font-size:100px; font-weight:900; line-height:1; margin:0;">${number}</div>
+  <div style="font-size:100px; font-weight:900; line-height:1; margin:2px 0 4px;">${number}</div>
 
-  <div style="padding-bottom:6px">
+  <div style="padding-bottom:4px">
     <div style="font-size:18px;line-height:1;">QUẦY PHỤC VỤ ${counterIdDisplay.padStart(2, '0')}</div>
-    <div style="font-weight:900;font-size:26px;line-height:1.1;margin-top:2px;">${counterName.toUpperCase()}</div>
-    <div style="font-size:16px;line-height:1.1;margin-top:6px;">THỜI GIAN IN VÉ: ${date} - ${time}</div>
-  ${qr ? `<div style="margin-top:8px;text-align:center"><img src="${qr}" alt="QR đánh giá" style="width:160px;height:160px;display:block;margin:0 auto;border-radius:6px;"/><div style="font-size:12px;margin-top:6px;">Quét mã để đánh giá dịch vụ</div></div>` : ''}
-    <div style="font-style:italic;font-weight:800;font-size:22px;line-height:1.1;margin-top:8px;">Cảm ơn Quý khách!</div>
+    <div style="font-weight:900;font-size:26px;line-height:1.05;margin-top:2px;">${counterName.toUpperCase()}</div>
+    <div style="font-size:16px;line-height:1.05;margin-top:6px;">THỜI GIAN IN VÉ: ${date} - ${time}</div>
+  ${qr ? `<div style="margin-top:6px;text-align:center"><img src="${qr}" alt="QR đánh giá" style="width:220px;height:220px;display:block;margin:0 auto;border-radius:4px;image-rendering:pixelated;"/><div style="font-size:12px;margin-top:6px;">Quét mã để đánh giá dịch vụ</div></div>` : ''}
+    <div style="font-style:italic;font-weight:800;font-size:20px;line-height:1.05;margin-top:8px;">Cảm ơn Quý khách!</div>
   </div>
 </div>`;
   },
@@ -98,7 +110,7 @@ const renderTicketToPdfBase64 = React.useCallback(async (html: string) => {
   container.innerHTML = html;
   document.body.appendChild(container);
 
-  const canvas = await html2canvas(container, { scale: 2, backgroundColor: '#fff' });
+  const canvas = await html2canvas(container, { scale: CANVAS_SCALE, backgroundColor: '#fff' });
   document.body.removeChild(container);
 
   const img = canvas.toDataURL('image/png');
@@ -230,8 +242,9 @@ const performAgentPrint = React.useCallback(
         const url = token
           ? `${origin}/review?token=${encodeURIComponent(token)}`
           : `${origin}/review?ticket_number=${number}&tenxa=${TEN_XA}&counter_name=${encodeURIComponent(counterName)}`;
-        // Generate a higher-resolution QR for printing so it is scannable on paper
-        const dataUrl = await QRCode.toDataURL(url, { width: 288, margin: 2 });
+  // Generate a higher-resolution QR for printing so it is scannable on paper
+  const intrinsic = computeIntrinsicQrPx(DESIRED_QR_CSS_PX);
+  const dataUrl = await QRCode.toDataURL(url, { width: intrinsic, margin: 2, errorCorrectionLevel: 'Q' });
         await performAgentPrint(t, d, dataUrl);
       } catch (qrErr) {
         console.warn('QR generation failed, printing without QR', qrErr);
@@ -261,8 +274,9 @@ const performAgentPrint = React.useCallback(
         const url = token
           ? `${origin}/review?token=${encodeURIComponent(token)}`
           : `${origin}/review?ticket_number=${number}&tenxa=${TEN_XA}&counter_name=${encodeURIComponent(counterName)}`;
-        // AutoPrint uses a larger QR to ensure printed tickets have a scannable QR
-        const dataUrl = await QRCode.toDataURL(url, { width: 288, margin: 2 });
+  // AutoPrint uses a larger QR to ensure printed tickets have a scannable QR
+  const intrinsic = computeIntrinsicQrPx(DESIRED_QR_CSS_PX);
+  const dataUrl = await QRCode.toDataURL(url, { width: intrinsic, margin: 2, errorCorrectionLevel: 'Q' });
         setQrDataUrl(dataUrl);
         await performAgentPrint(t, d, dataUrl);
       } catch (err) {
