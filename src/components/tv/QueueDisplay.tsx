@@ -333,14 +333,12 @@ export default function QueueDisplay() {
   // ✅ Main data fetching và processing function
   const fetchAndProcessQueueData = useCallback(async (showLoading = false) => {
     try {
-      if (showLoading) {
-        setIsLoading(true);
-      }
+      
       setApiError(null);
       // Đảm bảo đã có apiCounters trước khi process
       if (apiCounters.length === 0) {
         setProcessedCounters([]);
-        setIsLoading(false);
+        
         return;
       }
       const tickets = await fetchAllTickets();
@@ -808,12 +806,12 @@ export default function QueueDisplay() {
       )}
 
       {/* TTS Queue Status Bar */}
-      {ttsQueueStatus.queueLength > 0 && (
+      {/* {ttsQueueStatus.queueLength > 0 && (
         <div className="fixed top-0 left-0 right-0 z-50 bg-orange-400 text-black text-center py-2 text-sm">
           <div className="flex items-center justify-center gap-4">
             <span>🎵 Hàng đợi phát thanh: {ttsQueueStatus.queueLength} thông báo</span>
             
-            {/* Show upcoming announcements */}
+            Show upcoming announcements
             {ttsQueueStatus.upcomingRequests.length > 0 && (
               <div className="flex items-center gap-2 text-xs">
                 <span>📋 Tiếp theo:</span>
@@ -834,7 +832,7 @@ export default function QueueDisplay() {
             )}
           </div>
         </div>
-      )}
+      )} */}
 
       <div 
         className="flex items-center justify-center"

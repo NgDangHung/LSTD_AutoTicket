@@ -445,7 +445,7 @@ export default function KioskMainScreen() {
   }, [popupOpen]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 p-8">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100">
       
        {/* <Head>
         <script src="/jsrsasign-all-min.js" id="jsrsasign-script" defer></script>
@@ -688,10 +688,10 @@ export default function KioskMainScreen() {
 
         {/* Counter Grid */}
         {!countersLoading && filteredCounters.length > 0 && (
-          <div className="flex flex-col items-center" >
+          <div className="flex flex-col items-center" style={{width: '1600px', position: 'relative', right: '222px'}} >
             {/* Scroll Indicator */}
             {filteredCounters.length > 4 && (
-              <div className="mb-4 text-center">
+              <div className=" text-center">
                 <p className="text-gray-600 text-sm flex items-center justify-center gap-2">
                   <span>📋 {filteredCounters.length} quầy có sẵn</span>
                 </p>
@@ -699,7 +699,7 @@ export default function KioskMainScreen() {
             )}
             
             {/* Grid màn dọc */}
-            <div
+            {/* <div
               className={`service-grid-container grid grid-cols-2 gap-6 p-4 border rounded-lg backdrop-blur-sm ${filteredCounters.length > 8 ? 'max-h-[1020px] overflow-y-auto' : ''}`}
             >
               {filteredCounters.map((counter, idx) => {
@@ -721,13 +721,13 @@ export default function KioskMainScreen() {
                   </div>
                 );
               })}
-            </div>
+            </div> */}
 
             {/* Grid màn ngang */}
-            {/* <div
-              className="service-grid-container grid grid-cols-4 p-6 border rounded-lg backdrop-blur-sm overflow-y-auto"
+            <div
+              className="service-grid-container grid grid-cols-4 border rounded-lg backdrop-blur-sm overflow-y-auto"
               style={{
-                width: '1600px',
+                width: '100%',
                 margin: '0 auto',
                 background: 'rgba(255,255,255,0.2)',
                 boxSizing: 'border-box',
@@ -764,7 +764,7 @@ export default function KioskMainScreen() {
                   </span>
                 </div>
               ))}
-            </div> */}
+            </div>
           </div>
         )}
 
@@ -778,20 +778,22 @@ export default function KioskMainScreen() {
         )}
 
         {/* Footer màn dọc */}
-        <div className="flex items-center w-full text-gray-600 italic" style={{ position: 'relative', top: '5rem', justifyContent: 'space-around' }}>
+        {/* <div className="flex items-center w-full text-gray-600 italic" style={{ position: 'relative', top: '5rem', justifyContent: 'space-around' }}>
           <p className="text-xl font-extrabold text-red-700 ">{config.workingHours}</p>
           <p className="text-xl font-extrabold text-red-700 ">{config.hotline}</p>
-        </div>
-
-         {/* Footer màn ngang */} 
-        {/* <div className="flex items-center w-full text-gray-600 italic" style={{ position: 'relative', top: '2rem', justifyContent: 'space-around' }}>
-          <p className="text-xl font-extrabold text-red-700 ">
-              {config.workingHours}
-          </p>
-          <p className="text-xl font-extrabold text-red-700 ">
-             {config.hotline}
-          </p>
         </div> */}
+
+        {/* Reserve space for fixed footer so layout doesn't jump when grid renders */}
+        {/* <div style={{ height: 96 }} /> */}
+
+        {/* Footer fixed to bottom */}
+        {/* <div className="fixed bottom-0 left-0 w-full bg-white/95 backdrop-blur-sm shadow-inner z-50"> */}
+        <div className="fixed bottom-0 left-0 w-full bg-white/25 backdrop-blur-sm shadow-inner z-50">
+          <div className="max-w-6xl mx-auto flex items-center justify-around text-gray-600 italic p-4">
+            <p className="text-xl font-extrabold text-red-700">{config.workingHours}</p>
+            <p className="text-xl font-extrabold text-red-700">{config.hotline}</p>
+          </div>
+        </div>
       </div>
 
       {/* Confirm Counter Modal */}
