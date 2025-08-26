@@ -1,6 +1,6 @@
-'use client';
-
-import React, { useState, useEffect, useMemo } from 'react';
+ 'use client';
+import Head from 'next/head';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import Image from 'next/image';
 import { AudioLines } from 'lucide-react';
 import { toast } from 'react-toastify';
@@ -9,38 +9,20 @@ import VirtualKeyboard from './VirtualKeyboard';
 import SpeechToText from './SpeechToText';
 import { useCreateTicket } from '@/hooks/useApi';
 import { useOptimizedSearch } from '@/hooks/useOptimizedSearch';
-import { countersAPI, Counter } from '@/libs/rootApi';
+import { countersAPI, configAPI, Counter } from '@/libs/rootApi';
 import '@/app/index.css';
-import PrintTicket from '@/components/kiosk/PrintTicket';
 import PopUp from './PopUp';
 import DateTimeVN from '../shared/DateTimeVN';
+import PrintTicket from '@/components/kiosk/PrintTicket';
 
-
-
-const services = [
-  { id: 1, name: 'Tư pháp' },
-  { id: 2, name: 'Thanh tra' },
-  { id: 3, name: 'Văn hóa TT - DL' },
-  { id: 4, name: 'Giáo dục Đào tạo' },
-  { id: 5, name: 'Y tế' },
-  { id: 6, name: 'Nông nghiệp và Môi trường' },
-  { id: 7, name: 'Xây dựng' },
-  { id: 8, name: 'Tài chính' },
-  { id: 9, name: 'Công thương' },
-  { id: 10, name: 'Nội vụ' },
-  { id: 11, name: 'Dân tộc - Tôn giáo' },
-];
 
 // Mapping lĩnh vực với quầy phục vụ - DEPRECATED: Use API data instead
 const legacyCounters = [
-  { id: 1, name: 'Thuế', serviceNames: 'Thuế', serviceIds: [] },
-  { id: 2, name: 'Văn phòng đăng kí đất đai khu vực 9', serviceNames: 'Văn phòng đăng kí đất đai khu vực 9', serviceIds: [] },
-  { id: 3, name: 'Lĩnh vực Kinh tế', serviceNames: 'Lĩnh vực Kinh tế', serviceIds: [] },
-  { id: 4, name: 'Tư pháp - Hộ tịch (Chứng thực điện tử)', serviceNames: 'Tư pháp - Hộ tịch (Chứng thực điện tử)', serviceIds: [] },
-  { id: 5, name: 'Tư pháp - Hộ tịch', serviceNames: 'Tư pháp - Hộ tịch', serviceIds: [] },
-  { id: 6, name: 'Điện lực', serviceNames: 'Điện lực', serviceIds: [] },
-  { id: 7, name: 'Bảo hiểm xã hội', serviceNames: 'Bảo hiểm xã hội', serviceIds: [] },
-  { id: 8, name: 'Lĩnh vực Văn hoá - Xã hội', serviceNames: 'Lĩnh vực Văn hoá - Xã hội', serviceIds: [] },
+  { id: 2, name: 'Tư pháp - Hộ tịch', serviceNames: 'Tư pháp - Hộ tịch', serviceIds: [] },
+  { id: 3, name: 'Đô thị - Công thương', serviceNames: 'Đô thị - Công thương', serviceIds: [] },
+  { id: 4, name: 'Văn hóa', serviceNames: 'Văn hóa', serviceIds: [] },
+  { id: 5, name: 'Nông nghiệp - Môi trường', serviceNames: 'Nông nghiệp - Môi trường', serviceIds: [] },
+  { id: 6, name: 'Văn phòng', serviceNames: 'Văn phòng', serviceIds: [] },
 ];
 
 
@@ -56,9 +38,53 @@ interface ProcedureResult {
   serviceNames?: string; // Add optional serviceNames field
 }
 
+const DEFAULT_CONFIG = {
+  header: 'XÃ VỊ XUYÊN',
+  workingHours: 'Giờ làm việc (Thứ 2 - Thứ 6): 07h30 - 17h00',
+  hotline: 'Hotline hỗ trợ: 0219-1022',
+};
+
 export default function KioskMainScreen() {
-  
-   // Popup state 
+// Footer default config (module-scope stable)
+
+  // Footer config state (now includes header)
+  const [config, setConfig] = useState<{ header: string; workingHours: string; hotline: string }>(DEFAULT_CONFIG);
+
+  // Fetch config from API on mount
+  const fetchConfig = React.useCallback(async () => {
+    try {
+      const data = await configAPI.getConfig('xavixuyen');
+      if (data && (data.work_time || data.hotline)) {
+        setConfig({
+          header: data.header || DEFAULT_CONFIG.header,
+          workingHours: data.work_time || DEFAULT_CONFIG.workingHours,
+          hotline: data.hotline || DEFAULT_CONFIG.hotline,
+        });
+      }
+    } catch {
+      setConfig(DEFAULT_CONFIG);
+    }
+  }, [DEFAULT_CONFIG]);
+
+  // Save config to API
+  async function handleSaveConfig(newConfig: { header: string; work_time: string; hotline: string }, onSuccess?: () => void, onError?: (err: any) => void) {
+    try {
+      await configAPI.setConfig('xavixuyen', {
+        header: newConfig.header,
+        work_time: newConfig.work_time,
+        hotline: newConfig.hotline
+      });
+      if (onSuccess) onSuccess();
+    } catch (err) {
+      if (onError) onError(err);
+    }
+  }
+
+  useEffect(() => {
+    fetchConfig();
+  }, [fetchConfig]);
+
+   // Popup state
   const [popupUrl, setPopupUrl] = useState<string | null>(null);
   const [popupOpen, setPopupOpen] = useState(false);
 
@@ -72,7 +98,7 @@ export default function KioskMainScreen() {
   };
 
   // Original states
-  const [printData, setPrintData] = useState<{ number: number; counterId: string; counterName: string } | null>(null);
+  const [printData, setPrintData] = useState<{ number: number; counterId: string; counterName: string; token?: string } | null>(null);
   const [selectedService, setSelectedService] = useState<string>('');
   const [selectedServiceName, setSelectedServiceName] = useState<string>('');
   const [showConfirmCounter, setShowConfirmCounter] = useState(false);
@@ -93,23 +119,17 @@ export default function KioskMainScreen() {
   // Load counters from API on component mount
   useEffect(() => {
     const loadCounters = async () => {
-      // Prevent multiple calls
       if (hasLoadedCounters || countersLoading) {
         return;
       }
-
       try {
         setCountersLoading(true);
         setCountersError(null);
-        
         const countersData = await countersAPI.getCounters();
         setApiCounters(countersData);
-        setHasLoadedCounters(true); // Mark as loaded
+        setHasLoadedCounters(true);
       } catch (error) {
-        // ...existing code...
         setCountersError('Failed to load counters from API');
-        
-        // Fallback to legacy data
         const fallbackCounters: Counter[] = legacyCounters.map(counter => ({
           id: counter.id,
           name: counter.name,
@@ -117,15 +137,73 @@ export default function KioskMainScreen() {
           status: 'active' as const
         }));
         setApiCounters(fallbackCounters);
-        setHasLoadedCounters(true); // Mark as loaded even on error
-        
+        setHasLoadedCounters(true);
         toast.warn('Using offline counter data');
       } finally {
         setCountersLoading(false);
       }
     };
-
     loadCounters();
+
+    // --- WebSocket lắng nghe event 'upsert_counter', 'delete_counter', và 'update_config' ---
+    let ws: WebSocket | null = null;
+    if (typeof window !== 'undefined') {
+      ws = new window.WebSocket('wss://lstd.onrender.com/ws/updates');
+      ws.onopen = () => {
+        // Kết nối thành công
+        console.log('WebSocket connected for counter/config updates');
+      };
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          if ((['upsert_counter', 'delete_counter'].includes(data.event)) && data.tenxa === 'xavixuyen') {
+            console.log('Received upsert_counter event:', data);
+            // Luôn gọi lại API và cập nhật state, không phụ thuộc vào flag
+            (async () => {
+              try {
+                setCountersLoading(true);
+                setCountersError(null);
+                const countersData = await countersAPI.getCounters();
+                setApiCounters(countersData);
+                setHasLoadedCounters(true);
+              } catch (error) {
+                setCountersError('Failed to load counters from API');
+                const fallbackCounters: Counter[] = legacyCounters.map(counter => ({
+                  id: counter.id,
+                  name: counter.name,
+                  is_active: true,
+                  status: 'active' as const
+                }));
+                setApiCounters(fallbackCounters);
+                setHasLoadedCounters(true);
+                toast.warn('Using offline counter data');
+              } finally {
+                setCountersLoading(false);
+              }
+            })();
+          }
+          // Listen for config update event
+          if (data.event === 'update_config' && data.tenxa === 'xavixuyen') {
+            console.log('Received update_config event:', data);
+            fetchConfig();
+          }
+        } catch (err) {
+          // Ignore parse error
+        }
+      };
+      ws.onerror = () => {
+        // console.warn('WebSocket error for counter/config updates');
+      };
+      ws.onclose = () => {
+        // console.log('WebSocket closed for counter/config updates');
+      };
+    }
+    return () => {
+      if (ws) {
+        ws.close();
+        ws = null;
+      }
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Only run once on mount
 
@@ -209,59 +287,7 @@ export default function KioskMainScreen() {
     });
 
     return filtered;
-  }, [isSearchMode, searchResults, counters, searchValue]);
-
-  // const handleServiceSelect = (serviceId: number) => {
-
-
-  //   const service = services.find(s => s.id === serviceId);
-  //   if (!service) return;
-
-  //   if (isSearchMode) {
-  //     // LUỒNG 1: Tìm kiếm thủ tục -> chọn lĩnh vực
-  //     const matchingProcedure = searchResults.find(proc => proc.field_id === service.id);
-      
-  //     if (matchingProcedure) {
-  //       setSelectedProcedure(matchingProcedure);
-  //       setSelectedService(serviceId.toString());
-  //       setSelectedServiceName(`${service.name} - ${matchingProcedure.name}`);
-  //       setShowConfirmCounter(true);
-        
-  //       // ...existing code...
-  //     } else {
-  //       // ...existing code...
-  //       toast.error('Không tìm thấy thủ tục phù hợp cho lĩnh vực này');
-  //     }
-  //   } else {
-  //     // LUỒNG 2: Chọn trực tiếp lĩnh vực
-  //     const counter = getCounterByServiceId(serviceId);
-      
-  //     if (counter) {
-  //       // Tạo mock procedure để có thể sử dụng chung logic với luồng 1
-  //       const mockProcedure: ProcedureResult = {
-  //         id: serviceId,
-  //         name: service.name,
-  //         field_id: serviceId,
-  //         counters: [{
-  //           id: counter.id,
-  //           name: counter.name,
-  //           status: 'active'
-  //         }]
-  //       };
-        
-  //       setSelectedProcedure(mockProcedure);
-  //       setSelectedService(serviceId.toString());
-  //       setSelectedServiceName(service.name);
-  //       setShowConfirmCounter(true);
-        
-  //       // ...existing code...
-  //     } else {
-  //       // ...existing code...
-  //       toast.error('Không tìm thấy quầy phục vụ cho lĩnh vực này');
-  //     }
-  //   }
-  // };
-
+  }, [isSearchMode, searchResults, counters]);
 
   // ✅ Enhanced handleCounterSelect using API search data
   
@@ -315,7 +341,7 @@ export default function KioskMainScreen() {
       // Call API to create ticket instead of generating random number
       const newTicket = await createTicket(parseInt(counterId));
 
-      if (newTicket) {
+  if (newTicket) {
         // Find counter name from selectedProcedure or fallback
         let counterName = `Quầy ${counterId}`;
 
@@ -326,11 +352,15 @@ export default function KioskMainScreen() {
           }
         }
 
-        // 🖨️ Gửi dữ liệu cho PrintTicket component
+        // Extract optional server-signed token (Workflow A)
+        const token = (newTicket as any).token as string | undefined;
+
+        // 🖨️ Gửi dữ liệu cho PrintTicket component (bao gồm token nếu BE trả về)
         setPrintData({
           number: newTicket.number,
           counterId: newTicket.counter_id.toString(),
-          counterName: counterName
+          counterName: counterName,
+          token
         });
 
         // Reset states
@@ -375,13 +405,13 @@ export default function KioskMainScreen() {
     setVoiceStopTrigger('outside-click');
   };
 
-  const handleSearchClick = () => {
-    setShowVirtualKeyboard(true);
-  };
+  // const handleSearchClick = () => {
+  //   setShowVirtualKeyboard(true);
+  // };
 
-  const handleKeyboardClose = () => {
-    setShowVirtualKeyboard(false);
-  };
+  // const handleKeyboardClose = () => {
+  //   setShowVirtualKeyboard(false);
+  // };
 
   const handleSearchChange = (value: string) => {
     setSearchQuery(value);
@@ -397,13 +427,38 @@ export default function KioskMainScreen() {
     // Keyboard will only close when user explicitly closes it
   };
 
+    // Ref cho QR popup
+  const qrRef = useRef<HTMLDivElement>(null);
+    // Ref for the main search input so we can focus it programmatically
+    const searchInputRef = useRef<HTMLInputElement | null>(null);
+
+  // Đóng QR khi click ra ngoài (đặt sau khi popupOpen/setPopupOpen đã được khai báo)
+  useEffect(() => {
+    if (!popupOpen) return;
+    function handleClickOutside(event: MouseEvent) {
+      if (qrRef.current && !qrRef.current.contains(event.target as Node)) {
+        setPopupOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [popupOpen]);
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 p-8">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100">
+      
+       {/* <Head>
+        <script src="/jsrsasign-all-min.js" id="jsrsasign-script" defer></script>
+        <script src="/qz-tray.js" id="qztray-script" defer></script>
+        <script src="/sign-message.js" id="signmessage-script" defer></script>
+      </Head> */}
+
       <div className="max-w-6xl mx-auto">
         {/* Header màn dọc */}
-        {/* <div 
+        <div 
           className="flex items-center justify-center mb-12"
-          style={{ backgroundColor: '' }}
         >
           <div className="flex items-center gap-2">
             <Image
@@ -419,18 +474,18 @@ export default function KioskMainScreen() {
                 TRUNG TÂM PHỤC VỤ HÀNH CHÍNH CÔNG 
               </h1>
                <h1 className="text-3xl font-bold text-red-700 " style={{ lineHeight: '1.3' }}>
-                XÃ VỊ XUYÊN 
+                {config.header}
               </h1>
               <p className='text-xl font-extrabold text-red-700 mt-3' style={{fontSize: '1.5rem'}}>
                 Hành chính phục vụ 
               </p>
             </div>
           </div>
-        </div> */}
+        </div>
 
         {/* Header màn ngang */}
 
-        <div className="flex items-center justify-center" style={{ minHeight: 200 }}>
+        {/* <div className="flex items-center justify-center mb-6" style={{ minHeight: 200 }}>
           <Image
             src="/images/logo_vang.png"
             alt="logo_vang"
@@ -440,14 +495,17 @@ export default function KioskMainScreen() {
             unoptimized
           />
           <div style={{ marginLeft: '12px' }}>
-            <h1 className="text-3xl font-bold text-red-700" style={{ lineHeight: '1.2' }}>
-              TRUNG TÂM PHỤC VỤ HÀNH CHÍNH CÔNG XÃ VỊ XUYÊN
+            <h1 className="text-3xl font-bold text-red-700" style={{ lineHeight: '1.5' }}>
+              TRUNG TÂM PHỤC VỤ HÀNH CHÍNH CÔNG
+            </h1>
+            <h1 className="text-3xl font-bold text-red-700" style={{ lineHeight: '1.3' }}>
+              {config.header}
             </h1>
             <p className='text-xl font-extrabold text-red-700 mt-3'>
               Hành chính phục vụ
             </p>
           </div>
-        </div>
+        </div> */}
 
         {/* DateTimeVN Component */}
         <div className="text-center text-xl font-extrabold text-red-700" style = {{position: 'relative', right: '-260px', top: '-50px'}}>
@@ -455,51 +513,80 @@ export default function KioskMainScreen() {
         </div>
 
         {/* Navigation Bar */}
-        <div className="flex space-x-4 mb-16" style={{marginLeft: '44px', minHeight: '50px'}}>
+        <div className="flex space-x-4 mb-16" style={{minHeight: '50px', marginLeft: '-16px'}}>
           <button
             aria-current="page"
-            className="rounded-md bg-red-600 px-3 py-2 text-sm font-medium hover:bg-red-700 text-white"
-            style={{ lineHeight: '50px', fontSize: '20px' }}
+            className="rounded-md bg-red-600  py-2 text-sm font-medium hover:bg-red-700 text-white"
+            style={{ lineHeight: '50px', fontSize: '20px',  minWidth: '250px'}}
             onClick={() => handleOpenPopup('https://dichvucong.gov.vn/p/home/dvc-trang-chu.html')}
           >
             Dịch Vụ Công Quốc Gia
           </button>
           <button
-            className="rounded-md bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700"
-            style={{ lineHeight: '50px', fontSize: '20px'}}
+            className="rounded-md bg-red-600  py-2 text-sm font-medium text-white hover:bg-red-700"
+            style={{ lineHeight: '50px', fontSize: '20px',  minWidth: '250px'}}
             onClick={() => handleOpenPopup('https://dichvucong.gov.vn/p/home/dvc-thanh-toan-phi-le-phi-ho-so.html')}
           >
             Thanh Toán Trực Tuyến
           </button>
           <button
-            className="rounded-md bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700"
-            style={{ lineHeight: '50px', fontSize: '20px' }}
-            onClick={() => handleOpenPopup('https://dichvucong.gov.vn/p/home/dvc-dich-vu-cong-truc-tuyen-ds.html?pCoQuanId=384979')}
+            className="rounded-md bg-red-600 py-2 text-sm font-medium text-white hover:bg-red-700"
+            style={{ lineHeight: '50px', fontSize: '20px', minWidth: '300px' }}
+            onClick={() => handleOpenPopup('https://dichvucong.gov.vn/p/home/dvc-dich-vu-cong-truc-tuyen-ds.html?pCoQuanId=426105')}
           >
             Tra Cứu Thủ Tục Hành Chính
           </button>
+          <div className="relative flex flex-col items-center">
+            <button
+              className={`rounded-md bg-red-600 py-2 text-sm font-medium text-white hover:bg-red-700 transition-all ${popupOpen ? 'ring-4 ring-blue-400 scale-105' : ''}`}
+              style={{ lineHeight: '50px', fontSize: '20px', minWidth: '200px', zIndex: 1 }}
+              onClick={() => setPopupOpen((prev) => !prev)}
+            >
+              Gửi file vào kiosk
+            </button>
+            {/* QR code hiển thị nổi, đè lên các thành phần bên dưới */}
+          {popupOpen && (
+            <div
+              ref={qrRef}
+              className="flex flex-col items-center animate-fade-in"
+              style={{
+                position: 'absolute',
+                top: '110%',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                zIndex: 1000,
+                background: 'rgba(255,255,255,0.98)',
+                borderRadius: 16,
+                boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
+                padding: 16,
+                minWidth: 220
+              }}
+            >
+              <Image
+                // src="/images/qr_tanphong_new.jpg"
+                src="https://127.0.0.1:4443/qr.png"
+                alt="QR gửi file vào kiosk"
+                width={180}
+                height={180}  
+                // style={{borderRadius: 12, background: 'rgba(212, 20, 20, 1)'}}
+                unoptimized
+              />
+              <span className="mt-2 text-base font-semibold text-red-700">Quét mã QR để gửi file</span>
+            </div>
+          )}
+          </div>
         </div>
 
         {/* Search Bar */}
         <div className="flex justify-center gap-4 mb-12 mt-12" style={{ marginTop: '2rem'}}>
           <div className="relative flex items-center w-full max-w-5xl" style={{ marginTop: '-28px', maxWidth: '70rem' }}>
-            <button
-              onClick={searchQuery.trim() ? () => setSearchQuery('') : handleVoiceSearch}
-              className="px-5 py-3 bg-red-600 text-white font-extrabold text-base shadow-lg hover:bg-red-700 transition-colors flex items-center justify-center gap-2"
-              style={{ whiteSpace: 'nowrap', minHeight: '70px', minWidth: '140px', borderRadius: '8px', textAlign: 'center' }}
-            >
-              {searchQuery.trim() ? (
-                <span style={{fontSize: '1.2rem', fontWeight: 'bold'}}>🗑️ Xóa tìm kiếm</span>
-              ) : (
-                <span style={{fontSize: '1.2rem', fontWeight: 'bold', width: '100%', display: 'inline-block', textAlign: 'center'}}>Tìm kiếm</span>
-              )}
-            </button>
             <div style={{ width: '20px' }}></div>
             <div className="relative flex-1"> 
               <input 
                 name='voice-search'
+                ref={searchInputRef}
                 value={searchQuery}
-                onClick={handleSearchClick}
+                // onClick={handleSearchClick}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className={`flex items-center gap-2 px-6 py-3 text-lg pr-12 Shadow cursor-pointer transition-all duration-300 w-full ${
                   showVirtualKeyboard ? 'ring-2 ring-blue-500 border-blue-500' : ''
@@ -519,13 +606,35 @@ export default function KioskMainScreen() {
                   lineHeight: '44px',
                 }}
               />
+              {/* <AudioLines 
+                  size={24} 
+                  className={`absolute right-4 top-1/2 transform -translate-y-1/2 cursor-pointer transition-colors ${
+                    isVoiceActive ? 'text-red-500 animate-pulse' : 'text-blue-500 hover:text-blue-700'
+                  }`}
+                  onClick={handleVoiceSearch}
+                /> */}
             </div>
+            <div style={{ width: '20px' }}></div>
+            <button
+              onClick={searchQuery.trim() ? () => setSearchQuery('') : () => {
+                // Focus the search input instead of activating voice search
+                searchInputRef.current?.focus();
+              }}
+              className="px-5 py-3 bg-red-600 text-white font-extrabold text-base shadow-lg hover:bg-red-700 transition-colors flex items-center justify-center gap-2"
+              style={{ whiteSpace: 'nowrap', minHeight: '70px', minWidth: '140px', borderRadius: '8px', textAlign: 'center' }}
+            >
+              {searchQuery.trim() ? (
+                <span style={{fontSize: '1.2rem', fontWeight: 'bold'}}>🗑️ Xóa tìm kiếm</span>
+              ) : (
+                <span style={{fontSize: '1.2rem', fontWeight: 'bold', width: '100%', display: 'inline-block', textAlign: 'center'}}>Tìm kiếm</span>
+              )}
+            </button>
             {/* Voice Status Indicator */}
-            {isVoiceActive && (
-              <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-red-500 text-white px-3 py-1 rounded-full text-sm font-medium animate-pulse">
+            {/* {isVoiceActive && (
+              <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-red-500 text-white  py-1 rounded-full text-sm font-medium animate-pulse">
                 🎤 {voiceStopTrigger === 'enter-key' ? 'Đang nghe... (Enter để dừng)' : 'Bấm ra ngoài để dừng ... '}
               </div>
-            )}
+            )} */}
           </div>
           {/* Đã gộp nút xóa tìm kiếm vào nút voice */}
         </div>
@@ -585,10 +694,10 @@ export default function KioskMainScreen() {
 
         {/* Counter Grid */}
         {!countersLoading && filteredCounters.length > 0 && (
-          <div className="flex flex-col items-center" style={{width: '1600px', position: 'relative', right: '222px'}}>
+          <div className="flex flex-col items-center" style={{width: '1600px', position: 'relative', right: '222px'}} >
             {/* Scroll Indicator */}
             {filteredCounters.length > 4 && (
-              <div className="text-center">
+              <div className=" text-center">
                 <p className="text-gray-600 text-sm flex items-center justify-center gap-2">
                   <span>📋 {filteredCounters.length} quầy có sẵn</span>
                 </p>
@@ -596,8 +705,8 @@ export default function KioskMainScreen() {
             )}
             
             {/* Grid màn dọc */}
-            {/* <div 
-              className="service-grid-container grid grid-cols-2 gap-6 overflow-y-auto p-4 border rounded-lg backdrop-blur-sm"
+            {/* <div
+              className={`service-grid-container grid grid-cols-2 gap-6 p-4 border rounded-lg backdrop-blur-sm ${filteredCounters.length > 8 ? 'max-h-[1020px] overflow-y-auto' : ''}`}
             >
               {filteredCounters.map((counter, idx) => {
                 // So le: idx 0,3,4,... (quầy 1,4,5,...) nền đỏ; idx 1,2,5,... nền trắng
@@ -612,7 +721,7 @@ export default function KioskMainScreen() {
                     style={{minHeight: 215}}
                   >
                     <div className="flex flex-col items-center justify-center w-full h-full">
-                      <span className="text-xl font-bold mb-2">{`QUẦY ${String(idx + 1).padStart(2, '0')}`}</span>
+                      <span className="text-xl font-bold mb-2">{`QUẦY ${String(counter.id).padStart(2, '0')}`}</span>
                       <span className="text-2xl font-extrabold mb-2">{counter.name?.toUpperCase()}</span>
                     </div>
                   </div>
@@ -622,9 +731,9 @@ export default function KioskMainScreen() {
 
             {/* Grid màn ngang */}
             <div
-              className="service-grid-container grid grid-cols-4 p-6 border rounded-lg backdrop-blur-sm overflow-y-auto"
+              className="service-grid-container grid grid-cols-4 border rounded-lg backdrop-blur-sm overflow-y-auto"
               style={{
-                width: '1600px',
+                width: '100%',
                 margin: '0 auto',
                 background: 'rgba(255,255,255,0.2)',
                 boxSizing: 'border-box',
@@ -676,23 +785,21 @@ export default function KioskMainScreen() {
         )}
 
         {/* Footer màn dọc */}
-        {/* <div className="flex items-center w-full text-gray-600 italic" style={{ position: 'relative', top: '16rem', justifyContent: 'space-around' }}>
-          <p className="text-xl font-extrabold text-red-700 ">
-              Giờ làm việc (Thứ 2 - Thứ 6): 07h30 - 17h30
-          </p>
-          <p className="text-xl font-extrabold text-red-700 ">
-             Hotline hỗ trợ: 0219-1022
-          </p>
+        {/* <div className="flex items-center w-full text-gray-600 italic" style={{ position: 'relative', top: '5rem', justifyContent: 'space-around' }}>
+          <p className="text-xl font-extrabold text-red-700 ">{config.workingHours}</p>
+          <p className="text-xl font-extrabold text-red-700 ">{config.hotline}</p>
         </div> */}
 
-         {/* Footer màn ngang */} 
-        <div className="flex items-center w-full text-gray-600 italic" style={{ position: 'relative', top: '2rem', justifyContent: 'space-around' }}>
-          <p className="text-xl font-extrabold text-red-700 ">
-              Giờ làm việc (Thứ 2 - Thứ 6): 07h30 - 17h30
-          </p>
-          <p className="text-xl font-extrabold text-red-700 ">
-             Hotline hỗ trợ: 0219-1022
-          </p>
+        {/* Reserve space for fixed footer so layout doesn't jump when grid renders */}
+        {/* <div style={{ height: 96 }} /> */}
+
+        {/* Footer fixed to bottom */}
+        {/* <div className="fixed bottom-0 left-0 w-full bg-white/95 backdrop-blur-sm shadow-inner z-50"> */}
+        <div className="fixed bottom-0 left-0 w-full bg-white/25 backdrop-blur-sm shadow-inner z-50">
+          <div className="max-w-6xl mx-auto flex items-center justify-around text-gray-600 italic p-4">
+            <p className="text-xl font-extrabold text-red-700">{config.workingHours}</p>
+            <p className="text-xl font-extrabold text-red-700">{config.hotline}</p>
+          </div>
         </div>
       </div>
 
@@ -708,7 +815,7 @@ export default function KioskMainScreen() {
       )}
 
       {/* Virtual Keyboard */}
-      {showVirtualKeyboard && (
+      {/* {showVirtualKeyboard && (
         <VirtualKeyboard
           value={searchQuery}
           onChange={handleSearchChange}
@@ -722,7 +829,7 @@ export default function KioskMainScreen() {
             setVoiceStopTrigger('enter-key');
           }}
         />
-      )}
+      )} */}
 
       {/* Speech to Text */}
       <SpeechToText
@@ -732,13 +839,13 @@ export default function KioskMainScreen() {
         stopTrigger={voiceStopTrigger}
       />
       
-
       {/* Print Component */}
       {printData && (
         <PrintTicket
           number={printData.number}
           counterId={printData.counterId}
           counterName={printData.counterName}
+          // token={printData.token}
           autoPrint={true}
         />
       )}
@@ -748,4 +855,4 @@ export default function KioskMainScreen() {
 
     </div>
   );
-} 
+}

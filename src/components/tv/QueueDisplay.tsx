@@ -2,11 +2,10 @@
 
 import Image from 'next/image';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import NumberAnimation from './NumberAnimation';
 import { useWebSocketQueue } from '@/hooks/useWebSocketQueue';
-import { footersAPI } from '@/libs/rootApi';
+import CounterRow from './CounterRow';
 import { TTSService, type TTSService as TTSServiceType } from '@/libs/ttsService';
-import { rootApi } from '@/libs/rootApi';
+import { rootApi, countersAPI, configAPI, tvGroupsAPI } from '@/libs/rootApi';
 
 // ✅ Real API ticket interface based on actual BE response
 interface RealTicket {
@@ -38,11 +37,18 @@ interface CounterAPI {
   status: string;
 }
 
-type FooterConfig = {
+type config = {
   workingHours: string;
   hotline: string;
+  header:string
 };
 
+
+const DEFAULT_CONFIG = {
+  header: 'XÃ VỊ XUYÊN',
+  workingHours: 'Giờ làm việc (Thứ 2 - Thứ 6): 07h30 - 17h00',
+  hotline: 'Hotline hỗ trợ: 0219-1022',
+};
 
 export default function QueueDisplay() {
   // API lấy số đang phục vụ cho từng quầy
@@ -63,6 +69,11 @@ export default function QueueDisplay() {
   
   // ✅ New state using ProcessedCounterData
   const [processedCounters, setProcessedCounters] = useState<ProcessedCounterData[]>([]);
+  // Ref mirror to avoid stale-closure issues when events fire fast
+  const processedCountersRef = useRef<ProcessedCounterData[]>([]);
+  useEffect(() => {
+    processedCountersRef.current = processedCounters;
+  }, [processedCounters]);
   const [isLoading, setIsLoading] = useState(true);
   const [apiError, setApiError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<string>('');
@@ -78,6 +89,9 @@ export default function QueueDisplay() {
     called_at: string;
     source: string;
   }>>({});
+
+  // ✅ Optional filter: when TV opened with ?groupId= the display will only show those counters
+  const [allowedCounterIds, setAllowedCounterIds] = useState<number[] | null>(null);
   
   // Announcement states
   const [announcement, setAnnouncement] = useState<{
@@ -91,64 +105,46 @@ export default function QueueDisplay() {
   // WebSocket hook for real-time updates
   const { isConnected, lastEvent } = useWebSocketQueue();
 
-  // Footer config state
-  const DEFAULT_FOOTER = {
-    workingHours: 'Giờ làm việc (Thứ 2 - Thứ 6): 07h30 - 17h00',
-    hotline: 'Hotline hỗ trợ: 0916670793',
-  };
-  const [footerConfig, setFooterConfig] = React.useState<FooterConfig>(DEFAULT_FOOTER);
+  const [config, setconfig] = React.useState<config>(DEFAULT_CONFIG);
 
 
   // Fetch footer config on mount and listen for updates
-  useEffect(() => {
-    let ignore = false;
-    async function fetchFooter() {
-      try {
-        const data = await footersAPI.getFooter('xavixuyen');
-        if (!ignore && data && (data.work_time || data.hotline)) {
-          setFooterConfig({
-            workingHours: data.work_time || DEFAULT_FOOTER.workingHours,
-            hotline: data.hotline || DEFAULT_FOOTER.hotline,
-          });
-        }
-      } catch {
-        setFooterConfig(DEFAULT_FOOTER);
+  const fetchConfig = useCallback(async () => {
+    try {
+      const data = await configAPI.getConfig('xavixuyen');
+      if (data && (data.work_time || data.hotline)) {
+        setconfig({
+          workingHours: data.work_time || DEFAULT_CONFIG.workingHours,
+          hotline: data.hotline || DEFAULT_CONFIG.hotline,
+          header: data.header || DEFAULT_CONFIG.header,
+        });
       }
+    } catch {
+      setconfig(DEFAULT_CONFIG);
     }
-    fetchFooter();
-    // BroadcastChannel for cross-tab footer config sync
-    let bc: BroadcastChannel | null = null;
-    const handler = async () => {
-      try {
-        const data = await footersAPI.getFooter('xavixuyen');
-        if (!ignore && data && (data.work_time || data.hotline)) {
-          setFooterConfig({
-            workingHours: data.work_time || footerConfig.workingHours,
-            hotline: data.hotline || footerConfig.hotline,
-          });
-        }
-      } catch {}
-    };
-    window.addEventListener('footerConfigUpdated', handler);
-    if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
-      bc = new BroadcastChannel('footerConfig');
-      bc.onmessage = (event) => {
-        if (event?.data === 'updated') handler();
-      };
-    }
-    return () => {
-      ignore = true;
-      window.removeEventListener('footerConfigUpdated', handler);
-      if (bc) bc.close();
-    };
   }, []);
+
+  // ====== Hàm handleSaveConfig sử dụng API setConfig ======
+  async function handleSaveConfig(newConfig: { header: string; work_time: string; hotline: string }, onSuccess?: () => void, onError?: (err: any) => void) {
+    try {
+      // Đảm bảo truyền đủ header cho BE
+      await configAPI.setConfig('xavixuyen', {
+        work_time: newConfig.work_time,
+        hotline: newConfig.hotline,
+        header: newConfig.header
+      });
+      if (onSuccess) onSuccess();
+      // Có thể phát sự kiện cập nhật nếu cần: window.dispatchEvent(new Event('configUpdated'));
+    } catch (err) {
+      if (onError) onError(err);
+    }
+  }
 
   // ✅ Initialize TTS Service on client-side only
   useEffect(() => {
     if (typeof window !== 'undefined') {
       try {
         const initTTS = async () => {
-          const { TTSService } = await import('@/libs/ttsService');
           const tts = TTSService.getInstance();
           setTtsService(tts);
           console.log('✅ TTS Service initialized for TV display');
@@ -162,10 +158,7 @@ export default function QueueDisplay() {
 
   // ✅ State: counters from API
   const [apiCounters, setApiCounters] = useState<CounterAPI[]>([]);
-
-  // ✅ Fetch counters from API on mount
-  useEffect(() => {
-    const fetchCounters = async () => {
+  const fetchCounters = useCallback(async () => {
       try {
         const response = await rootApi.get('/counters/', { params: { tenxa: 'xavixuyen' } });
         setApiCounters(response.data);
@@ -174,8 +167,48 @@ export default function QueueDisplay() {
         console.error('❌ Failed to fetch counters:', error);
         setApiCounters([]);
       }
-    };
+    }, []);
+  // ✅ Fetch counters and configs from API on mount
+  useEffect(() => {
     fetchCounters();
+    fetchConfig();
+  }, [fetchCounters, fetchConfig]);
+
+  // ✅ Counter name mapping (API-driven)
+  const getCounterName = useCallback((counterId: number): string => {
+    const found = apiCounters.find(c => c.id === counterId);
+    return found ? found.name : `Quầy ${counterId}`;
+  }, [apiCounters]);
+
+  // Load TV group if groupId query param present and set allowedCounterIds
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const gid = params.get('groupId');
+    if (!gid) {
+      setAllowedCounterIds(null);
+      return;
+    }
+    const id = parseInt(gid as string, 10);
+    if (isNaN(id)) {
+      setAllowedCounterIds(null);
+      return;
+    }
+
+    let mounted = true;
+    (async () => {
+      try {
+        const group = await tvGroupsAPI.getGroup(id);
+        if (!mounted) return;
+        console.log('[TV Groups] loaded group for TV display:', group);
+        setAllowedCounterIds(group.counter_ids || []);
+      } catch (err) {
+        console.warn('[TV Groups] failed to load group', err);
+        if (mounted) setAllowedCounterIds(null);
+      }
+    })();
+
+    return () => { mounted = false; };
   }, []);
 
   // ✅ Khởi tạo wsServingTickets khi đã có apiCounters (reload trang)
@@ -183,7 +216,8 @@ export default function QueueDisplay() {
     const initServingTicketsOnLoad = async () => {
       if (apiCounters.length === 0) return;
       const servingState: Record<number, { number: number; counter_name: string; called_at: string; source: string }> = {};
-      for (const counter of apiCounters) {
+      const countersToInit = allowedCounterIds ? apiCounters.filter(c => allowedCounterIds.includes(c.id)) : apiCounters;
+      for (const counter of countersToInit) {
         try {
           const ticket = await fetchServingTicket(counter.id);
           if (ticket) {
@@ -201,21 +235,9 @@ export default function QueueDisplay() {
       setWsServingTickets(servingState);
     };
     initServingTicketsOnLoad();
-  }, [apiCounters]);
+  }, [apiCounters, allowedCounterIds, getCounterName]);
 
 
-  // ✅ Counter name mapping (API-driven)
-  const getCounterName = (counterId: number): string => {
-    const found = apiCounters.find(c => c.id === counterId);
-    return found ? found.name : `Quầy ${counterId}`;
-  };
-
-  // ✅ Counter ID parsing from name (API-driven, strict match)
-  const getCounterIdFromName = (counterName: string): number | null => {
-    // So sánh tuyệt đối, loại bỏ fallback số quầy để tránh bug mapping
-    const found = apiCounters.find(c => c.name.trim().toLowerCase() === counterName.trim().toLowerCase());
-    return found ? found.id : null;
-  };
 
   // ✅ Fetch all tickets from real API
   const fetchAllTickets = async (): Promise<RealTicket[]> => {
@@ -257,11 +279,12 @@ export default function QueueDisplay() {
   };
 
   // ✅ Process tickets into counter groups với WebSocket serving state (API-driven counters)
-  const processTicketsToCounters = (tickets: RealTicket[]): ProcessedCounterData[] => {
+    const processTicketsToCounters = useCallback((tickets: RealTicket[]): ProcessedCounterData[] => {
     console.log('🔧 Processing tickets into counter groups with WebSocket serving state...');
     const countersMap = new Map<number, ProcessedCounterData>();
-    // Khởi tạo tất cả quầy từ API
-    apiCounters.forEach(counterApi => {
+    // Khởi tạo quầy từ API (apply group filter if present)
+    const sourceCounters = allowedCounterIds ? apiCounters.filter(c => allowedCounterIds.includes(c.id)) : apiCounters;
+    sourceCounters.forEach(counterApi => {
       countersMap.set(counterApi.id, {
         counter_id: counterApi.id,
         counter_name: counterApi.name,
@@ -278,7 +301,7 @@ export default function QueueDisplay() {
     console.log('🎯 WebSocket serving tickets:', wsServingTickets);
     // Process waiting tickets
     waitingTickets.forEach(ticket => {
-      const counter = countersMap.get(ticket.counter_id);
+  const counter = countersMap.get(ticket.counter_id);
       if (!counter) return;
       counter.waiting_tickets.push(ticket);
     });
@@ -305,19 +328,17 @@ export default function QueueDisplay() {
     });
     // Trả về danh sách quầy theo thứ tự id tăng dần
     return Array.from(countersMap.values()).sort((a, b) => a.counter_id - b.counter_id);
-  };
+  }, [apiCounters, wsServingTickets, allowedCounterIds]);
 
   // ✅ Main data fetching và processing function
   const fetchAndProcessQueueData = useCallback(async (showLoading = false) => {
     try {
-      if (showLoading) {
-        setIsLoading(true);
-      }
+      
       setApiError(null);
       // Đảm bảo đã có apiCounters trước khi process
       if (apiCounters.length === 0) {
         setProcessedCounters([]);
-        setIsLoading(false);
+        
         return;
       }
       const tickets = await fetchAllTickets();
@@ -334,7 +355,7 @@ export default function QueueDisplay() {
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [apiCounters]);
+  }, [apiCounters, processTicketsToCounters]);
 
   // ✅ Simplified: No need to re-process since we render directly from wsServingTickets
   // useEffect removed - direct rendering is more reliable
@@ -379,7 +400,18 @@ export default function QueueDisplay() {
               case 'ticket_called':
                 handleTicketCalledEvent(eventData);
                 break;
-                
+            
+              case 'upsert_counter':
+                fetchCounters()
+                break;
+
+              case 'delete_counter':
+                fetchCounters()
+                break;
+              
+              case 'update_config':
+                fetchConfig()
+                break;
               default:
                 console.log('ℹ️ Unknown WebSocket event:', eventData.event);
             }
@@ -419,25 +451,62 @@ export default function QueueDisplay() {
       }
     };
     
-    // ✅ Handle new_ticket event từ BE documentation
+    // ✅ Handle new_ticket event từ BE documentation - optimized to avoid full re-render
     const handleNewTicketEvent = async (eventData: { event: string, ticket_number: number, counter_id: number }) => {
       console.log('🎫 New ticket created via WebSocket:', eventData);
-      
-      // Refresh queue data sau khi có vé mới
-      await fetchAndProcessQueueData(false);
-      
-      // Optional: Show brief notification
-      console.log(`📢 New ticket #${eventData.ticket_number} created for counter ${eventData.counter_id}`);
+
+      const { ticket_number, counter_id } = eventData;
+      const cid = typeof counter_id === 'number' ? counter_id : null;
+
+      // If counters not initialized or counter id missing -> fallback to full refresh
+      if (!cid || processedCountersRef.current.length === 0) {
+        await fetchAndProcessQueueData(false);
+        console.log(`📢 Fallback full refresh for new ticket #${ticket_number} (counter ${counter_id})`);
+        return;
+      }
+
+      // Early exit if ticket already present (use ref to avoid stale closure)
+      const existingCounterRef = processedCountersRef.current.find(c => c.counter_id === cid);
+      if (existingCounterRef && existingCounterRef.waiting_numbers.includes(ticket_number)) {
+        console.log(`ℹ️ Ticket #${ticket_number} already present in counter ${cid}, skipping`);
+        return;
+      }
+
+      // Local functional update: only change the affected counter
+      setProcessedCounters(prev => {
+        if (!prev || prev.length === 0) return prev;
+        const idx = prev.findIndex(c => c.counter_id === cid);
+        if (idx === -1) {
+          // unknown counter -> fallback asynchronously
+          setTimeout(() => fetchAndProcessQueueData(false), 0);
+          return prev;
+        }
+
+        const target = prev[idx];
+        // double-check duplicate protection
+        if (target.waiting_numbers.includes(ticket_number)) return prev;
+
+        const newWaiting = [...target.waiting_numbers, ticket_number];
+        const newCounter = { ...target, waiting_numbers: newWaiting, waiting_count: newWaiting.length };
+
+        const next = prev.slice();
+        next[idx] = newCounter;
+        console.log(`📢 Locally appended new ticket #${ticket_number} to counter ${cid}`);
+        return next;
+      });
     };
     
     // ✅ Handle ticket_called event từ BE documentation - UPDATED for WebSocket state
-    const handleTicketCalledEvent = async (eventData: { event: string, ticket_number: number | null, counter_name: string }) => {
-      console.log('📞 Ticket called via WebSocket:', eventData);
-      const { ticket_number, counter_name } = eventData;
-      const counterId = getCounterIdFromName(counter_name);
-      console.log('🎯 Parsed counter ID from counter_name:', counterId, 'for name:', counter_name);
+    const handleTicketCalledEvent = async (eventData: { event: string, ticket_number: number | null, counter_name: string, counter_id?: number }) => {
+      console.log('📞 [TTS DEBUG] Ticket called via WebSocket:', eventData, 'ttsService:', !!ttsService);
+      const { ticket_number, counter_name, counter_id } = eventData;
+      const counterId = typeof counter_id === 'number' ? counter_id : null;
+      console.log('🎯 [TTS DEBUG] Using counter_id from event:', counterId, 'for name:', counter_name, 'and counter_id:', counter_id);
 
-      if (!counterId) return;
+      if (!counterId) {
+        console.warn('[TTS DEBUG] counterId is null, skip TTS');
+        return;
+      }
 
       // Nếu ticket_number là null => clear số đang phục vụ
       if (ticket_number == null) {
@@ -455,25 +524,41 @@ export default function QueueDisplay() {
       const key = `${counterId}-${ticket_number}`;
       // Nếu đã phát rồi thì bỏ qua
       if (announcedTicketsRef.current.has(key)) {
-        console.log(`⏩ Skip duplicate TTS: ${key}`);
+        console.log(`[TTS DEBUG] ⏩ Skip duplicate TTS: ${key}`);
         return;
       }
 
       // Đánh dấu đã phát
       announcedTicketsRef.current.add(key);
+      console.log(`[TTS DEBUG] Marked as announced: ${key}`);
 
-      // Gọi API lấy vé đang phục vụ cho quầy này
-      const servingTicket = await fetchServingTicket(counterId);
-      if (servingTicket) {
-        setWsServingTickets(prev => ({
-          ...prev,
-          [counterId]: {
-            number: servingTicket.number,
-            counter_name: getCounterName(counterId),
-            called_at: servingTicket.called_at || new Date().toISOString(),
-            source: 'api-called'
-          }
-        }));
+      // Immediately store the serving ticket from the event so UI updates fast
+      setWsServingTickets(prev => ({
+        ...prev,
+        [counterId]: {
+          number: ticket_number as number,
+          counter_name: counter_name || getCounterName(counterId),
+          called_at: new Date().toISOString(),
+          source: 'ws-event'
+        }
+      }));
+
+      // Also call API to reconcile/confirm and update state when API returns
+      try {
+        const servingTicket = await fetchServingTicket(counterId);
+        if (servingTicket) {
+          setWsServingTickets(prev => ({
+            ...prev,
+            [counterId]: {
+              number: servingTicket.number,
+              counter_name: getCounterName(counterId),
+              called_at: servingTicket.called_at || new Date().toISOString(),
+              source: 'api-called'
+            }
+          }));
+        }
+      } catch (err) {
+        // ignore API error - we already showed event value
       }
 
       // Show announcement cho TV display
@@ -483,22 +568,28 @@ export default function QueueDisplay() {
         timestamp: new Date().toISOString()
       });
 
-      // TTS announcement nếu chưa phát
-      if (ttsService) {
-        try {
-          await ttsService.queueAnnouncement(
+      // TTS announcement: get instance at call-time to avoid stale closure/null state
+      try {
+        const tts = TTSService.getInstance();
+        if (tts) {
+          console.log('[TTS DEBUG] Calling tts.queueAnnouncement', { counterId, ticket_number });
+          await tts.queueAnnouncement(
             counterId,
             ticket_number,
             1, // First attempt
             'manual', // Source type: manual (từ WebSocket)
             new Date().toISOString()
           );
-          console.log(`📢 TTS queued for Counter ${counterId} - Ticket ${ticket_number}`);
-        } catch (error) {
-          console.warn('⚠️ Failed to queue TTS:', error);
-          // Xoá khỏi set nếu queue thất bại để retry sau
+          console.log(`[TTS DEBUG] 📢 TTS queued for Counter ${counterId} - Ticket ${ticket_number}`);
+        } else {
+          console.warn('[TTS DEBUG] TTSService.getInstance() returned null, cannot queue TTS');
+          // Remove mark so we can retry later when TTS becomes available
           announcedTicketsRef.current.delete(key);
         }
+      } catch (error) {
+        console.warn('[TTS DEBUG] ⚠️ Failed to queue TTS:', error);
+        // Remove mark so we can retry later when TTS fails
+        announcedTicketsRef.current.delete(key);
       }
 
       // Auto-hide announcement after 4 seconds
@@ -537,12 +628,8 @@ export default function QueueDisplay() {
     // ✅ BACKUP: Listen for ticket called events from test-queue (fallback)
     const handleTicketCalledFromTestQueue = (event: CustomEvent) => {
       console.log('🔔 Backup: Ticket called event from test-queue:', event.detail);
-      
       const { ticket_number, counter_name, counter_id } = event.detail;
-      
-      // Parse counter ID
-      const counterId = counter_id || getCounterIdFromName(counter_name);
-      
+      const counterId = typeof counter_id === 'number' ? counter_id : null;
       if (counterId && ticket_number) {
         // ✅ Store serving ticket in WebSocket state (backup source)
         const servingTicket = {
@@ -578,7 +665,6 @@ export default function QueueDisplay() {
         // Auto-hide announcement after 4 seconds
         setTimeout(() => setAnnouncement(null), 4000);
       }
-      
       // Refresh queue data
       fetchAndProcessQueueData(false);
     };
@@ -720,12 +806,12 @@ export default function QueueDisplay() {
       )}
 
       {/* TTS Queue Status Bar */}
-      {ttsQueueStatus.queueLength > 0 && (
+      {/* {ttsQueueStatus.queueLength > 0 && (
         <div className="fixed top-0 left-0 right-0 z-50 bg-orange-400 text-black text-center py-2 text-sm">
           <div className="flex items-center justify-center gap-4">
             <span>🎵 Hàng đợi phát thanh: {ttsQueueStatus.queueLength} thông báo</span>
             
-            {/* Show upcoming announcements */}
+            Show upcoming announcements
             {ttsQueueStatus.upcomingRequests.length > 0 && (
               <div className="flex items-center gap-2 text-xs">
                 <span>📋 Tiếp theo:</span>
@@ -746,27 +832,27 @@ export default function QueueDisplay() {
             )}
           </div>
         </div>
-      )}
+      )} */}
 
       <div 
         className="flex items-center justify-center"
         style={{ backgroundColor: '' }}
       >
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2" style={{marginTop: '-22px', position: 'relative'}}>
           <Image
             src="/images/logo_vang.png" 
             alt="logo_vang" 
             width={240}
             height={240}
-            className="w-60 h-60 object-contain"
+            className="w-48 h-56 object-contain"
             unoptimized
           />
           <div style={{ marginLeft: '15px'  }}>
-            <h1 className="text-5xl font-bold text-red-700 " style={{ lineHeight: '1.5' }}>
-              TRUNG TÂM PHỤC VỤ HÀNH CHÍNH CÔNG  
+            <h1 className="text-5xl font-bold text-red-700" style={{ lineHeight: '1.5' }}>
+              TRUNG TÂM PHỤC VỤ HÀNH CHÍNH CÔNG
             </h1>
-            <h1 className="text-5xl font-bold text-red-700 " style={{ lineHeight: '1.3' }}>
-              XÃ VỊ XUYÊN
+            <h1 className="text-5xl font-bold text-red-700" style={{ lineHeight: '1.3' }}>
+              {config.header}
             </h1>
             <p className='text-2xl font-extrabold text-red-700 mt-3' style={{fontSize: '2rem'}}>
               Hành chính phục vụ 
@@ -783,59 +869,49 @@ export default function QueueDisplay() {
       </>
 
       {/* Main Display dạng bảng giống mẫu */}
-      <div className="flex-1 p-4 flex flex-col items-center" style={{position: 'relative',top: '-37px'}}>
+      <div className="flex-1 p-4 flex flex-col items-center" style={{position: 'relative',top: '0px'}}>
         <div className="w-full" style={{maxWidth: 1500}}>
           {/* Header table */}
-          <div className="grid" style={{gridTemplateColumns: '1.7fr 1fr 1fr', fontSize: '2rem'}}>
+          <div className="grid" style={{gridTemplateColumns: '1.6fr 0.8fr 1fr', fontSize: '1.4rem'}}>
             <div className="bg-red-700 text-white text-center py-4  font-bold border border-white border-b-0 rounded-tl-xl uppercase tracking-wide">QUẦY PHỤC VỤ</div>
             <div className="bg-red-700 text-white text-center py-4  font-bold border border-white border-b-0 uppercase tracking-wide">ĐANG PHỤC VỤ</div>
             <div className="bg-red-700 text-white text-center py-4  font-bold border border-white border-b-0 rounded-tr-xl uppercase tracking-wide">ĐANG CHỜ</div>
           </div>
           {/* Table body */}
-          {processedCounters.map((counter, idx) => {
-            const isEven = idx % 2 === 0;
-            return (
-              <div key={counter.counter_id} className={`grid border-b border-white last:rounded-b-xl ${isEven ? 'bg-gray-300 bg-opacity-80' : 'bg-pink-100  bg-opacity-80'}`} style={{minHeight: 80, alignItems: 'center', gridTemplateColumns: '1.7fr 1fr 1fr'}}>
-                {/* Quầy phục vụ */}
-                <div className="text-xl font-extrabold text-red-800 px-4 py-3 border-r border-white uppercase" style={{fontSize: '1.5rem'}}>
-                  QUẦY {counter.counter_id} | {counter.counter_name}
-                </div>
-                {/* Đang phục vụ - logic cũ: nếu có số thì hiển thị, không thì hiện 'Chưa có số được phục vụ' */}
-                <div className="text-5xl font-extrabold text-center text-red-800 px-4 py-3 border-r border-white"  >
-                  {counter.serving_number || wsServingTickets[counter.counter_id] ? (
-                    <NumberAnimation number={(counter.serving_number || wsServingTickets[counter.counter_id]?.number)?.toString() || '0'} />
-                  ) : (
-                    <span className="text-gray-400 text-xl font-bold">Chưa có số được phục vụ</span>
-                  )}
-                </div>
-                {/* Đang chờ */}
-                <div className="text-4xl font-extrabold text-center text-red-800 px-4 py-3">
-                  {counter.waiting_numbers.length > 0 ? (
-                    <>
-                      {counter.waiting_numbers.slice(0, 6).map((number, index) => (
-                        <span key={`waiting-${counter.counter_id}-${number}-${index}`}>{number}{index < Math.min(counter.waiting_numbers.length - 1, 5) ? ', ' : ''}</span>
-                      ))}
-                      {counter.waiting_numbers.length > 6 && (
-                        <span className="text-base text-gray-500 font-normal"> ... </span>
-                      )}
-                    </>
-                  ) : (
-                    <span className="text-gray-400 text-xl font-bold">Không có số đang chờ</span>
-                  )}
-                </div>
-              </div>
-            );
-          })}
+          {(() => {
+            const n = processedCounters.length;
+            const minHeight = n >= 4 && n <= 8 ? Math.floor(640 / n) : 80;
+            return processedCounters.map((counter, idx) => {
+              const isEven = idx % 2 === 0;
+
+              // derive stable primitives for child props
+              // Prefer real-time WebSocket state so UI reflects incoming events immediately
+              const servingNumber = (wsServingTickets[counter.counter_id]?.number ?? counter.serving_number) ?? null;
+              const waitingPreview = counter.waiting_numbers.slice(0, 4);
+
+              return (
+                <CounterRow
+                  key={counter.counter_id}
+                  counterId={counter.counter_id}
+                  counterName={counter.counter_name}
+                  servingNumber={servingNumber}
+                  waitingNumbers={waitingPreview}
+                  isEven={isEven}
+                  minHeight={minHeight}
+                />
+              );
+            });
+          })()}
         </div>
       </div>
 
       {/* Footer */}
-      {/* <footer className="bg-white p-4 text-center fixed bottom-0 left-0 w-full z-40">
+      {/* {/* <footer className="bg-white p-4 text-center fixed bottom-0 left-0 w-full z-40">
         <div className="flex justify-center items-center gap-8 text-lg italic text-red-700 font-extrabold"
           style={{fontSize: '2rem'}}
         >
-          <span> {footerConfig.workingHours}</span>
-          <span> {footerConfig.hotline} </span>
+          <span> {config.workingHours}</span>
+          <span> {config.hotline} </span>
           {lastUpdated && (
             <span className="text-lg text-red-700 font-extrabold" style={{fontSize: '2rem'}}>
               Thời gian: {new Date().toLocaleTimeString('vi-VN')}

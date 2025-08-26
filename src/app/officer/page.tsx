@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'react-toastify';
 import AuthGuard from '@/components/shared/AuthGuard';
 import { countersAPI, rootApi, Counter } from '@/libs/rootApi';
+import { ticketsAPI } from '@/libs/rootApi';
+import type { Ticket as ApiTicket } from '@/libs/rootApi';
 import StopServiceModal from '@/components/shared/StopServiceModal';
 
 interface CurrentUser {
@@ -54,7 +56,17 @@ interface CounterDetail {
   waiting_count: number;
 }
 
+// Đã import ở đầu file, không cần import lại
+
 function OfficerPage() {
+  // Notification API: xin quyền khi vào trang
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'Notification' in window) {
+      if (Notification.permission === 'default') {
+        Notification.requestPermission();
+      }
+    }
+  }, []);
   const router = useRouter();
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
   const [userLoading, setUserLoading] = useState(true);
@@ -96,6 +108,25 @@ function OfficerPage() {
     counterId: '',
     counterName: '',
   });
+
+  // Lịch sử gọi số
+  const [callHistory, setCallHistory] = useState<ApiTicket[]>([]);
+  const [callHistoryLoading, setCallHistoryLoading] = useState(false);
+  const [callHistoryError, setCallHistoryError] = useState<string | null>(null);
+
+  // Hàm load lịch sử gọi số
+  const loadCallHistory = useCallback(async (counterId: number) => {
+    setCallHistoryLoading(true);
+    setCallHistoryError(null);
+    try {
+      const data = await ticketsAPI.getTicketDone({ counter_id: counterId, tenxa: 'xavixuyen' });
+  setCallHistory(Array.isArray(data) ? data : []);
+    } catch (err) {
+      setCallHistoryError('Không thể tải lịch sử gọi số');
+    } finally {
+      setCallHistoryLoading(false);
+    }
+  }, []);
 
   const loadCurrentUser = useCallback(async () => {
     try {
@@ -212,6 +243,13 @@ function OfficerPage() {
     loadCurrentUser();
   }, [loadCurrentUser]);
 
+  // Tải lịch sử gọi số khi đã có currentUser
+  useEffect(() => {
+    if (currentUser?.counter_id) {
+      loadCallHistory(currentUser.counter_id);
+    }
+  }, [currentUser, loadCallHistory]);
+
   useEffect(() => {
     let ws: WebSocket | null = null;
     let reconnectCount = 0;
@@ -231,6 +269,20 @@ function OfficerPage() {
       ws.onmessage = async (e) => {
         const data = JSON.parse(e.data);
         if (data.event === 'new_ticket' || data.event === 'ticket_called') {
+          // Notification: chỉ gửi khi là new_ticket và có ticket_number
+          if (
+            data.event === 'new_ticket' &&
+            data.ticket_number &&
+            currentUser?.counter_id &&
+            (data.counter_id === currentUser.counter_id)
+          ) {
+            if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+              new Notification('Có vé mới vào hàng chờ!', {
+                body: `Công dân số ${data.ticket_number} vừa vào hàng chờ tại quầy ${data.counter_id}.`,
+                icon: '/images/logo_vang.png'
+              });
+            }
+          }
           await loadQueueData();
           // Always fetch serving ticket after queue update to sync UI
           if (currentUser?.counter_id) {
@@ -313,14 +365,16 @@ function OfficerPage() {
       if (response && response.number) {
         toast.success(`✅ Gọi vé ${response.number}`);
       }
-      // Always reload queue and serving ticket after callNext, regardless of result
+      // Always reload queue, serving ticket, and call history after callNext
       await loadQueueData();
       const serving = await fetchServingTicket(currentUser.counter_id);
       setServingTicket(serving);
+      await loadCallHistory(currentUser.counter_id);
     } catch (error) {
-      // Always reload serving ticket even on error
+      // Always reload serving ticket and call history even on error
       const serving = await fetchServingTicket(currentUser.counter_id);
       setServingTicket(serving);
+      await loadCallHistory(currentUser.counter_id);
     } finally {
       setActionLoading(false);
     }
@@ -382,7 +436,6 @@ function OfficerPage() {
   }
 
   // 👉 Render phần giao diện như cũ ở đây...
-
   return (
     <div className="min-h-screen bg-gray-100 p-8">
       <div className="max-w-4xl mx-auto">
@@ -393,9 +446,7 @@ function OfficerPage() {
               🏢 Quầy Làm Việc
             </h1>
             <div className="flex items-center gap-4 mt-2">
-              <span className="text-lg text-gray-600">
-                 {currentUser.full_name}
-              </span>
+              
               <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
                 👤 CÁN BỘ
               </span>
@@ -532,7 +583,7 @@ function OfficerPage() {
                 <h3 className="text-lg font-semibold text-gray-800 mb-3">
                   📝 Danh sách chờ
                 </h3>
-                <div className="space-y-2 max-h-60 overflow-y-auto">
+                <div className="space-y-2 overflow-y-auto" style={{maxHeight: '180px'}}>
                   {counterData.waiting_queue.map((ticket, index) => (
                     <div
                       key={ticket.ticket_id}
@@ -563,6 +614,40 @@ function OfficerPage() {
                 </div>
               </div>
             )}
+            
+            {/* Call History */}
+            <div className="mt-8">
+              {/* <h3 className="text-lg font-semibold text-gray-800 mb-3">
+                📜 Lịch sử gọi số 
+              </h3> */}
+              <div className="flex items-center justify-between gap-2 text-gray-800 mb-4">
+                <div className="flex items-center gap-2">
+                  <h2 className="text-lg font-semibold text-gray-800 mb-3">📜 Lịch sử gọi số</h2>
+                </div>
+                <h2 className="font-semibold text-lg">Tổng số vé đã tiếp đón: <span className="text-green-700">{callHistory.length}</span></h2>
+              </div>
+              {callHistoryLoading ? (
+                <div className="text-gray-500">Đang tải lịch sử...</div>
+              ) : callHistoryError ? (
+                <div className="text-red-500">{callHistoryError}</div>
+              ) : callHistory.length === 0 ? (
+                <div className="text-gray-500">Chưa có lịch sử gọi số</div>
+              ) : (
+                 <div className="space-y-2 overflow-y-auto" style={{maxHeight: '180px'}}>
+                    {callHistory.map((ticket) => (
+                     <div key={ticket.id} className="flex justify-between items-center p-3 rounded-lg border bg-gray-50 border-gray-200">
+                       <div className="flex items-center gap-3">
+                         <span className="font-bold text-lg text-gray-600">{ticket.number}</span>
+                         <span className="text-xs text-gray-500">{ticket.procedure_name || ''}</span>
+                       </div>
+                       <div className="text-sm text-gray-500">
+                         {ticket.called_at ? new Date(ticket.called_at).toLocaleTimeString('vi-VN') : ''}
+                       </div>
+                     </div>
+                   ))}
+                 </div>
+              )}
+            </div>
 
             {/* No waiting tickets */}
             {counterData.waiting_count === 0 && (

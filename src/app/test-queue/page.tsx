@@ -7,9 +7,12 @@ import { useRouter } from 'next/navigation';
 import { TTSService } from '@/libs/ttsService';
 import { toast } from 'react-toastify';
 import { type CounterDetail, type CurrentServing, type WaitingTicket } from '@/libs/queueApi';
-import { countersAPI, footersAPI, type Counter, type CallNextResponse, ticketsAPI, type Ticket, rootApi } from '@/libs/rootApi';
+import { countersAPI, configAPI, type Counter, type CallNextResponse, ticketsAPI, type Ticket, rootApi } from '@/libs/rootApi';
 import Button from '@/components/shared/Button';
-import FooterConfigModal from '@/components/shared/ChangeFooterModal';
+import ConfigModal from '@/components/shared/ChangeInfoModal';
+import ChangeReviewConfigModal from '@/components/shared/ChangeReviewConfigModal';
+import CounterManagement from '@/components/admin/CounterManagement';
+import TvManagement from '@/components/tv/TvManagement';
 
 
 
@@ -19,6 +22,10 @@ function TestQueuePage() {
   const ttsService = TTSService.getInstance();
   const [ttsQueueStatus, setTtsQueueStatus] = useState<any>({ queueLength: 0, isPlaying: false, upcomingRequests: [] });
   const [showFooterModal, setShowFooterModal] = useState(false);
+  const [showReviewConfigModal, setShowReviewConfigModal] = useState(false);
+  const [reviewConfig, setReviewConfig] = useState<{ feedback_timeout: number; qr_rating: boolean }>({ feedback_timeout: 0, qr_rating: true });
+  const [showCounterManagement, setShowCounterManagement] = useState(false);
+  const [showTvManagement, setShowTvManagement] = useState(false);
   // ✅ Real-time queue data states
   const [apiCounters, setApiCounters] = useState<Counter[]>([]);
   const [queueTickets, setQueueTickets] = useState<Ticket[]>([]);
@@ -38,24 +45,27 @@ function TestQueuePage() {
     called_at: string;
   }>>({});
 
-  const [footerConfig, setFooterConfig] = useState<{ workingHours: string; hotline: string }>({
+  const [config, setConfig] = useState<{header:string, workingHours: string; hotline: string }>({
+    header: 'PHƯỜNG AAA',
     workingHours: 'Giờ làm việc (Thứ 2 - Thứ 6): 07h30 - 17h00',
     hotline: 'Hotline hỗ trợ: 0916670793',
   });
 
   // Footer config API helpers
   const TEN_XA = 'xavixuyen';
-  async function fetchFooterConfig() {
+  async function fetchConfig() {
     // API trả về { work_time, hotline }
-    const data = await footersAPI.getFooter(TEN_XA);
+    const data = await configAPI.getConfig(TEN_XA);
     return {
+      header: data.header,
       workingHours: data.work_time,
       hotline: data.hotline,
     };
   }
-  async function saveFooterConfig(config: { workingHours: string; hotline: string }) {
+  async function saveConfig(config: {header: string, workingHours: string; hotline: string }) {
     // API nhận { work_time, hotline }
-    const data = await footersAPI.setFooter(TEN_XA, {
+    const data = await configAPI.setConfig(TEN_XA, {
+      header: config.header,
       work_time: config.workingHours,
       hotline: config.hotline,
     });
@@ -129,17 +139,17 @@ function TestQueuePage() {
     }
   }, []);
 
-  const handleSaveFooterConfig = async (config: { workingHours: string; hotline: string }) => {
+  const handleSaveConfig = async (config: { header: string, workingHours: string; hotline: string }) => {
     try {
-      await saveFooterConfig(config);
-      setFooterConfig(config);
+      await saveConfig(config);
+      setConfig(config);
       setShowFooterModal(false);
-      toast.success('Đã lưu cấu hình footer!');
+      toast.success('Đã lưu cấu hình!');
       // Broadcast event for all tabs
-      window.dispatchEvent(new CustomEvent('footerConfigUpdated', { detail: config }));
+      window.dispatchEvent(new CustomEvent('configUpdated', { detail: config }));
       // BroadcastChannel for cross-tab sync
       if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
-        const bc = new BroadcastChannel('footerConfig');
+        const bc = new BroadcastChannel('config');
         bc.postMessage('updated');
         bc.close();
       }
@@ -153,7 +163,16 @@ function TestQueuePage() {
     let ws: WebSocket | null = null;
     let reconnectCount = 0;
     const maxReconnectAttempts = 5;
-
+    const fetchCounters = async () => {
+          try {
+            const response = await rootApi.get('/counters/', { params: { tenxa: 'xavixuyen' } });
+            setApiCounters(response.data);
+            console.log('✅ Counters from API:', response.data);
+          } catch (error) {
+            console.error('❌ Failed to fetch counters:', error);
+            setApiCounters([]);
+          }
+        };
     // Initial data load
     loadCounters();
     loadQueueData();
@@ -185,7 +204,14 @@ function TestQueuePage() {
               case 'ticket_called':
                 handleTicketCalledEvent(eventData);
                 break;
-                
+              
+              case 'upsert_counter':
+                fetchCounters();
+                break;
+
+              case 'delete_counter':
+                fetchCounters();
+                break;  
               default:
                 console.log('ℹ️ Unknown WebSocket event:', eventData.event);
             }
@@ -421,13 +447,13 @@ function TestQueuePage() {
         {/* Header with WebSocket status and logout button */}
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold text-gray-600">
-            🧪 Bảng Điều Khiển
+          Bảng Điều Khiển
           </h1>
           <button
             onClick={handleLogout}
             className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
           >
-          🚪 Đăng xuất
+          Đăng xuất
           </button>
         </div>
         
@@ -439,7 +465,7 @@ function TestQueuePage() {
               onClick={() => router.push('/admin')}
               className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
             >
-              👑 Trang quản trị
+              📊 Số liệu thống kê
             </button>
             <button
               onClick={async () => { await loadCounters(); await loadQueueData(); await loadAllServingTickets(); }}
@@ -451,8 +477,34 @@ function TestQueuePage() {
               onClick={() => setShowFooterModal(true)}
               className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
             >
-              ⚙️ Chỉnh sửa chân trang
+              ⚙️ Chỉnh sửa thông tin
             </Button>
+            <Button
+              className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              onClick={() => setShowCounterManagement(true)}
+            >
+              ⚙️ Chỉnh sửa quầy
+            </Button>
+            {/* <Button
+              className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              onClick={() => setShowTvManagement(true)}
+            >
+              ⚙️ Chỉnh sửa TV
+            </Button> */}
+            {/* <Button
+              className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              onClick={async () => {
+                try {
+                  const cfg = await configAPI.getQrRating(TEN_XA);
+                  setReviewConfig(cfg || { feedback_timeout: 0, qr_rating: true });
+                } catch (err) {
+                  // ignore error and use defaults
+                }
+                setShowReviewConfigModal(true);
+              }}
+            >
+              ⚙️ Cấu hình đánh giá
+            </Button> */}
           </div>
         </div>
         
@@ -619,12 +671,59 @@ function TestQueuePage() {
 
       {/* Footer Config Modal */}
        {showFooterModal && (
-        <FooterConfigModal
+        <ConfigModal
           isOpen={showFooterModal}
           onClose={() => setShowFooterModal(false)}
-          onSave={handleSaveFooterConfig}
-          initialConfig={footerConfig}
+          onSave={handleSaveConfig}
+          initialConfig={config}
         />
+      )}
+
+      {showReviewConfigModal && (
+        <ChangeReviewConfigModal
+          isOpen={showReviewConfigModal}
+          onClose={() => setShowReviewConfigModal(false)}
+          initialConfig={reviewConfig}
+          onSave={async (cfg) => {
+            try {
+              await configAPI.setQrRating(TEN_XA, cfg as any);
+              setReviewConfig(cfg);
+              setShowReviewConfigModal(false);
+              toast.success('Đã lưu cấu hình đánh giá QR');
+            } catch (err) {
+              toast.error('Lỗi khi lưu cấu hình đánh giá');
+            }
+          }}
+        />
+      )}
+
+      {/* Counter Management Modal/Panel */}
+      {showCounterManagement && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40"
+          onMouseDown={e => {
+            // Chỉ ẩn modal nếu click vào overlay
+            if (e.target === e.currentTarget) setShowCounterManagement(false);
+          }}
+        >
+          <div className="mx-auto p-6 bg-white rounded-lg shadow w-[1100px]" onMouseDown={e => e.stopPropagation()}>
+            <CounterManagement />
+          </div>
+        </div>
+      )}
+
+      {showTvManagement && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40"
+          onMouseDown={e => {
+            // Chỉ ẩn modal nếu click vào overlay
+            if (e.target === e.currentTarget) setShowTvManagement(false);
+          }}
+        >
+          <div className="mx-auto p-6 bg-white rounded-lg shadow w-[1100px]" onMouseDown={e => e.stopPropagation()}>
+            <TvManagement />
+          </div>
+        </div>
       )}
 
     </div>

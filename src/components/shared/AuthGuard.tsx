@@ -53,7 +53,31 @@ export default function AuthGuard({ children, allowedRoles }: AuthGuardProps) {
           }
         }
 
-        // ✅ Fetch fresh user data if not cached or cache is invalid
+        // If no cached userData but a login is in progress, wait shortly for login to populate it
+        async function waitForUserData(ms = 1500, interval = 100) {
+          const start = Date.now();
+          while (Date.now() - start < ms) {
+            const ud = sessionStorage.getItem('user_data');
+            if (ud) {
+              try { return JSON.parse(ud); } catch { return null; }
+            }
+            const inProgress = sessionStorage.getItem('auth_in_progress');
+            if (!inProgress) break;
+            await new Promise(res => setTimeout(res, interval));
+          }
+          return null;
+        }
+
+        if (!userData) {
+          const waited = await waitForUserData(1500, 100);
+          if (waited) {
+            userData = waited;
+            console.log('📥 Found user_data populated by login flow:', userData);
+            setCurrentUser(userData);
+          }
+        }
+
+        // ✅ Fetch fresh user data if still not available after waiting
         if (!userData) {
           console.log('🔍 Verifying auth token...');
           const response = await rootApi.get('/auths/me', {

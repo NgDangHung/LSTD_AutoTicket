@@ -35,6 +35,32 @@ Json
 •	ticket_number: mã vé được gọi
 •	counter_name: tên quầy gọi (hiển thị cho khách biết đi đâu)
 ________________________________________
+✅ 3. Sự kiện: upsert_counter – Khi quầy được thêm mới hoặc chỉnh sửa tên
+Json
+{
+  "event": "upsert_counter",
+  "counter_id": 5,
+  "name": "Tên quầy mới",
+  "tenxa": "xavixuyen"
+}
+📌 Ý nghĩa:
+• Một quầy mới được thêm hoặc tên quầy được chỉnh sửa
+• counter_id: ID quầy vừa được thêm/sửa
+• name: tên quầy mới
+• tenxa: xã áp dụng
+________________________________________
+✅ 4. Sự kiện: delete_counter – Khi quầy bị xóa khỏi hệ thống
+Json
+{
+  "event": "delete_counter",
+  "counter_id": 5,
+  "tenxa": "xavixuyen"
+}
+📌 Ý nghĩa:
+• Một quầy vừa bị xóa khỏi hệ thống
+• counter_id: ID quầy bị xóa
+• tenxa: xã áp dụng
+________________________________________
 
 📌 Ghi chú thêm
 Vấn đề	Lưu ý
