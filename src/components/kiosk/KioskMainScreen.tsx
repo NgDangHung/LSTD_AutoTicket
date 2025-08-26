@@ -64,7 +64,7 @@ export default function KioskMainScreen() {
     } catch {
       setConfig(DEFAULT_CONFIG);
     }
-  }, [DEFAULT_CONFIG]);
+  }, []);
 
   // Save config to API
   async function handleSaveConfig(newConfig: { header: string; work_time: string; hotline: string }, onSuccess?: () => void, onError?: (err: any) => void) {
