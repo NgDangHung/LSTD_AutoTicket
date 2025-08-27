@@ -109,30 +109,30 @@ const PrintTicket: React.FC<PrintTicketProps> = ({
             setQzReady(true);
             const qz = (window as any).qz;
             (qz as any).security.setCertificatePromise(function (resolve: any, reject: any) {
-              resolve("-----BEGIN CERTIFICATE-----\n" +
-            "MIIECzCCAvOgAwIBAgIGAZg/4qd3MA0GCSqGSIb3DQEBCwUAMIGiMQswCQYDVQQG\n" +
-            "EwJVUzELMAkGA1UECAwCTlkxEjAQBgNVBAcMCUNhbmFzdG90YTEbMBkGA1UECgwS\n" +
-            "UVogSW5kdXN0cmllcywgTExDMRswGQYDVQQLDBJRWiBJbmR1c3RyaWVzLCBMTEMx\n" +
-            "HDAaBgkqhkiG9w0BCQEWDXN1cHBvcnRAcXouaW8xGjAYBgNVBAMMEVFaIFRyYXkg\n" +
-            "RGVtbyBDZXJ0MB4XDTI1MDcyNDA0NDExNVoXDTQ1MDcyNDA0NDExNVowgaIxCzAJ\n" +
-            "BgNVBAYTAlVTMQswCQYDVQQIDAJOWTESMBAGA1UEBwwJQ2FuYXN0b3RhMRswGQYD\n" +
-            "VQQKDBJRWiBJbmR1c3RyaWVzLCBMTEMxGzAZBgNVBAsMElFaIEluZHVzdHJpZXMs\n" +
-            "IExMQzEcMBoGCSqGSIb3DQEJARYNc3VwcG9ydEBxei5pbzEaMBgGA1UEAwwRUVog\n" +
-            "VHJheSBEZW1vIENlcnQwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDF\n" +
-            "Jrz71Nj2KVmR8LBj7ovgC049m8Bya5AerOA/98zizcVTnGQKZczw8ccTzELupxjE\n" +
-            "mxaM/jTPVgDEzLhjJFSIYzEgDXLyQD/8SABAjbGI2wRajYyD9TnT8UBOVmLepEV7\n" +
-            "d8LRh6IfUiQavFE6VpXI1+slN5TjCOOoK62/KY+ReLmngIRncuvD3NRwBhjtwDv+\n" +
-            "hknY+TtPNxM2/cSDhfwBNZaf0UQKnpvK/xRL4OoKYUH/6Wjxt24+2isCGBxWS5Th\n" +
-            "i6dayPT36jFqq4gPmY4GNO00g0A4hZMSWA8sK+3q0o72/pg8BuJoL4vYMW9q0eYJ\n" +
-            "W1eyNtxAj9GjWLKqs9W/AgMBAAGjRTBDMBIGA1UdEwEB/wQIMAYBAf8CAQEwDgYD\n" +
-            "VR0PAQH/BAQDAgEGMB0GA1UdDgQWBBTYRD3jUy8D4V3rdE8/7bqsLyZFoTANBgkq\n" +
-            "hkiG9w0BAQsFAAOCAQEAI18C7NlJoGvg2M/SjzMMzFyCLVDitg8IGGI2Q8OJZLyF\n" +
-            "8/Jy0UYey9ecoD4q8l47U8359xs9JsRlewTwfmyMpqhw7Tnz2nOvtwvXTd/XLXil\n" +
-            "To34Gt0P9TkeAhxNPVH4whK6muIbqRtlg+1WO1H5Z9Xv/mAEM+NlhP5d5VHLlV8X\n" +
-            "4pGUXhLTnsbjeDEZKsSizlQ8Zbu8H27Ja42MHvCYyOKeXxHI3DziO/U1w/J5xLEn\n" +
-            "ZKkKI1Pk48D1NTyj6KeVxlERs0xCn4a/oJ0xBV9cb9shD7FDCkAz9Bj7ip2qMwzk\n" +
-            "VwXT8sfr5n+phIDdQlHhrZSm9ssj2DgrJD9hHbhAWg==\n" +
-            "-----END CERTIFICATE-----\n"
+              resolve("-----BEGIN CERTIFICATE-----\n" + 
+"MIIECzCCAvOgAwIBAgIGAZjpN8q5MA0GCSqGSIb3DQEBCwUAMIGiMQswCQYDVQQG\n" + 
+"EwJVUzELMAkGA1UECAwCTlkxEjAQBgNVBAcMCUNhbmFzdG90YTEbMBkGA1UECgwS\n" + 
+"UVogSW5kdXN0cmllcywgTExDMRswGQYDVQQLDBJRWiBJbmR1c3RyaWVzLCBMTEMx\n" + 
+"HDAaBgkqhkiG9w0BCQEWDXN1cHBvcnRAcXouaW8xGjAYBgNVBAMMEVFaIFRyYXkg\n" + 
+"RGVtbyBDZXJ0MB4XDTI1MDgyNjAxNTAwNFoXDTQ1MDgyNjAxNTAwNFowgaIxCzAJ\n" + 
+"BgNVBAYTAlVTMQswCQYDVQQIDAJOWTESMBAGA1UEBwwJQ2FuYXN0b3RhMRswGQYD\n" + 
+"VQQKDBJRWiBJbmR1c3RyaWVzLCBMTEMxGzAZBgNVBAsMElFaIEluZHVzdHJpZXMs\n" + 
+"IExMQzEcMBoGCSqGSIb3DQEJARYNc3VwcG9ydEBxei5pbzEaMBgGA1UEAwwRUVog\n" + 
+"VHJheSBEZW1vIENlcnQwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDe\n" + 
+"GAZYuI6t0fuEbBtoR7PPgoFwx+E4kedR9UxUr4KB42uBLLCYxPUoP+4IHl43QSBN\n" + 
+"MT+PLp5EHqveDIz/PlGpbyCMcWbZ1BWgpflDpp6yPXzHQf1rC6coUCiO+GtwxSUn\n" + 
+"CMG5xjs/kO8KfjB8OQqZfFt/EgfUUQqsYo2DK1KMLVpjfBn9NmEVkaLNhMzp1lD0\n" + 
+"w0oOwLKZoSZQzhIS3kV9HlwdsCe895LBHyRHLBy8/1Vn+did+4Z/mDXxodGEipIx\n" + 
+"ytSYfcVkdROwS9Ej1T+EmDWE3QfFRDHEW8bBkCt12c9esGShVpS3aA/LHMYYClhQ\n" + 
+"cW3WFNEkxZMQ620DJNcpAgMBAAGjRTBDMBIGA1UdEwEB/wQIMAYBAf8CAQEwDgYD\n" + 
+"VR0PAQH/BAQDAgEGMB0GA1UdDgQWBBTXdGn9913ifpQQ0JsP88gpH6EudzANBgkq\n" + 
+"hkiG9w0BAQsFAAOCAQEAOc3inXNHl7pmj9tfIclAkSiEE5ku59mm9IB0LI20lEUc\n" + 
+"6aPzgj3AZw94bpmrEXeVG9ZenxK9gN5RKwLIbFNbfwlC8CGR/AXti1inlDPux1tJ\n" + 
+"DZnFBMwYp0yMQuyKhCtIVAsRo1jiKltAtPJh5MbcQ5HJWDn9YCj9l7F0GsqM8esL\n" + 
+"4o0KHcUjO1Mt9jeR16PsuVNvKFOec9PU3gCW59n9wzCAGEYsk1kOcpvUjfYs/vE6\n" + 
+"WJE+5fNsHAKtsgO/x2occaQBOAMftfyaiOsIdYrB8KnhqnhljIiBqWENWH/aG2Ae\n" + 
+"IC4OlBLN4Jm/n8hr9jdSnue2Vx2wWeUJi5i2mttzbg==\n" + 
+"-----END CERTIFICATE-----" 
             );
             });
           }
@@ -169,30 +169,30 @@ const PrintTicket: React.FC<PrintTicketProps> = ({
         return;
       }
       (qz as any).security.setCertificatePromise(function (resolve: any, reject: any) {
-        resolve("-----BEGIN CERTIFICATE-----\n" +
-      "MIIECzCCAvOgAwIBAgIGAZg/4qd3MA0GCSqGSIb3DQEBCwUAMIGiMQswCQYDVQQG\n" +
-      "EwJVUzELMAkGA1UECAwCTlkxEjAQBgNVBAcMCUNhbmFzdG90YTEbMBkGA1UECgwS\n" +
-      "UVogSW5kdXN0cmllcywgTExDMRswGQYDVQQLDBJRWiBJbmR1c3RyaWVzLCBMTEMx\n" +
-      "HDAaBgkqhkiG9w0BCQEWDXN1cHBvcnRAcXouaW8xGjAYBgNVBAMMEVFaIFRyYXkg\n" +
-      "RGVtbyBDZXJ0MB4XDTI1MDcyNDA0NDExNVoXDTQ1MDcyNDA0NDExNVowgaIxCzAJ\n" +
-      "BgNVBAYTAlVTMQswCQYDVQQIDAJOWTESMBAGA1UEBwwJQ2FuYXN0b3RhMRswGQYD\n" +
-      "VQQKDBJRWiBJbmR1c3RyaWVzLCBMTEMxGzAZBgNVBAsMElFaIEluZHVzdHJpZXMs\n" +
-      "IExMQzEcMBoGCSqGSIb3DQEJARYNc3VwcG9ydEBxei5pbzEaMBgGA1UEAwwRUVog\n" +
-      "VHJheSBEZW1vIENlcnQwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDF\n" +
-      "Jrz71Nj2KVmR8LBj7ovgC049m8Bya5AerOA/98zizcVTnGQKZczw8ccTzELupxjE\n" +
-      "mxaM/jTPVgDEzLhjJFSIYzEgDXLyQD/8SABAjbGI2wRajYyD9TnT8UBOVmLepEV7\n" +
-      "d8LRh6IfUiQavFE6VpXI1+slN5TjCOOoK62/KY+ReLmngIRncuvD3NRwBhjtwDv+\n" +
-      "hknY+TtPNxM2/cSDhfwBNZaf0UQKnpvK/xRL4OoKYUH/6Wjxt24+2isCGBxWS5Th\n" +
-      "i6dayPT36jFqq4gPmY4GNO00g0A4hZMSWA8sK+3q0o72/pg8BuJoL4vYMW9q0eYJ\n" +
-      "W1eyNtxAj9GjWLKqs9W/AgMBAAGjRTBDMBIGA1UdEwEB/wQIMAYBAf8CAQEwDgYD\n" +
-      "VR0PAQH/BAQDAgEGMB0GA1UdDgQWBBTYRD3jUy8D4V3rdE8/7bqsLyZFoTANBgkq\n" +
-      "hkiG9w0BAQsFAAOCAQEAI18C7NlJoGvg2M/SjzMMzFyCLVDitg8IGGI2Q8OJZLyF\n" +
-      "8/Jy0UYey9ecoD4q8l47U8359xs9JsRlewTwfmyMpqhw7Tnz2nOvtwvXTd/XLXil\n" +
-      "To34Gt0P9TkeAhxNPVH4whK6muIbqRtlg+1WO1H5Z9Xv/mAEM+NlhP5d5VHLlV8X\n" +
-      "4pGUXhLTnsbjeDEZKsSizlQ8Zbu8H27Ja42MHvCYyOKeXxHI3DziO/U1w/J5xLEn\n" +
-      "ZKkKI1Pk48D1NTyj6KeVxlERs0xCn4a/oJ0xBV9cb9shD7FDCkAz9Bj7ip2qMwzk\n" +
-      "VwXT8sfr5n+phIDdQlHhrZSm9ssj2DgrJD9hHbhAWg==\n" +
-      "-----END CERTIFICATE-----\n"
+        resolve("-----BEGIN CERTIFICATE-----\n" + 
+"MIIECzCCAvOgAwIBAgIGAZjpN8q5MA0GCSqGSIb3DQEBCwUAMIGiMQswCQYDVQQG\n" + 
+"EwJVUzELMAkGA1UECAwCTlkxEjAQBgNVBAcMCUNhbmFzdG90YTEbMBkGA1UECgwS\n" + 
+"UVogSW5kdXN0cmllcywgTExDMRswGQYDVQQLDBJRWiBJbmR1c3RyaWVzLCBMTEMx\n" + 
+"HDAaBgkqhkiG9w0BCQEWDXN1cHBvcnRAcXouaW8xGjAYBgNVBAMMEVFaIFRyYXkg\n" + 
+"RGVtbyBDZXJ0MB4XDTI1MDgyNjAxNTAwNFoXDTQ1MDgyNjAxNTAwNFowgaIxCzAJ\n" + 
+"BgNVBAYTAlVTMQswCQYDVQQIDAJOWTESMBAGA1UEBwwJQ2FuYXN0b3RhMRswGQYD\n" + 
+"VQQKDBJRWiBJbmR1c3RyaWVzLCBMTEMxGzAZBgNVBAsMElFaIEluZHVzdHJpZXMs\n" + 
+"IExMQzEcMBoGCSqGSIb3DQEJARYNc3VwcG9ydEBxei5pbzEaMBgGA1UEAwwRUVog\n" + 
+"VHJheSBEZW1vIENlcnQwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDe\n" + 
+"GAZYuI6t0fuEbBtoR7PPgoFwx+E4kedR9UxUr4KB42uBLLCYxPUoP+4IHl43QSBN\n" + 
+"MT+PLp5EHqveDIz/PlGpbyCMcWbZ1BWgpflDpp6yPXzHQf1rC6coUCiO+GtwxSUn\n" + 
+"CMG5xjs/kO8KfjB8OQqZfFt/EgfUUQqsYo2DK1KMLVpjfBn9NmEVkaLNhMzp1lD0\n" + 
+"w0oOwLKZoSZQzhIS3kV9HlwdsCe895LBHyRHLBy8/1Vn+did+4Z/mDXxodGEipIx\n" + 
+"ytSYfcVkdROwS9Ej1T+EmDWE3QfFRDHEW8bBkCt12c9esGShVpS3aA/LHMYYClhQ\n" + 
+"cW3WFNEkxZMQ620DJNcpAgMBAAGjRTBDMBIGA1UdEwEB/wQIMAYBAf8CAQEwDgYD\n" + 
+"VR0PAQH/BAQDAgEGMB0GA1UdDgQWBBTXdGn9913ifpQQ0JsP88gpH6EudzANBgkq\n" + 
+"hkiG9w0BAQsFAAOCAQEAOc3inXNHl7pmj9tfIclAkSiEE5ku59mm9IB0LI20lEUc\n" + 
+"6aPzgj3AZw94bpmrEXeVG9ZenxK9gN5RKwLIbFNbfwlC8CGR/AXti1inlDPux1tJ\n" + 
+"DZnFBMwYp0yMQuyKhCtIVAsRo1jiKltAtPJh5MbcQ5HJWDn9YCj9l7F0GsqM8esL\n" + 
+"4o0KHcUjO1Mt9jeR16PsuVNvKFOec9PU3gCW59n9wzCAGEYsk1kOcpvUjfYs/vE6\n" + 
+"WJE+5fNsHAKtsgO/x2occaQBOAMftfyaiOsIdYrB8KnhqnhljIiBqWENWH/aG2Ae\n" + 
+"IC4OlBLN4Jm/n8hr9jdSnue2Vx2wWeUJi5i2mttzbg==\n" + 
+"-----END CERTIFICATE-----" 
       );
       });
 
