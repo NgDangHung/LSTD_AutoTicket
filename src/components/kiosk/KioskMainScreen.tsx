@@ -39,7 +39,7 @@ interface ProcedureResult {
 }
 
 const DEFAULT_CONFIG = {
-  header: 'PHƯƠNG AAA',
+  header: 'XÃ HÙNG AN',
   workingHours: 'Giờ làm việc (Thứ 2 - Thứ 6): 07h30 - 17h00',
   hotline: 'Hotline hỗ trợ: 0916670793',
 };
@@ -335,6 +335,9 @@ export default function KioskMainScreen() {
     
     // ...existing code...
   };
+
+  // Determine grid columns based on number of filtered counters
+  const gridColsClass = filteredCounters.length < 8 ? 'grid-cols-3' : 'grid-cols-4';
 
   const handleConfirmCounter = async (counterId: string) => {
     try {
@@ -725,7 +728,7 @@ export default function KioskMainScreen() {
 
             {/* Grid màn ngang */}
             <div
-              className="service-grid-container grid grid-cols-4 border rounded-lg backdrop-blur-sm overflow-y-auto"
+              className={`service-grid-container grid ${gridColsClass} border rounded-lg backdrop-blur-sm overflow-y-auto`}
               style={{
                 width: '100%',
                 margin: '0 auto',
