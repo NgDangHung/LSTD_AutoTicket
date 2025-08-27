@@ -53,7 +53,7 @@ export default function KioskMainScreen() {
   // Fetch config from API on mount
   const fetchConfig = React.useCallback(async () => {
     try {
-      const data = await configAPI.getConfig('phuongtanphong');
+      const data = await configAPI.getConfig('xahungan');
       if (data && (data.work_time || data.hotline)) {
         setConfig({
           header: data.header || DEFAULT_CONFIG.header,
@@ -69,7 +69,7 @@ export default function KioskMainScreen() {
   // Save config to API
   async function handleSaveConfig(newConfig: { header: string; work_time: string; hotline: string }, onSuccess?: () => void, onError?: (err: any) => void) {
     try {
-      await configAPI.setConfig('phuongtanphong', {
+      await configAPI.setConfig('xahungan', {
         header: newConfig.header,
         work_time: newConfig.work_time,
         hotline: newConfig.hotline
@@ -148,7 +148,7 @@ export default function KioskMainScreen() {
     // --- WebSocket lắng nghe event 'upsert_counter', 'delete_counter', và 'update_config' ---
     let ws: WebSocket | null = null;
     if (typeof window !== 'undefined') {
-      ws = new window.WebSocket('wss://detect-seat-we21.onrender.com/ws/updates');
+      ws = new window.WebSocket('wss://lstd.onrender.com/ws/updates');
       ws.onopen = () => {
         // Kết nối thành công
         console.log('WebSocket connected for counter/config updates');
@@ -156,7 +156,7 @@ export default function KioskMainScreen() {
       ws.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
-          if ((['upsert_counter', 'delete_counter'].includes(data.event)) && data.tenxa === 'phuongtanphong') {
+          if ((['upsert_counter', 'delete_counter'].includes(data.event)) && data.tenxa === 'xahungan') {
             console.log('Received upsert_counter event:', data);
             // Luôn gọi lại API và cập nhật state, không phụ thuộc vào flag
             (async () => {
@@ -183,7 +183,7 @@ export default function KioskMainScreen() {
             })();
           }
           // Listen for config update event
-          if (data.event === 'update_config' && data.tenxa === 'phuongtanphong') {
+          if (data.event === 'update_config' && data.tenxa === 'xahungan') {
             console.log('Received update_config event:', data);
             fetchConfig();
           }

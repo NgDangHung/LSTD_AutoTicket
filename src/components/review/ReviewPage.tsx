@@ -27,7 +27,7 @@ function ReviewPage() {
   const [feedback, setFeedback] = useState("");
   const [message, setMessage] = useState("");
 
-  const API_BASE = "https://detect-seat-we21.onrender.com/app/tickets";
+  const API_BASE = "https://lstd.onrender.com/app/tickets";
 
   // Helper: map API status to Vietnamese label
   const getStatusLabel = (s: string | null | undefined) => {

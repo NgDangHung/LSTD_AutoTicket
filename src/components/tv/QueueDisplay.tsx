@@ -54,7 +54,7 @@ export default function QueueDisplay() {
   // API lấy số đang phục vụ cho từng quầy
   const fetchServingTicket = async (counterId: number): Promise<RealTicket | null> => {
     try {
-      const response = await rootApi.get(`/tickets/called`, { params: { counter_id: counterId, tenxa: 'phuongtanphong' } });
+      const response = await rootApi.get(`/tickets/called`, { params: { counter_id: counterId, tenxa: 'xahungan' } });
       const tickets: RealTicket[] = response.data;
       return tickets.length > 0 ? tickets[0] : null;
     } catch (error) {
@@ -111,7 +111,7 @@ export default function QueueDisplay() {
   // Fetch footer config on mount and listen for updates
   const fetchConfig = useCallback(async () => {
     try {
-      const data = await configAPI.getConfig('phuongtanphong');
+      const data = await configAPI.getConfig('xahungan');
       if (data && (data.work_time || data.hotline)) {
         setconfig({
           workingHours: data.work_time || DEFAULT_CONFIG.workingHours,
@@ -128,7 +128,7 @@ export default function QueueDisplay() {
   async function handleSaveConfig(newConfig: { header: string; work_time: string; hotline: string }, onSuccess?: () => void, onError?: (err: any) => void) {
     try {
       // Đảm bảo truyền đủ header cho BE
-      await configAPI.setConfig('phuongtanphong', {
+      await configAPI.setConfig('xahungan', {
         work_time: newConfig.work_time,
         hotline: newConfig.hotline,
         header: newConfig.header
@@ -160,7 +160,7 @@ export default function QueueDisplay() {
   const [apiCounters, setApiCounters] = useState<CounterAPI[]>([]);
   const fetchCounters = useCallback(async () => {
       try {
-        const response = await rootApi.get('/counters/', { params: { tenxa: 'phuongtanphong' } });
+        const response = await rootApi.get('/counters/', { params: { tenxa: 'xahungan' } });
         setApiCounters(response.data);
         console.log('✅ Counters from API:', response.data);
       } catch (error) {
@@ -245,7 +245,7 @@ export default function QueueDisplay() {
       console.log('🔄 Fetching all tickets from real API...');
       
       // GET /tickets/waiting - get all tickets (waiting + called + done)
-      const response = await rootApi.get('/tickets/waiting', { params: { tenxa: 'phuongtanphong' } });
+      const response = await rootApi.get('/tickets/waiting', { params: { tenxa: 'xahungan' } });
       const tickets: RealTicket[] = response.data;
       
       console.log('📡 Real API Response:', tickets);
@@ -267,7 +267,7 @@ export default function QueueDisplay() {
       
       for (let counterId = 1; counterId <= 4; counterId++) {
         try {
-          const response = await rootApi.get('/tickets/waiting', { params: { counter_id: counterId, tenxa: 'phuongtanphong' } });
+          const response = await rootApi.get('/tickets/waiting', { params: { counter_id: counterId, tenxa: 'xahungan' } });
           allTickets.push(...response.data);
         } catch (counterError) {
           console.warn(`⚠️ Failed to fetch tickets for counter ${counterId}:`, counterError);
@@ -376,7 +376,7 @@ export default function QueueDisplay() {
         console.log('🌐 WebSocket URL: wss://detect-seat.onrender.com/ws/updates');
         
         // ✅ REAL endpoint từ BE: wss://detect-seat.onrender.com/ws/updates
-        ws = new WebSocket('wss://detect-seat-we21.onrender.com/ws/updates');
+        ws = new WebSocket('wss://lstd.onrender.com/ws/updates');
         
         ws.onopen = () => {
           console.log('✅ WebSocket connected to production endpoint');
@@ -390,7 +390,7 @@ export default function QueueDisplay() {
           try {
             const eventData = JSON.parse(event.data);
             console.log('📡 WebSocket event received:', eventData);
-            if (eventData.tenxa !== 'phuongtanphong') return
+            if (eventData.tenxa !== 'xahungan') return
             // ✅ Handle real events từ BE documentation
             switch (eventData.event) {
               case 'new_ticket':

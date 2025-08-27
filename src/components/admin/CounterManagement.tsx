@@ -21,8 +21,7 @@ export default function CounterManagement() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<{ id: number | null, open: boolean }>({ id: null, open: false });
 
-  const postfix = 'tap';
-  const password = 'Tap@2025';
+  // postfix and password are no longer required by BE; don't keep them in the FE
 
   // Load counters
   useEffect(() => {
@@ -47,7 +46,7 @@ export default function CounterManagement() {
     setLoading(true);
     try {
       // Tạo quầy mới
-      const res = await countersAPI.upsertCounter({ counter_id: 0, name, postfix, password });
+  const res = await countersAPI.upsertCounter({ counter_id: 0, name });
       // Giả sử BE trả về { id, name } hoặc { counter_id, name }
       const counterId = res?.id;
       const counterName = fullName;
@@ -73,7 +72,7 @@ export default function CounterManagement() {
     setLoading(true);
     try {
       // Sửa tên quầy
-      const res = await countersAPI.upsertCounter({ counter_id: editId, name: editName, postfix, password });
+  const res = await countersAPI.upsertCounter({ counter_id: editId, name: editName });
       const counterId = res?.id || editId;
       const counterName = editFullName;
       if (counterId && counterName) {

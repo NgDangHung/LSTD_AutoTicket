@@ -39,7 +39,7 @@ const PrintTicket: React.FC<PrintTicketProps> = ({
   onPrintComplete
 }) => {
   // TEN_XA config: prefer env var NEXT_PUBLIC_TENXA, fallback to localStorage or default
-  const TEN_XA = 'phuongtanphong'
+  const TEN_XA = 'xahungan'
   // token prop is available as `token` (optional server-signed token for Workflow A)
 
   const [qrDataUrl, setQrDataUrl] = useState<string>('');

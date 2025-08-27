@@ -52,7 +52,7 @@ function TestQueuePage() {
   });
 
   // Footer config API helpers
-  const TEN_XA = 'phuongtanphong';
+  const TEN_XA = 'xahungan';
   async function fetchConfig() {
     // API trả về { work_time, hotline }
     const data = await configAPI.getConfig(TEN_XA);
@@ -108,7 +108,7 @@ function TestQueuePage() {
       console.log('🔄 Fetching WAITING tickets only from API...');
       
       // 🔥 API /tickets/waiting only returns tickets with status: 'waiting' 
-      const response = await rootApi.get('/tickets/waiting', { params: { tenxa: 'phuongtanphong' } });
+      const response = await rootApi.get('/tickets/waiting', { params: { tenxa: 'xahungan' } });
       const waitingTickets: any[] = response.data; // Only status: 'waiting'
       
       console.log('📡 API Response (waiting tickets only):', waitingTickets);
@@ -165,7 +165,7 @@ function TestQueuePage() {
     const maxReconnectAttempts = 5;
     const fetchCounters = async () => {
           try {
-            const response = await rootApi.get('/counters/', { params: { tenxa: 'phuongtanphong' } });
+            const response = await rootApi.get('/counters/', { params: { tenxa: 'xahungan' } });
             setApiCounters(response.data);
             console.log('✅ Counters from API:', response.data);
           } catch (error) {
@@ -182,7 +182,7 @@ function TestQueuePage() {
       try {
         console.log('🔌 Connecting to production WebSocket for test-queue...');
         
-        ws = new WebSocket('wss://detect-seat-we21.onrender.com/ws/updates');
+        ws = new WebSocket('wss://lstd.onrender.com/ws/updates');
         
         ws.onopen = () => {
           console.log('✅ WebSocket connected for test-queue page');
@@ -310,7 +310,7 @@ function TestQueuePage() {
   // ✅ Fetch serving ticket for a counter from API (like QueueDisplay)
   const fetchServingTicket = async (counterId: number) => {
     try {
-      const response = await rootApi.get('/tickets/called', { params: { counter_id: counterId, tenxa: 'phuongtanphong' } });
+      const response = await rootApi.get('/tickets/called', { params: { counter_id: counterId, tenxa: 'xahungan' } });
       const tickets: any[] = response.data;
       return tickets.length > 0 ? tickets[0] : null;
     } catch (error) {
