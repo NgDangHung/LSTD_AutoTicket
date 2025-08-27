@@ -45,7 +45,7 @@ type config = {
 
 
 const DEFAULT_CONFIG = {
-  header: 'PHƯỜNG TÂN PHONG',
+  header: 'XÃ HÙNG AN',
   workingHours: 'Giờ làm việc (Thứ 2 - Thứ 6): 07h30 - 17h00',
   hotline: 'Hotline hỗ trợ: 0916670793',
 };
@@ -863,8 +863,8 @@ export default function QueueDisplay() {
       <>
         <div className="flex justify-between items-center" style={{flexDirection: 'row-reverse'}}>
           <h2 className="text-2xl text-red-700 font-bold italic" style={{position: 'relative',top: '-50px',left: '-180px', fontSize: '2rem'}}>
-             {/* <span>{new Date().toLocaleTimeString('vi-VN')}</span> - Phường Tân Phong,  Ngày {new Date().toLocaleDateString('vi-VN')} */}
-             Phường Tân Phong,  Ngày {new Date().toLocaleDateString('vi-VN')}
+             {/* <span>{new Date().toLocaleTimeString('vi-VN')}</span> - Xã Hùng An,  Ngày {new Date().toLocaleDateString('vi-VN')} */}
+             Xã Hùng An,  Ngày {new Date().toLocaleDateString('vi-VN')}
           </h2>
         </div>
       </>
