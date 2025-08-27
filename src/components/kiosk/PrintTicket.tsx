@@ -137,7 +137,7 @@ const PrintTicket: React.FC<PrintTicketProps> = ({
             });
           }
          },
-        { src: 'sign-message-xavixuyen.js', id: 'signmessage-script' }
+        { src: 'sign-message.js', id: 'signmessage-script' }
       ];
       scripts.forEach(({ src, id, onload}) => {
         if (!document.getElementById(id)) {
