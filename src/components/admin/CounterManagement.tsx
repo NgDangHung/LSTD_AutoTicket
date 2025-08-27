@@ -3,6 +3,7 @@ import { toast } from 'react-toastify';
 import { countersAPI, ttsAPI } from '@/libs/rootApi';
 import CreateCounterModal from './CreateCounterModal';
 import Modal from '@/components/shared/Modal';
+import Button from '../shared/Button';
 
 interface Counter {
   id: number;
@@ -136,28 +137,30 @@ export default function CounterManagement() {
         isOpen={deleteConfirm.open}
         onClose={() => setDeleteConfirm({ id: null, open: false })}
         title="Xác nhận xoá quầy"
-        size="md"
+        size="sm"
         showCloseButton={true}
       >
         <div className="mb-6 text-lg text-gray-800">Bạn có chắc muốn xoá quầy này?</div>
         <div className="flex justify-center gap-3">
-          <button
-            className="px-4 py-2 rounded bg-gray-300 text-gray-800 hover:bg-gray-400 font-semibold"
+          <Button
+            variant="secondary"
+            size="md"
             onClick={() => setDeleteConfirm({ id: null, open: false })}
             disabled={loading}
-            style={{padding: '11px 33px'}}
+            style={{width: 170}}
           >
             Hủy
-          </button>
-          <button
-            className="px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700 font-semibold"
+          </Button>
+          <Button
+            variant="danger"
+            size="md"
             onClick={confirmDelete}
             disabled={loading}
-            style={{padding: '11px 33px'}}
+            style={{width: 170}}
 
           >
             Xóa
-          </button>
+          </Button>
         </div>
       </Modal>
       <div

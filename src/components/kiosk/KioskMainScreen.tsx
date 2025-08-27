@@ -533,7 +533,7 @@ export default function KioskMainScreen() {
           <button
             className="rounded-md bg-red-600 py-2 text-sm font-medium text-white hover:bg-red-700"
             style={{ lineHeight: '50px', fontSize: '20px', minWidth: '300px' }}
-            onClick={() => handleOpenPopup('https://dichvucong.gov.vn/p/home/dvc-dich-vu-cong-truc-tuyen-ds.html?pCoQuanId=426105')}
+            onClick={() => handleOpenPopup('https://dichvucong.gov.vn/p/home/dvc-dich-vu-cong-truc-tuyen-ds.html?pCoQuanId=384979')}
           >
             Tra Cứu Thủ Tục Hành Chính
           </button>
@@ -579,14 +579,14 @@ export default function KioskMainScreen() {
         </div>
 
         {/* Search Bar */}
-        <div className="flex justify-center gap-4 mb-12 mt-12" style={{ marginTop: '2rem'}}>
+        {/* <div className="flex justify-center gap-4 mb-12 mt-12" style={{ marginTop: '2rem'}}>
           <div className="relative flex items-center w-full max-w-5xl" style={{ marginTop: '-28px', maxWidth: '70rem' }}>
             <div style={{ width: '20px' }}></div>
             <div className="relative flex-1"> 
               <input 
                 name='voice-search'
                 value={searchQuery}
-                // onClick={handleSearchClick}
+                onClick={handleSearchClick}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className={`flex items-center gap-2 px-6 py-3 text-lg pr-12 Shadow cursor-pointer transition-all duration-300 w-full ${
                   showVirtualKeyboard ? 'ring-2 ring-blue-500 border-blue-500' : ''
@@ -626,15 +626,15 @@ export default function KioskMainScreen() {
                 <span style={{fontSize: '1.2rem', fontWeight: 'bold', width: '100%', display: 'inline-block', textAlign: 'center'}}>Tìm kiếm bằng giọng nói</span>
               )}
             </button>
-            {/* Voice Status Indicator */}
+            Voice Status Indicator
             {isVoiceActive && (
               <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-red-500 text-white  py-1 rounded-full text-sm font-medium animate-pulse">
                 🎤 {voiceStopTrigger === 'enter-key' ? 'Đang nghe... (Enter để dừng)' : 'Bấm ra ngoài để dừng ... '}
               </div>
             )}
           </div>
-          {/* Đã gộp nút xóa tìm kiếm vào nút voice */}
-        </div>
+          Đã gộp nút xóa tìm kiếm vào nút voice
+        </div> */}
 
         {/* Search Loading */}
         {searchLoading && (
@@ -695,7 +695,7 @@ export default function KioskMainScreen() {
             {/* Scroll Indicator */}
             {filteredCounters.length > 4 && (
               <div className=" text-center">
-                <p className="text-gray-600 text-sm flex items-center justify-center gap-2">
+                <p className="text-gray-600 text-sm flex items-center justify-center gap-2 mb-3">
                   <span>📋 {filteredCounters.length} quầy có sẵn</span>
                 </p>
               </div>
