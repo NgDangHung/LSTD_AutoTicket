@@ -68,7 +68,7 @@ export class TTSService {
     // ✅ Only setup WebSocket on client-side to prevent SSR error
     if (typeof window !== 'undefined') {
       // Mặc định load xã hiện tại, có thể thay đổi nếu cần
-      this.loadCounters('xatanan');
+      this.loadCounters('xatanmy');
       this.setupWebSocketListener();
     }
   }
@@ -85,7 +85,7 @@ export class TTSService {
         const customEvent = event as CustomEvent;
         const { ticket_number, counter_id, timestamp, tenxa } = customEvent.detail;
         // Chỉ xử lý nếu tenxa === xã hiện tại
-        if (tenxa !== 'xatanan') return;
+        if (tenxa !== 'xatanmy') return;
         if (typeof counter_id !== 'number') {
           console.warn('❌ Không xác định được counter_id từ event:', customEvent.detail);
           return;
@@ -131,7 +131,7 @@ export class TTSService {
       callAttempt,
       timestamp: timestamp || new Date().toISOString(),
       source,
-      tenxa: tenxa || 'xatanan'
+      tenxa: tenxa || 'xatanmy'
     };
 
     // Insert vào queue theo timestamp (FIFO based on called_at time)
@@ -327,7 +327,7 @@ export class TTSService {
   // Helper method để download MP3 file từ TTS API
   async downloadAudio(counterId: number, ticketNumber: number): Promise<void> {
     try {
-      const audioBlob = await ttsAPI.generateAudio(counterId, ticketNumber, 'xatanan');
+      const audioBlob = await ttsAPI.generateAudio(counterId, ticketNumber, 'xatanmy');
       
       // Create download link
       const downloadUrl = URL.createObjectURL(audioBlob);
@@ -353,7 +353,7 @@ export class TTSService {
   // Helper method để tạo HTML5 audio element
   async createAudioElement(counterId: number, ticketNumber: number): Promise<HTMLAudioElement> {
     try {
-      const audioBlob = await ttsAPI.generateAudio(counterId, ticketNumber, 'xatanan');
+      const audioBlob = await ttsAPI.generateAudio(counterId, ticketNumber, 'xatanmy');
       const audioUrl = URL.createObjectURL(audioBlob);
       
       const audio = new Audio(audioUrl);

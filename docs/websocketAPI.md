@@ -17,7 +17,7 @@ json
 "event": "new_ticket",
 "ticket_number": 20,
 "counter_id": 1
-"tenxa": xatanan
+"tenxa": xatanmy
 }
 📌 Ý nghĩa:
 • Một vé mới được tạo từ kiosk
@@ -32,7 +32,7 @@ Json
 "event": "ticket_called",
 "ticket_number": 20,
 "counter_name": "Văn phòng"
-"tenxa": xatanan
+"tenxa": xatanmy
 }
 📌 Ý nghĩa:
 • Hệ thống gọi khách có số vé 20 tới quầy
@@ -47,7 +47,7 @@ Json
 "event": "upsert_counter",
 "counter_id": 5,
 "name": "Tên quầy mới",
-"tenxa": "xatanan"
+"tenxa": "xatanmy"
 }
 📌 Ý nghĩa:
 • Một quầy mới được thêm hoặc tên quầy được chỉnh sửa
@@ -62,7 +62,7 @@ Json
 {
 "event": "delete_counter",
 "counter_id": 5,
-"tenxa": "xatanan"
+"tenxa": "xatanmy"
 }
 📌 Ý nghĩa:
 • Một quầy vừa bị xóa khỏi hệ thống
