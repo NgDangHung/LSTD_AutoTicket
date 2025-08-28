@@ -61,15 +61,15 @@ export default function Dashboard() {
         const startStr = format(startDate, 'yyyy-MM-dd');
         const endStr = format(endDate, 'yyyy-MM-dd');
         const [tickets, attended, avgTime, waitTime, absentTime, counters, ratingsRes, feedbacksRes] = await Promise.all([
-          rootApi.get('/stats/tickets-per-counter', { params: { start_date: startStr, end_date: endStr, tenxa: 'xatanmy' }, headers }),
-          rootApi.get('/stats/attended-tickets', { params: { start_date: startStr, end_date: endStr, tenxa: 'xatanmy' }, headers }),
-          rootApi.get('/stats/average-handling-time', { params: { start_date: startStr, end_date: endStr, tenxa: 'xatanmy' }, headers }),
-          rootApi.get('/stats/average-waiting-time', { params: { start_date: startStr, end_date: endStr, tenxa: 'xatanmy' }, headers }),
-          rootApi.get('/stats/afk-duration', { params: { start_date: startStr, end_date: endStr, tenxa: 'xatanmy' }, headers }),
-          rootApi.get('/counters', { params: { tenxa: 'xatanmy' }, headers }),
+          rootApi.get('/stats/tickets-per-counter', { params: { start_date: startStr, end_date: endStr, tenxa: 'xavinhtuy' }, headers }),
+          rootApi.get('/stats/attended-tickets', { params: { start_date: startStr, end_date: endStr, tenxa: 'xavinhtuy' }, headers }),
+          rootApi.get('/stats/average-handling-time', { params: { start_date: startStr, end_date: endStr, tenxa: 'xavinhtuy' }, headers }),
+          rootApi.get('/stats/average-waiting-time', { params: { start_date: startStr, end_date: endStr, tenxa: 'xavinhtuy' }, headers }),
+          rootApi.get('/stats/afk-duration', { params: { start_date: startStr, end_date: endStr, tenxa: 'xavinhtuy' }, headers }),
+          rootApi.get('/counters', { params: { tenxa: 'xavinhtuy' }, headers }),
           // new endpoints
-          rootApi.get('/stats/rating-per-counter', { params: { start_date: startStr, end_date: endStr, tenxa: 'xatanmy' }, headers }),
-          rootApi.get('/stats/feedbacks', { params: { start_date: startStr, end_date: endStr, tenxa: 'xatanmy' }, headers }),
+          rootApi.get('/stats/rating-per-counter', { params: { start_date: startStr, end_date: endStr, tenxa: 'xavinhtuy' }, headers }),
+          rootApi.get('/stats/feedbacks', { params: { start_date: startStr, end_date: endStr, tenxa: 'xavinhtuy' }, headers }),
         ]);
 
         // Map counter_id -> name
