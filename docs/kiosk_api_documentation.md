@@ -9,12 +9,13 @@
 ### 🔐 [POST] `/auths/login` – Đăng nhập lấy access token
 
 - **Body (x-www-form-urlencoded):**
-  | Field         | Type     | Required | Description        |
+  | Field | Type | Required | Description |
   |---------------|----------|----------|--------------------|
-  | username      | string   | ✅       | Tên đăng nhập      |
-  | password      | string   | ✅       | Mật khẩu           |
+  | username | string | ✅ | Tên đăng nhập |
+  | password | string | ✅ | Mật khẩu |
 
 - **Response:**
+
 ```json
 {
   "access_token": "string",
@@ -27,9 +28,11 @@
 ### 🧑‍💻 [GET] `/auths/me` – Lấy thông tin người dùng hiện tại
 
 - **Headers:**
+
   - `Authorization: Bearer <access_token>`
 
 - **Response:**
+
 ```json
 {
   "id": 1,
@@ -44,10 +47,13 @@
 ---
 
 ### 🆕 [POST] `/auths/users/` – Tạo người dùng mới
+
 - **Headers:**
+
   - `Authorization: Bearer <access_token>`
 
 - **Body (application/json):**
+
 ```json
 {
   "username": "string",
@@ -59,6 +65,7 @@
 ```
 
 - **Response:**
+
 ```json
 {
   "id": 1,
@@ -73,12 +80,16 @@
 ---
 
 ## 📋 Procedures
+
 ---
+
 ### 🔍 [GET] `/procedures/` – Lấy danh sách thủ tục
+
 - **Query Params:**
 
 - **Response:**
-```json
+
+````json
   {
     "id": 1,
     "name": "Đăng ký xe",
@@ -109,21 +120,25 @@
     ]
   }
 ]
-```
+````
+
 ## 🧾 Counters
 
 ### 🗑️ [DELETE] `/counters/delete-counter` – Xóa quầy phục vụ
 
 - **Query Params:**
-  - `tenxa` (string, required): Tên xã/khu vực (ví dụ: "phuongtanphong")
+
+  - `tenxa` (string, required): Tên xã/khu vực (ví dụ: "xahamyen")
   - `counter_id` (integer, required): ID quầy cần xóa
 
 - **Response:**
+
 ```json
 "string" // Thông báo kết quả xóa (thường là "Deleted successfully" hoặc lỗi)
 ```
 
 - **Validation Error (422):**
+
 ```json
 {
   "detail": [
@@ -141,23 +156,25 @@
   - Cần truyền đúng `counter_id` và `tenxa`.
   - Trả về thông báo kết quả xóa hoặc lỗi nếu không thành công.
 
-
 ---
 
 ### 🆕 [POST] `/counters/upsert-counter` – Tạo mới hoặc cập nhật tên quầy
 
 - **Query Params:**
-  - `tenxa` (string, required): Tên xã/khu vực (ví dụ: "phuongtanphong")
+
+  - `tenxa` (string, required): Tên xã/khu vực (ví dụ: "xahamyen")
 
 - **Request Body (application/json):**
+
 ```json
 {
-  "counter_id": 0,      // ID quầy (nếu cập nhật), hoặc 0 để tạo mới
-  "name": "string"     // Tên quầy mới
+  "counter_id": 0, // ID quầy (nếu cập nhật), hoặc 0 để tạo mới
+  "name": "string" // Tên quầy mới
 }
 ```
 
 - **Response:**
+
 ```json
 {
   "id": 0,
@@ -167,6 +184,7 @@
 ```
 
 - **Validation Error (422):**
+
 ```json
 {
   "detail": [
@@ -189,7 +207,6 @@
 
 ### ⏭️ [POST] `/counters/{counter_id}/call-next` – Gọi lượt tiếp theo
 
-
 ---
 
 ## 🎟 Tickets
@@ -199,6 +216,7 @@
 ### 📝 [POST] `/tickets/` – Tạo phiếu mới
 
 - **Body (application/json):**
+
 ```json
 {
   "counter_id": 1
@@ -206,6 +224,7 @@
 ```
 
 - **Response:**
+
 ```json
 {
   "id": 1,
@@ -225,6 +244,7 @@
 ### 📋 [GET] `/seats/` – Lấy danh sách chỗ ngồi
 
 - **Response:**
+
 ```json
 [
   {
@@ -243,9 +263,11 @@
 ### ✏️ [PUT] `/seats/{seat_id}` – Cập nhật trạng thái ghế
 
 - **Path Param:**
+
   - `seat_id` (integer)
 
 - **Body (application/json):**
+
 ```json
 {
   "status": true
@@ -263,17 +285,21 @@
 ### ⏭️ [POST] `/counters/{counter_id}/call-next` – Gọi lượt tiếp theo
 
 - **Path Param:**
+
   - `counter_id` (integer)
 
 - **Headers:**
+
   - `Authorization: Bearer <access_token>`
 
 - **Authorization Rules:**
+
   - `admin`: ✅ Có thể gọi bất kỳ counter nào
   - `officer`: ✅ Chỉ có thể gọi counter được gán (`user.counter_id == counter_id`)
   - `other roles`: ❌ Không có quyền
 
 - **Response:**
+
 ```json
 {
   "number": 105,
@@ -282,6 +308,7 @@
 ```
 
 - **Error Responses:**
+
 ```json
 // 403 Forbidden - Officer không có quyền với counter này
 {
@@ -304,17 +331,21 @@
 ### ⏸️ [POST] `/counters/{counter_id}/pause` – Tạm dừng quầy
 
 - **Path Param:**
+
   - `counter_id` (integer)
 
 - **Headers:**
+
   - `Authorization: Bearer <access_token>`
 
 - **Authorization Rules:**
+
   - `admin`: ✅ Có thể tạm dừng bất kỳ counter nào
   - `officer`: ✅ Chỉ có thể tạm dừng counter được gán (`user.counter_id == counter_id`)
   - `other roles`: ❌ Không có quyền
 
 - **Body (application/json):**
+
 ```json
 {
   "reason": "Đi họp"
@@ -322,6 +353,7 @@
 ```
 
 - **Response:**
+
 ```json
 {
   "id": 1,
@@ -336,17 +368,21 @@
 ### ▶️ [PUT] `/counters/{counter_id}/resume` – Tiếp tục quầy
 
 - **Path Param:**
+
   - `counter_id` (integer)
 
 - **Headers:**
+
   - `Authorization: Bearer <access_token>`
 
 - **Authorization Rules:**
+
   - `admin`: ✅ Có thể mở lại bất kỳ counter nào
   - `officer`: ✅ Chỉ có thể mở lại counter được gán (`user.counter_id == counter_id`)
   - `other roles`: ❌ Không có quyền
 
 - **Response:**
+
 ```json
 {
   "id": 2,
@@ -354,7 +390,6 @@
   "status": "active"
 }
 ```
-
 
 ---
 
@@ -387,11 +422,11 @@ async def validate_counter_access(
     current_user = Depends(get_current_user)
 ):
     """Validate user has access to specific counter"""
-    
+
     # Admin has access to all counters
     if current_user.role == "admin":
         return True
-    
+
     # Officer can only access assigned counter
     elif current_user.role == "officer":
         if current_user.counter_id != counter_id:
@@ -400,7 +435,7 @@ async def validate_counter_access(
                 detail=f"Officer chỉ có quyền với counter {current_user.counter_id}"
             )
         return True
-    
+
     # Other roles denied
     else:
         raise HTTPException(
@@ -441,117 +476,131 @@ INSERT INTO users (username, full_name, role, counter_id) VALUES
 
 Tài liệu API Thống kê (Stats APIs - API cho Dashboard)
 Tất cả các API trong nhóm Stats đều sử dụng phương thức GET và trả về dữ liệu dưới dạng application/json.
-________________________________________
+
+---
+
 1. /stats/tickets-per-counter
-Mô tả: Lấy tổng số vé đã phát theo từng quầy.
-🟢 Method: GET
-🔸 Query Params:
-Tên	Kiểu dữ liệu	Mô tả	Bắt buộc
-start_date	string (date)	Ngày bắt đầu (format: YYYY-MM-DD)	Không
-end_date	string (date)	Ngày kết thúc (format: YYYY-MM-DD)	Không
-🔁 Response:
-json
-Sao chépChỉnh sửa
-[
-  {
-    "counter_id": 1,
-    "total_tickets": 150
-  },
-  ...
-]
-________________________________________
+   Mô tả: Lấy tổng số vé đã phát theo từng quầy.
+   🟢 Method: GET
+   🔸 Query Params:
+   Tên Kiểu dữ liệu Mô tả Bắt buộc
+   start_date string (date) Ngày bắt đầu (format: YYYY-MM-DD) Không
+   end_date string (date) Ngày kết thúc (format: YYYY-MM-DD) Không
+   🔁 Response:
+   json
+   Sao chépChỉnh sửa
+   [
+   {
+   "counter_id": 1,
+   "total_tickets": 150
+   },
+   ...
+   ]
+
+---
+
 2. /stats/attended-tickets
-Mô tả: Lấy số vé đã tiếp nhận (gọi thành công) theo từng quầy.
-🟢 Method: GET
-🔸 Query Params:
-Tên	Kiểu dữ liệu	Mô tả	Bắt buộc
-start_date	string (date)	Ngày bắt đầu	Không
-end_date	string (date)	Ngày kết thúc	Không
-🔁 Response:
-json
-Sao chépChỉnh sửa
-[
-  {
-    "counter_id": 1,
-    "attended_tickets": 120
-  },
-  ...
-]
-________________________________________
+   Mô tả: Lấy số vé đã tiếp nhận (gọi thành công) theo từng quầy.
+   🟢 Method: GET
+   🔸 Query Params:
+   Tên Kiểu dữ liệu Mô tả Bắt buộc
+   start_date string (date) Ngày bắt đầu Không
+   end_date string (date) Ngày kết thúc Không
+   🔁 Response:
+   json
+   Sao chépChỉnh sửa
+   [
+   {
+   "counter_id": 1,
+   "attended_tickets": 120
+   },
+   ...
+   ]
+
+---
+
 3. /stats/average-handling-time
-Mô tả: Lấy thời gian xử lý trung bình của từng quầy.
-🟢 Method: GET
-🔸 Query Params:
-Tên	Kiểu dữ liệu	Mô tả	Bắt buộc
-start_date	string (date)	Ngày bắt đầu	Không
-end_date	string (date)	Ngày kết thúc	Không
-🔁 Response:
-json
-Sao chépChỉnh sửa
-[
-  {
-    "counter_id": 1,
-    "avg_handling_time_seconds": 65.4
-  },
-  ...
-]
-________________________________________
+   Mô tả: Lấy thời gian xử lý trung bình của từng quầy.
+   🟢 Method: GET
+   🔸 Query Params:
+   Tên Kiểu dữ liệu Mô tả Bắt buộc
+   start_date string (date) Ngày bắt đầu Không
+   end_date string (date) Ngày kết thúc Không
+   🔁 Response:
+   json
+   Sao chépChỉnh sửa
+   [
+   {
+   "counter_id": 1,
+   "avg_handling_time_seconds": 65.4
+   },
+   ...
+   ]
+
+---
+
 4. /stats/average-waiting-time
-Mô tả: Lấy thời gian chờ trung bình của người dân ở mỗi quầy.
-🟢 Method: GET
-🔸 Query Params:
-Tên	Kiểu dữ liệu	Mô tả	Bắt buộc
-start_date	string (date)	Ngày bắt đầu	Không
-end_date	string (date)	Ngày kết thúc	Không
-🔁 Response:
-json
-Sao chépChỉnh sửa
-[
-  {
-    "counter_id": 1,
-    "avg_waiting_time_seconds": 30.2
-  },
-  ...
-]
-________________________________________
+   Mô tả: Lấy thời gian chờ trung bình của người dân ở mỗi quầy.
+   🟢 Method: GET
+   🔸 Query Params:
+   Tên Kiểu dữ liệu Mô tả Bắt buộc
+   start_date string (date) Ngày bắt đầu Không
+   end_date string (date) Ngày kết thúc Không
+   🔁 Response:
+   json
+   Sao chépChỉnh sửa
+   [
+   {
+   "counter_id": 1,
+   "avg_waiting_time_seconds": 30.2
+   },
+   ...
+   ]
+
+---
+
 5. /stats/afk-duration
-Mô tả: Lấy tổng thời gian "vắng mặt" (AFK) theo từng quầy.
-🟢 Method: GET
-🔸 Query Params:
-Tên	Kiểu dữ liệu	Mô tả	Bắt buộc
-start_date	string (date)	Ngày bắt đầu	Không
-end_date	string (date)	Ngày kết thúc	Không
-🔁 Response:
-json
-Sao chépChỉnh sửa
-[
-  {
-    "counter_id": 1,
-    "total_afk_seconds": 3200
-  },
-  ...
-]
-________________________________________
+   Mô tả: Lấy tổng thời gian "vắng mặt" (AFK) theo từng quầy.
+   🟢 Method: GET
+   🔸 Query Params:
+   Tên Kiểu dữ liệu Mô tả Bắt buộc
+   start_date string (date) Ngày bắt đầu Không
+   end_date string (date) Ngày kết thúc Không
+   🔁 Response:
+   json
+   Sao chépChỉnh sửa
+   [
+   {
+   "counter_id": 1,
+   "total_afk_seconds": 3200
+   },
+   ...
+   ]
+
+---
+
 6. /stats/working-time-check
-Mô tả: Kiểm tra giờ làm việc (có đi làm đúng ca hay không) trong ngày.
-🟢 Method: GET
-🔸 Query Params:
-Tên	Kiểu dữ liệu	Mô tả	Bắt buộc
-date_check	string (date)	Ngày kiểm tra (YYYY-MM-DD)	Không
-🔁 Response:
-json
-Sao chépChỉnh sửa
-[
-  {
-    "counter_id": 1,
-    "started_at": "08:01:12",
-    "ended_at": "16:59:00"
-  },
-  ...
-]
-(Trường hợp schema đầy đủ có thể thêm vào phần này)
-________________________________________
+   Mô tả: Kiểm tra giờ làm việc (có đi làm đúng ca hay không) trong ngày.
+   🟢 Method: GET
+   🔸 Query Params:
+   Tên Kiểu dữ liệu Mô tả Bắt buộc
+   date_check string (date) Ngày kiểm tra (YYYY-MM-DD) Không
+   🔁 Response:
+   json
+   Sao chépChỉnh sửa
+   [
+   {
+   "counter_id": 1,
+   "started_at": "08:01:12",
+   "ended_at": "16:59:00"
+   },
+   ...
+   ]
+   (Trường hợp schema đầy đủ có thể thêm vào phần này)
+
+---
+
 🛑 Lưu ý chung:
-•	Tất cả các thời gian được tính bằng giây.
-•	Các endpoint có thể dùng kết hợp start_date và end_date để lọc dữ liệu theo khoảng thời gian cụ thể.
-•	Nếu không truyền start_date và end_date, hệ thống sẽ lấy dữ liệu theo mặc định (có thể là ngày hiện tại hoặc toàn bộ).
+• Tất cả các thời gian được tính bằng giây.
+• Các endpoint có thể dùng kết hợp start_date và end_date để lọc dữ liệu theo khoảng thời gian cụ thể.
+• Nếu không truyền start_date và end_date, hệ thống sẽ lấy dữ liệu theo mặc định (có thể là ngày hiện tại hoặc toàn bộ).

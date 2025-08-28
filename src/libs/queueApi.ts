@@ -50,7 +50,7 @@ export interface CreateTicketResponse {
 }
 
 // Base API URL - match với api.ts configuration
-const API_BASE_URL = 'https://detect-seat-we21.onrender.com/app';
+const API_BASE_URL = 'https://lstd.onrender.com/app';
 
 // Create axios instance with base config
 const api = axios.create({
@@ -60,7 +60,7 @@ const api = axios.create({
     'Content-Type': 'application/json',
   },
   params: {
-    tenxa: 'phuongtanphong' // Default parameter for all requests
+    tenxa: 'xahamyen' // Default parameter for all requests
   }
 });
 
@@ -75,8 +75,8 @@ export const getWaitingTickets = async (): Promise<WaitingTicketsResponse> => {
     // ✅ Try multiple possible endpoints
     const possiblePaths = [
 
-      '/tickets/waiting?tenxa=phuongtanphong',        // Current path
-      '/tickets?tenxa=phuongtanphong',               // Base tickets endpoint
+      '/tickets/waiting?tenxa=xahamyen',        // Current path
+      '/tickets?tenxa=xahamyen',               // Base tickets endpoint
       '/waiting-tickets',       // Alternative naming
       '/queue/waiting'          // Queue-based naming
     ];
@@ -123,7 +123,7 @@ export const getCounterQueue = async (counterId: number): Promise<CounterDetail 
 export const createTicket = async (request: CreateTicketRequest): Promise<CreateTicketResponse> => {
   try {
     console.log('🔄 Creating new ticket:', request);
-    const response = await api.post<CreateTicketResponse>('/tickets?tenxa=phuongtanphong', request);
+    const response = await api.post<CreateTicketResponse>('/tickets?tenxa=xahamyen', request);
     console.log('✅ Successfully created ticket:', response.data);
     return response.data;
   } catch (error: any) {

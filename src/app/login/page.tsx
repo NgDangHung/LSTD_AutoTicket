@@ -50,7 +50,7 @@ export default function LoginPage() {
       
       console.log('🔐 Login Request Details:');
       console.log('📡 Endpoint: POST /auths/login');
-      console.log('🌐 Full URL: https://detect-seat-we21.onrender.com/auths/login');
+      console.log('🌐 Full URL: https://lstd.onrender.com/auths/login');
       console.log('📤 Payload:', JSON.stringify(loginData, null, 2));
       console.log('📋 Headers: Content-Type: application/json');
       
@@ -76,7 +76,7 @@ export default function LoginPage() {
         // ✅ Get user info to determine redirect path using rootApi (same axios instance)
         try {
           console.log('🔍 Getting user info for redirect (rootApi)...');
-          const resp = await withTimeout(rootApi.get('/auths/me', { params: { tenxa: 'phuongtanphong' } }), 7000);
+          const resp = await withTimeout(rootApi.get('/auths/me', { params: { tenxa: 'xahamyen' } }), 7000);
           const userData = resp.data;
           console.log('👤 User info:', userData);
 
