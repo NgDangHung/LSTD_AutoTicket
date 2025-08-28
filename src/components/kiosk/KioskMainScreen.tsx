@@ -148,7 +148,7 @@ export default function KioskMainScreen() {
     // --- WebSocket lắng nghe event 'upsert_counter', 'delete_counter', và 'update_config' ---
     let ws: WebSocket | null = null;
     if (typeof window !== 'undefined') {
-      ws = new window.WebSocket('wss://wss://lstd.onrender.com/ws/updates');
+      ws = new window.WebSocket('wss://lstd.onrender.com/ws/updates');
       ws.onopen = () => {
         // Kết nối thành công
         console.log('WebSocket connected for counter/config updates');

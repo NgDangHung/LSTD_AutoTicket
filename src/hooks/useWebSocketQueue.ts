@@ -42,7 +42,7 @@ const createGlobalWebSocket = () => {
     globalWebSocket.close();
   }
 
-  const wsUrl = 'wss://wss://lstd.onrender.com/ws/updates';
+  const wsUrl = 'wss://lstd.onrender.com/ws/updates';
   console.log('🔌 Creating new global WebSocket connection:', wsUrl);
   
   globalWebSocket = new WebSocket(wsUrl);
