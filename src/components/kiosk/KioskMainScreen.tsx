@@ -41,7 +41,7 @@ interface ProcedureResult {
 const DEFAULT_CONFIG = {
   header: 'XÃ THÁI HÒA',
   workingHours: 'Giờ làm việc (Thứ 2 - Thứ 6): 07h30 - 17h00',
-  hotline: 'Hotline hỗ trợ: 0916670793',
+  hotline: 'Hotline hỗ trợ: 0916670793', 
 };
 
 export default function KioskMainScreen() {
