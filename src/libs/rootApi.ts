@@ -34,7 +34,7 @@ rootApi.interceptors.request.use(
       config.headers.Authorization = `Bearer ${token}`;
       
       // ✅ Debug log for call-next requests
-      if (config.url?.includes('/call-next?tenxa=xathaihoa')) {
+      if (config.url?.includes('/call-next?tenxa=xatruongsinh')) {
         console.log('🔍 Call-next request interceptor debug:', {
           url: config.url,
           method: config.method,
@@ -111,7 +111,7 @@ export const authsAPI = {
     // Sử dụng đúng endpoint và truyền params qua query string
     return rootApi.post('/auths/login', formData, {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      params: { tenxa: 'xathaihoa' }
+      params: { tenxa: 'xatruongsinh' }
     }).then(response => response.data);
   },
 
@@ -120,7 +120,7 @@ export const authsAPI = {
    * Create new user account
    */
   createUser: (userData: CreateUserRequest): Promise<User> => {
-    return rootApi.post('/auths/users', userData, { params: { tenxa: 'xathaihoa' } }).then(response => response.data);
+    return rootApi.post('/auths/users', userData, { params: { tenxa: 'xatruongsinh' } }).then(response => response.data);
   },
 
   /**
@@ -128,7 +128,7 @@ export const authsAPI = {
    * Get current authenticated user information
    */
   getCurrentUser: (): Promise<User> => {
-    return rootApi.get('/auths/me', { params: { tenxa: 'xathaihoa' } }).then(response => response.data);
+    return rootApi.get('/auths/me', { params: { tenxa: 'xatruongsinh' } }).then(response => response.data);
   },
 };
 
@@ -154,7 +154,7 @@ export const ttsAPI = {
         'Content-Type': 'application/json',
         'Accept': 'audio/mpeg, audio/*'
       },
-      body: JSON.stringify({ ...request, tenxa: 'xathaihoa' })
+      body: JSON.stringify({ ...request, tenxa: 'xatruongsinh' })
     });
 
     if (!response.ok) {
@@ -179,7 +179,7 @@ export const ttsAPI = {
    * Returns: string (URL or message)
    */
   generateCounterAudio: async (request: { counter_id: number; name: string }): Promise<string> => {
-    const response = await fetch(`${BASE_URL}/tts/generate_counter_audio?tenxa=xathaihoa`, {
+    const response = await fetch(`${BASE_URL}/tts/generate_counter_audio?tenxa=xatruongsinh`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -234,7 +234,7 @@ export const proceduresAPI = {
    */
   getProcedures: (search?: string): Promise<Procedure[]> => {
     const params = search ? { search } : {};
-    return rootApi.get('/procedures', { params: { ...params, tenxa: 'xathaihoa' } }).then(response => response.data);
+    return rootApi.get('/procedures', { params: { ...params, tenxa: 'xatruongsinh' } }).then(response => response.data);
   },
 
   /**
@@ -243,7 +243,7 @@ export const proceduresAPI = {
    */
   searchExtended: (search?: string): Promise<ProcedureExtended[]> => {
     const params = search ? { search } : {};
-    return rootApi.get('/procedures/search-extended', { params: { ...params, tenxa: 'xathaihoa' } }).then(response => response.data);
+    return rootApi.get('/procedures/search-extended', { params: { ...params, tenxa: 'xatruongsinh' } }).then(response => response.data);
   },
 };
 
@@ -299,7 +299,7 @@ export const ticketsAPI = {
    * Create new ticket for queue
    */
   createTicket: (request: CreateTicketRequest): Promise<Ticket> => {
-    return rootApi.post('/tickets', request, { params: { tenxa: 'xathaihoa' } }).then(response => response.data);
+    return rootApi.post('/tickets', request, { params: { tenxa: 'xatruongsinh' } }).then(response => response.data);
   },
 
   /**
@@ -307,7 +307,7 @@ export const ticketsAPI = {
    * Get all waiting tickets in queue
    */
   getWaitingTickets: (): Promise<WaitingTicketsResponse> => {
-    return rootApi.get('/tickets/waiting', { params: { tenxa: 'xathaihoa' } }).then(response => response.data);
+    return rootApi.get('/tickets/waiting', { params: { tenxa: 'xatruongsinh' } }).then(response => response.data);
   },
 
   /**
@@ -388,7 +388,7 @@ export const seatsAPI = {
    * Get all seats
    */
   getSeats: (): Promise<Seat[]> => {
-    return rootApi.get('/seats', { params: { tenxa: 'xathaihoa' } }).then(response => response.data);
+    return rootApi.get('/seats', { params: { tenxa: 'xatruongsinh' } }).then(response => response.data);
   },
 
   /**
@@ -453,7 +453,7 @@ export const countersAPI = {
    * Get all counters information
    */
   getCounters: (): Promise<Counter[]> => {
-    return rootApi.get('/counters', { params: { tenxa: 'xathaihoa' } }).then(response => response.data);
+    return rootApi.get('/counters', { params: { tenxa: 'xatruongsinh' } }).then(response => response.data);
   },
 
   /**
@@ -461,7 +461,7 @@ export const countersAPI = {
    * Call next ticket in queue for specific counter
    */
   callNext: (counterId: number): Promise<CallNextResponse> => {
-    return rootApi.post(`/counters/${counterId}/call-next`, null, { params: { tenxa: 'xathaihoa' } }).then(response => response.data);
+    return rootApi.post(`/counters/${counterId}/call-next`, null, { params: { tenxa: 'xatruongsinh' } }).then(response => response.data);
   },
 
   /**
@@ -469,7 +469,7 @@ export const countersAPI = {
    * Pause counter operations with reason
    */
   pauseCounter: (counterId: number, request: PauseCounterRequest): Promise<PauseCounterResponse> => {
-    return rootApi.post(`/counters/${counterId}/pause`, request, { params: { tenxa: 'xathaihoa' } }).then(response => response.data);
+    return rootApi.post(`/counters/${counterId}/pause`, request, { params: { tenxa: 'xatruongsinh' } }).then(response => response.data);
   },
 
   /**
@@ -477,7 +477,7 @@ export const countersAPI = {
    * Resume counter operations
    */
   resumeCounter: (counterId: number): Promise<ResumeCounterResponse> => {
-    return rootApi.put(`/counters/${counterId}/resume`, null, { params: { tenxa: 'xathaihoa' } }).then(response => response.data);
+    return rootApi.put(`/counters/${counterId}/resume`, null, { params: { tenxa: 'xatruongsinh' } }).then(response => response.data);
   },
 
   /**
@@ -485,7 +485,7 @@ export const countersAPI = {
    * Tạo mới hoặc cập nhật tên quầy
    */
   upsertCounter: (data: UpsertCounterRequest): Promise<{ id: number; name: string; status: string}> => {
-    return rootApi.post('/counters/upsert-counter', data, { params: { tenxa: 'xathaihoa' } }).then(res => res.data);
+    return rootApi.post('/counters/upsert-counter', data, { params: { tenxa: 'xatruongsinh' } }).then(res => res.data);
   },
 
   /**
@@ -493,7 +493,7 @@ export const countersAPI = {
    * Xóa quầy phục vụ
    */
   deleteCounter: (counter_id: number): Promise<string> => {
-    return rootApi.delete('/counters/delete-counter', { params: { tenxa: 'xathaihoa', counter_id } }).then(res => res.data);
+    return rootApi.delete('/counters/delete-counter', { params: { tenxa: 'xatruongsinh', counter_id } }).then(res => res.data);
   },
 };
 
@@ -516,7 +516,7 @@ export const tvGroupsAPI = {
   getGroups: async (): Promise<TVGroup[]> => {
     // Try real API first, fallback to localStorage mock
     try {
-      const res = await rootApi.get('/tv-groups', { params: { tenxa: 'xathaihoa' } });
+      const res = await rootApi.get('/tv-groups', { params: { tenxa: 'xatruongsinh' } });
       return res.data;
     } catch (err) {
       // Fallback to localStorage
@@ -540,7 +540,7 @@ export const tvGroupsAPI = {
    */
   getGroup: async (id: number): Promise<TVGroup> => {
     try {
-      const res = await rootApi.get(`/tv-groups/${id}`, { params: { tenxa: 'xathaihoa' } });
+      const res = await rootApi.get(`/tv-groups/${id}`, { params: { tenxa: 'xatruongsinh' } });
       return res.data;
     } catch (err) {
       if (typeof window === 'undefined') throw err;
@@ -560,7 +560,7 @@ export const tvGroupsAPI = {
    */
   createGroup: async (data: { name: string; counter_ids: number[]; description?: string }): Promise<TVGroup> => {
     try {
-      const res = await rootApi.post('/tv-groups', data, { params: { tenxa: 'xathaihoa' } });
+      const res = await rootApi.post('/tv-groups', data, { params: { tenxa: 'xatruongsinh' } });
       // broadcast update
       try { window.dispatchEvent(new CustomEvent('tvGroupsUpdated', { detail: { action: 'create', id: res.data.id } })); } catch {}
       if (typeof window !== 'undefined' && 'BroadcastChannel' in window) { try { const bc = new BroadcastChannel('tv-groups'); bc.postMessage({ type: 'updated' }); bc.close(); } catch {} }
@@ -588,7 +588,7 @@ export const tvGroupsAPI = {
    */
   updateGroup: async (id: number, data: { name: string; counter_ids: number[]; description?: string }): Promise<TVGroup> => {
     try {
-      const res = await rootApi.put(`/tv-groups/${id}`, data, { params: { tenxa: 'xathaihoa' } });
+      const res = await rootApi.put(`/tv-groups/${id}`, data, { params: { tenxa: 'xatruongsinh' } });
       try { window.dispatchEvent(new CustomEvent('tvGroupsUpdated', { detail: { action: 'update', id } })); } catch {}
       if (typeof window !== 'undefined' && 'BroadcastChannel' in window) { try { const bc = new BroadcastChannel('tv-groups'); bc.postMessage({ type: 'updated' }); bc.close(); } catch {} }
       return res.data;
@@ -612,7 +612,7 @@ export const tvGroupsAPI = {
    */
   deleteGroup: async (id: number): Promise<string> => {
     try {
-      const res = await rootApi.delete(`/tv-groups/${id}`, { params: { tenxa: 'xathaihoa' } });
+      const res = await rootApi.delete(`/tv-groups/${id}`, { params: { tenxa: 'xatruongsinh' } });
       try { window.dispatchEvent(new CustomEvent('tvGroupsUpdated', { detail: { action: 'delete', id } })); } catch {}
       if (typeof window !== 'undefined' && 'BroadcastChannel' in window) { try { const bc = new BroadcastChannel('tv-groups'); bc.postMessage({ type: 'updated' }); bc.close(); } catch {} }
       return res.data;
@@ -719,56 +719,56 @@ export const statsDashboardAPI = {
    * Tổng số vé đã phát theo từng quầy
    */
   getTicketsPerCounter: (params?: { start_date?: string; end_date?: string }) =>
-    rootApi.get('/stats/tickets-per-counter', { params: { ...params, tenxa: 'xathaihoa' } }).then(res => res.data),
+    rootApi.get('/stats/tickets-per-counter', { params: { ...params, tenxa: 'xatruongsinh' } }).then(res => res.data),
 
   /**
    * 🟢 [GET] /stats/attended-tickets
    * Số vé đã tiếp nhận theo từng quầy
    */
   getAttendedTickets: (params?: { start_date?: string; end_date?: string }) =>
-    rootApi.get('/stats/attended-tickets', { params: { ...params, tenxa: 'xathaihoa' } }).then(res => res.data),
+    rootApi.get('/stats/attended-tickets', { params: { ...params, tenxa: 'xatruongsinh' } }).then(res => res.data),
 
   /**
    * 🟢 [GET] /stats/average-handling-time
    * Thời gian xử lý trung bình từng quầy
    */
   getAverageHandlingTime: (params?: { start_date?: string; end_date?: string }) =>
-    rootApi.get('/stats/average-handling-time', { params: { ...params, tenxa: 'xathaihoa' } }).then(res => res.data),
+    rootApi.get('/stats/average-handling-time', { params: { ...params, tenxa: 'xatruongsinh' } }).then(res => res.data),
 
   /**
    * 🟢 [GET] /stats/average-waiting-time
    * Thời gian chờ trung bình từng quầy
    */
   getAverageWaitingTime: (params?: { start_date?: string; end_date?: string }) =>
-    rootApi.get('/stats/average-waiting-time', { params: { ...params, tenxa: 'xathaihoa' } }).then(res => res.data),
+    rootApi.get('/stats/average-waiting-time', { params: { ...params, tenxa: 'xatruongsinh' } }).then(res => res.data),
 
   /**
    * 🟢 [GET] /stats/afk-duration
    * Tổng thời gian vắng mặt từng quầy
    */
   getAfkDuration: (params?: { start_date?: string; end_date?: string }) =>
-    rootApi.get('/stats/afk-duration', { params: { ...params, tenxa: 'xathaihoa' } }).then(res => res.data),
+    rootApi.get('/stats/afk-duration', { params: { ...params, tenxa: 'xatruongsinh' } }).then(res => res.data),
 
   /**
    * 🟢 [GET] /stats/working-time-check
    * Giờ làm việc từng quầy trong ngày
    */
   getWorkingTimeCheck: (params?: { date_check?: string }) =>
-    rootApi.get('/stats/working-time-check', { params: { ...params, tenxa: 'xathaihoa' } }).then(res => res.data),
+    rootApi.get('/stats/working-time-check', { params: { ...params, tenxa: 'xatruongsinh' } }).then(res => res.data),
   /**
    * 📊 [GET] /stats/rating-per-counter
    * Returns aggregated rating counts per counter.
    * Query params: start_date, end_date, tenxa(required)
    */
   getRatingPerCounter: (params?: { start_date?: string; end_date?: string }) =>
-    rootApi.get('/stats/rating-per-counter', { params: { ...params, tenxa: 'xathaihoa' } }).then(res => res.data as RatingPerCounter[]),
+    rootApi.get('/stats/rating-per-counter', { params: { ...params, tenxa: 'xatruongsinh' } }).then(res => res.data as RatingPerCounter[]),
 
   /**
    * 💬 [GET] /stats/feedbacks
    * List feedbacks with optional filters: rating, counter_id, start_date, end_date
    */
   getFeedbacks: (params?: { rating?: string; counter_id?: number; start_date?: string; end_date?: string }) =>
-    rootApi.get('/stats/feedbacks', { params: { ...params, tenxa: 'xathaihoa' } }).then(res => res.data as FeedbackItem[]),
+    rootApi.get('/stats/feedbacks', { params: { ...params, tenxa: 'xatruongsinh' } }).then(res => res.data as FeedbackItem[]),
 };
 
 // ===================================

@@ -39,7 +39,7 @@ const PrintTicket: React.FC<PrintTicketProps> = ({
   onPrintComplete
 }) => {
   // TEN_XA config: prefer env var NEXT_PUBLIC_TENXA, fallback to localStorage or default
-  const TEN_XA = 'xathaihoa'
+  const TEN_XA = 'xatruongsinh'
   // token prop is available as `token` (optional server-signed token for Workflow A)
 
   const [qrDataUrl, setQrDataUrl] = useState<string>('');
@@ -72,7 +72,7 @@ const generateThermalTicketHTML = React.useCallback(
   <div style="padding-top:2px">
     <div style="font-weight:800;font-size:26px;line-height:1.05;">TRUNG TÂM</div>
     <div style="font-weight:800;font-size:26px;line-height:1.05;">PHỤC VỤ HÀNH CHÍNH CÔNG</div>
-    <div style="font-weight:900;font-size:32px;line-height:1.05;margin-top:2px;">XÃ THÁI HÒA</div>
+    <div style="font-weight:900;font-size:32px;line-height:1.05;margin-top:2px;">XÃ TRƯỜNG SINH</div>
     <div style="font-weight:800;font-size:24px;line-height:1.05;margin-top:4px;">SỐ THỨ TỰ</div>
   </div>
 

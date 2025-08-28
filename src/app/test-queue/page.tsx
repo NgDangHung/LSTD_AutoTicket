@@ -52,7 +52,7 @@ function TestQueuePage() {
   });
 
   // Footer config API helpers
-  const TEN_XA = 'xathaihoa';
+  const TEN_XA = 'xatruongsinh';
   async function fetchConfig() {
     // API trả về { work_time, hotline }
     const data = await configAPI.getConfig(TEN_XA);
@@ -108,7 +108,7 @@ function TestQueuePage() {
       console.log('🔄 Fetching WAITING tickets only from API...');
       
       // 🔥 API /tickets/waiting only returns tickets with status: 'waiting' 
-      const response = await rootApi.get('/tickets/waiting', { params: { tenxa: 'xathaihoa' } });
+      const response = await rootApi.get('/tickets/waiting', { params: { tenxa: 'xatruongsinh' } });
       const waitingTickets: any[] = response.data; // Only status: 'waiting'
       
       console.log('📡 API Response (waiting tickets only):', waitingTickets);
@@ -165,7 +165,7 @@ function TestQueuePage() {
     const maxReconnectAttempts = 5;
     const fetchCounters = async () => {
           try {
-            const response = await rootApi.get('/counters/', { params: { tenxa: 'xathaihoa' } });
+            const response = await rootApi.get('/counters/', { params: { tenxa: 'xatruongsinh' } });
             setApiCounters(response.data);
             console.log('✅ Counters from API:', response.data);
           } catch (error) {
@@ -310,7 +310,7 @@ function TestQueuePage() {
   // ✅ Fetch serving ticket for a counter from API (like QueueDisplay)
   const fetchServingTicket = async (counterId: number) => {
     try {
-      const response = await rootApi.get('/tickets/called', { params: { counter_id: counterId, tenxa: 'xathaihoa' } });
+      const response = await rootApi.get('/tickets/called', { params: { counter_id: counterId, tenxa: 'xatruongsinh' } });
       const tickets: any[] = response.data;
       return tickets.length > 0 ? tickets[0] : null;
     } catch (error) {
