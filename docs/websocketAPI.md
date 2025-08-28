@@ -1,6 +1,6 @@
 📡 WebSocket API: Nhận sự kiện từ backend
 🔌 Endpoint WebSocket:
-wss://wss://lstd.onrender.com/ws/updates********\*\*********\_\_\_\_********\*\*********
+wss://lstd.onrender.com/ws/updates**\*\*\*\***\*\***\*\*\*\***\_\_\_\_**\*\*\*\***\*\***\*\*\*\***
 🔁 Cách sử dụng
 Frontend cần:
 
