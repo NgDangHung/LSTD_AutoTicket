@@ -871,9 +871,9 @@ export default function QueueDisplay() {
 
       {/* Main Display dạng bảng giống mẫu */}
       <div className="flex-1 p-4 flex flex-col items-center" style={{position: 'relative',top: '0px'}}>
-        <div className="w-full" style={{maxWidth: 1500}}>
+        <div className="w-full" style={{maxWidth: 1700}}>
           {/* Header table */}
-          <div className="grid" style={{gridTemplateColumns: '1.6fr 0.8fr 1fr', fontSize: '1.4rem'}}>
+          <div className="grid" style={{gridTemplateColumns: '1.8fr 0.8fr 0.8fr', fontSize: '1.5rem'}}>
             <div className="bg-red-700 text-white text-center py-4  font-bold border border-white border-b-0 rounded-tl-xl uppercase tracking-wide">QUẦY PHỤC VỤ</div>
             <div className="bg-red-700 text-white text-center py-4  font-bold border border-white border-b-0 uppercase tracking-wide">ĐANG PHỤC VỤ</div>
             <div className="bg-red-700 text-white text-center py-4  font-bold border border-white border-b-0 rounded-tr-xl uppercase tracking-wide">ĐANG CHỜ</div>
