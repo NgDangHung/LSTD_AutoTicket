@@ -51,9 +51,9 @@ const PrintTicket: React.FC<PrintTicketProps> = ({
 
   // Lấy tên máy in 1 lần (không đổi mỗi render)
   const [printerName] = useState<string>(() => {
-    if (typeof window === 'undefined') return 'POS-80C';
+    if (typeof window === 'undefined') return 'XP-80C';
     // if (typeof window === 'undefined') return 'Microsoft Print to PDF';
-    return localStorage.getItem('kioskPrinterName') || 'POS-80C';
+    return localStorage.getItem('kioskPrinterName') || 'XP-80C';
     // return localStorage.getItem('kioskPrinterName') || 'Microsoft Print to PDF';
   });
 
