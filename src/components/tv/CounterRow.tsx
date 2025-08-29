@@ -22,11 +22,11 @@ function CounterRowComponent({ counterId, counterName, servingNumber, waitingNum
   return (
     <div
       className={`grid border-b border-white last:rounded-b-xl ${isEven ? 'bg-gray-300 bg-opacity-80' : 'bg-pink-100  bg-opacity-80'}`}
-      style={{ minHeight, alignItems: 'center', gridTemplateColumns: '1.6fr 0.8fr 1fr' } as React.CSSProperties}
+      style={{ minHeight, alignItems: 'center', gridTemplateColumns: '1.7fr 0.8fr 0.9fr' } as React.CSSProperties}
       role="row"
       aria-label={`Quầy ${counterId}`}
     >
-      <div className="text-xl font-extrabold text-red-800 px-4 py-3 border-r border-white uppercase" style={{ fontSize: '1.1rem' }}>
+      <div className="text-xl font-extrabold text-red-800 px-4 py-3 border-r border-white uppercase" style={{ fontSize: '1.4rem' }}>
         QUẦY {counterId} | {counterName}
       </div>
 
