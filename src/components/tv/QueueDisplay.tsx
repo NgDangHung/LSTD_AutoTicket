@@ -47,7 +47,7 @@ type config = {
 const DEFAULT_CONFIG = {
   header: 'XÃ TRƯỜNG SINH',
   workingHours: 'Giờ làm việc (Thứ 2 - Thứ 6): 07h30 - 17h00',
-  hotline: 'Hotline hỗ trợ: 0916670793',
+  hotline: 'Hotline hỗ trợ: 02191022',
 };
 
 export default function QueueDisplay() {
@@ -873,7 +873,7 @@ export default function QueueDisplay() {
       <div className="flex-1 p-4 flex flex-col items-center" style={{position: 'relative',top: '0px'}}>
         <div className="w-full" style={{maxWidth: 1500}}>
           {/* Header table */}
-          <div className="grid" style={{gridTemplateColumns: '1.6fr 0.8fr 1fr', fontSize: '1.4rem'}}>
+          <div className="grid" style={{gridTemplateColumns: '1.8fr 0.8fr 0.8fr', fontSize: '1.4rem'}}>
             <div className="bg-red-700 text-white text-center py-4  font-bold border border-white border-b-0 rounded-tl-xl uppercase tracking-wide">QUẦY PHỤC VỤ</div>
             <div className="bg-red-700 text-white text-center py-4  font-bold border border-white border-b-0 uppercase tracking-wide">ĐANG PHỤC VỤ</div>
             <div className="bg-red-700 text-white text-center py-4  font-bold border border-white border-b-0 rounded-tr-xl uppercase tracking-wide">ĐANG CHỜ</div>
