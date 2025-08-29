@@ -76,7 +76,7 @@ export default function LoginPage() {
         // ✅ Get user info to determine redirect path using rootApi (same axios instance)
         try {
           console.log('🔍 Getting user info for redirect (rootApi)...');
-          const resp = await withTimeout(rootApi.get('/auths/me', { params: { tenxa: 'xavinhtuy' } }), 7000);
+          const resp = await withTimeout(rootApi.get('/auths/me', { params: { tenxa: 'xalienhiep' } }), 7000);
           const userData = resp.data;
           console.log('👤 User info:', userData);
 

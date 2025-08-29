@@ -45,16 +45,16 @@ type config = {
 
 
 const DEFAULT_CONFIG = {
-  header: 'XÃ VĨNH TUY',
+  header: 'XÃ LIÊN HIỆP',
   workingHours: 'Giờ làm việc (Thứ 2 - Thứ 6): 07h30 - 17h00',
-  hotline: 'Hotline hỗ trợ: 0916670793',
+  hotline: 'Hotline hỗ trợ: 02191022',
 };
 
 export default function QueueDisplay() {
   // API lấy số đang phục vụ cho từng quầy
   const fetchServingTicket = async (counterId: number): Promise<RealTicket | null> => {
     try {
-      const response = await rootApi.get(`/tickets/called`, { params: { counter_id: counterId, tenxa: 'xavinhtuy' } });
+      const response = await rootApi.get(`/tickets/called`, { params: { counter_id: counterId, tenxa: 'xalienhiep' } });
       const tickets: RealTicket[] = response.data;
       return tickets.length > 0 ? tickets[0] : null;
     } catch (error) {
@@ -111,7 +111,7 @@ export default function QueueDisplay() {
   // Fetch footer config on mount and listen for updates
   const fetchConfig = useCallback(async () => {
     try {
-      const data = await configAPI.getConfig('xavinhtuy');
+      const data = await configAPI.getConfig('xalienhiep');
       if (data && (data.work_time || data.hotline)) {
         setconfig({
           workingHours: data.work_time || DEFAULT_CONFIG.workingHours,
@@ -128,7 +128,7 @@ export default function QueueDisplay() {
   async function handleSaveConfig(newConfig: { header: string; work_time: string; hotline: string }, onSuccess?: () => void, onError?: (err: any) => void) {
     try {
       // Đảm bảo truyền đủ header cho BE
-      await configAPI.setConfig('xavinhtuy', {
+      await configAPI.setConfig('xalienhiep', {
         work_time: newConfig.work_time,
         hotline: newConfig.hotline,
         header: newConfig.header
@@ -160,7 +160,7 @@ export default function QueueDisplay() {
   const [apiCounters, setApiCounters] = useState<CounterAPI[]>([]);
   const fetchCounters = useCallback(async () => {
       try {
-        const response = await rootApi.get('/counters/', { params: { tenxa: 'xavinhtuy' } });
+        const response = await rootApi.get('/counters/', { params: { tenxa: 'xalienhiep' } });
         setApiCounters(response.data);
         console.log('✅ Counters from API:', response.data);
       } catch (error) {
@@ -245,7 +245,7 @@ export default function QueueDisplay() {
       console.log('🔄 Fetching all tickets from real API...');
       
       // GET /tickets/waiting - get all tickets (waiting + called + done)
-      const response = await rootApi.get('/tickets/waiting', { params: { tenxa: 'xavinhtuy' } });
+      const response = await rootApi.get('/tickets/waiting', { params: { tenxa: 'xalienhiep' } });
       const tickets: RealTicket[] = response.data;
       
       console.log('📡 Real API Response:', tickets);
@@ -267,7 +267,7 @@ export default function QueueDisplay() {
       
       for (let counterId = 1; counterId <= 4; counterId++) {
         try {
-          const response = await rootApi.get('/tickets/waiting', { params: { counter_id: counterId, tenxa: 'xavinhtuy' } });
+          const response = await rootApi.get('/tickets/waiting', { params: { counter_id: counterId, tenxa: 'xalienhiep' } });
           allTickets.push(...response.data);
         } catch (counterError) {
           console.warn(`⚠️ Failed to fetch tickets for counter ${counterId}:`, counterError);
@@ -390,7 +390,7 @@ export default function QueueDisplay() {
           try {
             const eventData = JSON.parse(event.data);
             console.log('📡 WebSocket event received:', eventData);
-            if (eventData.tenxa !== 'xavinhtuy') return
+            if (eventData.tenxa !== 'xalienhiep') return
             // ✅ Handle real events từ BE documentation
             switch (eventData.event) {
               case 'new_ticket':
@@ -864,16 +864,16 @@ export default function QueueDisplay() {
         <div className="flex justify-between items-center" style={{flexDirection: 'row-reverse'}}>
           <h2 className="text-2xl text-red-700 font-bold italic" style={{position: 'relative',top: '-50px',left: '-180px', fontSize: '2rem'}}>
              {/* <span>{new Date().toLocaleTimeString('vi-VN')}</span> - Xã Hùng An,  Ngày {new Date().toLocaleDateString('vi-VN')} */}
-             Xã Vĩnh Tuy,  Ngày {new Date().toLocaleDateString('vi-VN')}
+             Xã Liên Hiệp,  Ngày {new Date().toLocaleDateString('vi-VN')}
           </h2>
         </div>
       </>
 
       {/* Main Display dạng bảng giống mẫu */}
       <div className="flex-1 p-4 flex flex-col items-center" style={{position: 'relative',top: '0px'}}>
-        <div className="w-full" style={{maxWidth: 1500}}>
+        <div className="w-full" style={{maxWidth: 1700}}>
           {/* Header table */}
-          <div className="grid" style={{gridTemplateColumns: '1.6fr 0.8fr 1fr', fontSize: '1.4rem'}}>
+          <div className="grid" style={{gridTemplateColumns: '1.8fr 0.8fr 0.8fr', fontSize: '1.5rem'}}>
             <div className="bg-red-700 text-white text-center py-4  font-bold border border-white border-b-0 rounded-tl-xl uppercase tracking-wide">QUẦY PHỤC VỤ</div>
             <div className="bg-red-700 text-white text-center py-4  font-bold border border-white border-b-0 uppercase tracking-wide">ĐANG PHỤC VỤ</div>
             <div className="bg-red-700 text-white text-center py-4  font-bold border border-white border-b-0 rounded-tr-xl uppercase tracking-wide">ĐANG CHỜ</div>
