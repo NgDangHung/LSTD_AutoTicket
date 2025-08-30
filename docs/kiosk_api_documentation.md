@@ -128,7 +128,7 @@
 
 - **Query Params:**
 
-  - `tenxa` (string, required): Tên xã/khu vực (ví dụ: "xabinhxa")
+  - `tenxa` (string, required): Tên xã/khu vực (ví dụ: "xabachxa")
   - `counter_id` (integer, required): ID quầy cần xóa
 
 - **Response:**
@@ -162,7 +162,7 @@
 
 - **Query Params:**
 
-  - `tenxa` (string, required): Tên xã/khu vực (ví dụ: "xabinhxa")
+  - `tenxa` (string, required): Tên xã/khu vực (ví dụ: "xabachxa")
 
 - **Request Body (application/json):**
 

@@ -60,7 +60,7 @@ const api = axios.create({
     'Content-Type': 'application/json',
   },
   params: {
-    tenxa: 'xabinhxa' // Default parameter for all requests
+    tenxa: 'xabachxa' // Default parameter for all requests
   }
 });
 
@@ -75,8 +75,8 @@ export const getWaitingTickets = async (): Promise<WaitingTicketsResponse> => {
     // ✅ Try multiple possible endpoints
     const possiblePaths = [
 
-      '/tickets/waiting?tenxa=xabinhxa',        // Current path
-      '/tickets?tenxa=xabinhxa',               // Base tickets endpoint
+      '/tickets/waiting?tenxa=xabachxa',        // Current path
+      '/tickets?tenxa=xabachxa',               // Base tickets endpoint
       '/waiting-tickets',       // Alternative naming
       '/queue/waiting'          // Queue-based naming
     ];
@@ -123,7 +123,7 @@ export const getCounterQueue = async (counterId: number): Promise<CounterDetail 
 export const createTicket = async (request: CreateTicketRequest): Promise<CreateTicketResponse> => {
   try {
     console.log('🔄 Creating new ticket:', request);
-    const response = await api.post<CreateTicketResponse>('/tickets?tenxa=xabinhxa', request);
+    const response = await api.post<CreateTicketResponse>('/tickets?tenxa=xabachxa', request);
     console.log('✅ Successfully created ticket:', response.data);
     return response.data;
   } catch (error: any) {
