@@ -39,7 +39,7 @@ interface ProcedureResult {
 }
 
 const DEFAULT_CONFIG = {
-  header: 'XÃ MINH THANH',
+  header: 'XÃ THÁI SƠN',
   workingHours: 'Giờ làm việc (Thứ 2 - Thứ 6): 07h30 - 17h00',
   hotline: 'Hotline hỗ trợ: 02191022', 
 };
