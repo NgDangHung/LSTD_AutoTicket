@@ -149,7 +149,7 @@ export const queueAPI = {
 // Counter Management API
 export const counterAPI = {
   // Get all counters
-  getCounters: () => axiosInstance.get('/counters', { params: { tenxa: 'xaminhthanh' } }),
+  getCounters: () => axiosInstance.get('/counters', { params: { tenxa: 'xathaison' } }),
   
   // Update counter status
   updateStatus: (counterId: string, status: 'active' | 'paused' | 'offline', reason?: string) =>
@@ -157,23 +157,23 @@ export const counterAPI = {
   
   // Get counter statistics
   getStats: (counterId: string, period?: string) =>
-    axiosInstance.get(`/counters/${counterId}/stats`, { params: { period, tenxa: 'xaminhthanh' } }),
+    axiosInstance.get(`/counters/${counterId}/stats`, { params: { period, tenxa: 'xathaison' } }),
 };
 
 // User Management API
 export const userAPI = {
   // Get all users
-  getUsers: () => axiosInstance.get('/users', { params: { tenxa: 'xaminhthanh' } }),
+  getUsers: () => axiosInstance.get('/users', { params: { tenxa: 'xathaison' } }),
 
   // Create new user
-  createUser: (userData: any) => axiosInstance.post('/users', userData, { params: { tenxa: 'xaminhthanh' } }),
+  createUser: (userData: any) => axiosInstance.post('/users', userData, { params: { tenxa: 'xathaison' } }),
 
   // Update user
   updateUser: (userId: string, userData: any) =>
-    axiosInstance.patch(`/users/${userId}`, userData, { params: { tenxa: 'xaminhthanh' } }),
+    axiosInstance.patch(`/users/${userId}`, userData, { params: { tenxa: 'xathaison' } }),
 
   // Delete user
-  deleteUser: (userId: string) => axiosInstance.delete(`/users/${userId}`, { params: { tenxa: 'xaminhthanh' } }),
+  deleteUser: (userId: string) => axiosInstance.delete(`/users/${userId}`, { params: { tenxa: 'xathaison' } }),
 
   // Login - Authentication API
   login: (credentials: { username: string; password: string }) => {
@@ -182,7 +182,7 @@ export const userAPI = {
     formData.append('username', credentials.username);
     formData.append('password', credentials.password);
 
-    return axiosInstance.post('/auths/login?tenxa=xaminhthanh', formData, {
+    return axiosInstance.post('/auths/login?tenxa=xathaison', formData, {
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded'
       }
@@ -191,14 +191,14 @@ export const userAPI = {
   
   // Register new user
   register: (userData: { username: string; password: string }) =>
-    axiosInstance.post('/auths/users', userData, { params: { tenxa: 'xaminhthanh' } }),
+    axiosInstance.post('/auths/users', userData, { params: { tenxa: 'xathaison' } }),
 
   // Get current user info
   getCurrentUser: () =>
-    axiosInstance.get('/auths/me', { params: { tenxa: 'xaminhthanh' } }),
+    axiosInstance.get('/auths/me', { params: { tenxa: 'xathaison' } }),
 
   // Logout
-  logout: () => axiosInstance.post('/auth/logout', null, { params: { tenxa: 'xaminhthanh' } }),
+  logout: () => axiosInstance.post('/auth/logout', null, { params: { tenxa: 'xathaison' } }),
 };
 
 // Service Management API
@@ -221,13 +221,13 @@ export const serviceAPI = {
 export const proceduresAPI = {
   // 🔍 [GET] `/procedures/` – Lấy danh sách thủ tục
   getProcedures: (search?: string): Promise<{ data: Procedure[] }> => {
-    const params = search ? { search, tenxa: 'xaminhthanh' } : { tenxa: 'xaminhthanh' };
+    const params = search ? { search, tenxa: 'xathaison' } : { tenxa: 'xathaison' };
     return axiosInstance.get('/procedures', { params });
   },
   
   // 🔎 [GET] `/procedures/search-extended` – Tìm kiếm thủ tục kèm quầy
   searchExtended: (search?: string): Promise<{ data: ProcedureExtended[] }> => {
-    const params = search ? { search, tenxa: 'xaminhthanh' } : { tenxa: 'xaminhthanh' };
+    const params = search ? { search, tenxa: 'xathaison' } : { tenxa: 'xathaison' };
     return axiosInstance.get('/procedures/search-extended', { params });
   },
 };
@@ -236,7 +236,7 @@ export const proceduresAPI = {
 export const ticketsAPI = {
   // 📝 [POST] `/tickets/` – Tạo phiếu mới
   createTicket: (data: CreateTicketRequest): Promise<{ data: Ticket }> => {
-    return axiosInstance.post('/tickets/', data, { params: { tenxa: 'xaminhthanh' } });
+    return axiosInstance.post('/tickets/', data, { params: { tenxa: 'xathaison' } });
   },
 };
 
@@ -244,17 +244,17 @@ export const ticketsAPI = {
 export const countersAPI = {
   // ⏭️ [POST] `/counters/{counter_id}/call-next` – Gọi lượt tiếp theo
   callNext: (counterId: number): Promise<{ data: CallNextResponse }> => {
-    return axiosInstance.post(`/counters/${counterId}/call-next`, null, { params: { tenxa: 'xaminhthanh' } });
+    return axiosInstance.post(`/counters/${counterId}/call-next`, null, { params: { tenxa: 'xathaison' } });
   },
   
   // ⏸️ [POST] `/counters/{counter_id}/pause` – Tạm dừng quầy
   pauseCounter: (counterId: number, reason: string): Promise<{ data: PauseCounterResponse }> => {
-    return axiosInstance.post(`/counters/${counterId}/pause`, { reason }, { params: { tenxa: 'xaminhthanh' } });
+    return axiosInstance.post(`/counters/${counterId}/pause`, { reason }, { params: { tenxa: 'xathaison' } });
   },
   
   // ▶️ [PUT] `/counters/{counter_id}/resume` – Tiếp tục quầy
   resumeCounter: (counterId: number): Promise<{ data: ResumeCounterResponse }> => {
-    return axiosInstance.put(`/counters/${counterId}/resume`, null, { params: { tenxa: 'xaminhthanh' } });
+    return axiosInstance.put(`/counters/${counterId}/resume`, null, { params: { tenxa: 'xathaison' } });
   },
 };
 
