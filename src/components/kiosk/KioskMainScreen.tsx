@@ -39,7 +39,7 @@ interface ProcedureResult {
 }
 
 const DEFAULT_CONFIG = {
-  header: 'XÃ CAO BỒ',
+  header: 'XÃ BẠCH NGỌC',
   workingHours: 'Giờ làm việc (Thứ 2 - Thứ 6): 07h30 - 17h00',
   hotline: 'Hotline hỗ trợ: 02191022', 
 };
@@ -53,7 +53,7 @@ export default function KioskMainScreen() {
   // Fetch config from API on mount
   const fetchConfig = React.useCallback(async () => {
     try {
-      const data = await configAPI.getConfig('xacaobo');
+      const data = await configAPI.getConfig('xabachngoc');
       if (data && (data.work_time || data.hotline)) {
         setConfig({
           header: data.header || DEFAULT_CONFIG.header,
@@ -69,7 +69,7 @@ export default function KioskMainScreen() {
   // Save config to API
   async function handleSaveConfig(newConfig: { header: string; work_time: string; hotline: string }, onSuccess?: () => void, onError?: (err: any) => void) {
     try {
-      await configAPI.setConfig('xacaobo', {
+      await configAPI.setConfig('xabachngoc', {
         header: newConfig.header,
         work_time: newConfig.work_time,
         hotline: newConfig.hotline
@@ -156,7 +156,7 @@ export default function KioskMainScreen() {
       ws.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
-          if ((['upsert_counter', 'delete_counter'].includes(data.event)) && data.tenxa === 'xacaobo') {
+          if ((['upsert_counter', 'delete_counter'].includes(data.event)) && data.tenxa === 'xabachngoc') {
             console.log('Received upsert_counter event:', data);
             // Luôn gọi lại API và cập nhật state, không phụ thuộc vào flag
             (async () => {
@@ -183,7 +183,7 @@ export default function KioskMainScreen() {
             })();
           }
           // Listen for config update event
-          if (data.event === 'update_config' && data.tenxa === 'xacaobo') {
+          if (data.event === 'update_config' && data.tenxa === 'xabachngoc') {
             console.log('Received update_config event:', data);
             fetchConfig();
           }
