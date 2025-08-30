@@ -62,7 +62,7 @@ function AdminPage() {
         headers: {
           'Authorization': `Bearer ${authToken}`
         },
-        params: { tenxa: 'xahoaan' }
+        params: { tenxa: 'xacaobo' }
       });
       
       const userData = response.data;
